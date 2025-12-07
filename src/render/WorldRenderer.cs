@@ -94,7 +94,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public static Color defaultClearColour = new Color(168, 204, 232);
     public static Color defaultFogColour = Color.White;
 
-    private readonly HashSet<SubChunkCoord> chunksToMesh = [];
+    public readonly HashSet<SubChunkCoord> chunksToMesh = [];
 
     public bool fastChunkSwitch = true;
     public uint chunkVAO;
@@ -680,6 +680,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 for (int i = 0; i < Chunk.CHUNKHEIGHT; i++) {
                     if (!chunk.subChunks[i].isMeshed()) {
                         allMeshed = false;
+                        // requeue for next time
+                        chunksToMesh.Add(new SubChunkCoord(sectionCoord.x, i, sectionCoord.z));
+
                         break;
                     }
                 }

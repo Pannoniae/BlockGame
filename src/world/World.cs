@@ -505,7 +505,7 @@ public partial class World : IDisposable {
             limit = double.MaxValue;
         }
 
-        while (worldIO.hasChunkLoadResult() && Game.permanentStopwatch.ElapsedMilliseconds - startTime < limit) {
+        while (worldIO.hasChunkLoadResult()) {
             var result = worldIO.getChunkLoadResult();
             if (result == null) {
                 break;
@@ -536,6 +536,11 @@ public partial class World : IDisposable {
             // re-queue for status progression (GENERATED -> POPULATED -> LIGHTED -> MESHED)
             // this will handle neighbour dependencies correctly
             addToChunkLoadQueue(result.Value.coord, result.Value.targetStatus);
+
+            // check time AFTER processing - break if we've exceeded budget
+            if (Game.permanentStopwatch.ElapsedMilliseconds - startTime >= limit) {
+                break;
+            }
         }
     }
 
@@ -558,7 +563,7 @@ public partial class World : IDisposable {
         var limit = Net.mode == NetMode.DED ? double.MaxValue
             : loading ? MAX_CHUNKLOAD_FRAMETIME_FAST
             : MAX_CHUNKLOAD_FRAMETIME;
-        while (Game.permanentStopwatch.ElapsedMilliseconds - startTime < limit) {
+        while (chunkLoadQueue.Count > 0) {
 
             // check if queue is stuck and shuffle only when needed
             var currentQueueSize = chunkLoadQueue.Count;
@@ -576,22 +581,24 @@ public partial class World : IDisposable {
                 lastQueueSize = currentQueueSize;
             }
 
-            if (chunkLoadQueue.Count > 0) {
-                var ticket = chunkLoadQueue[^1];
-                chunkLoadQueue.RemoveAt(chunkLoadQueue.Count - 1);
+            var ticket = chunkLoadQueue[^1];
+            chunkLoadQueue.RemoveAt(chunkLoadQueue.Count - 1);
 
-                // check if chunk is still relevant before loading it
-                if (isChunkRelevant(ticket.chunkCoord)) {
-                    loadChunk(ticket.chunkCoord, ticket.level);
-                    loadedChunks++;
+            // check if chunk is still relevant before loading it
+            if (isChunkRelevant(ticket.chunkCoord)) {
+                loadChunk(ticket.chunkCoord, ticket.level);
+                loadedChunks++;
+
+                // check time AFTER loading - break if we've exceeded budget
+                if (Game.permanentStopwatch.ElapsedMilliseconds - startTime >= limit) {
+                    break;
                 }
-                // if too far, just discard the ticket and continue
             }
-            else {
-                // chunk queue empty, don't loop more
-                isLoading = false;
-                break;
-            }
+            // if too far, just discard the ticket and continue
+        }
+
+        if (chunkLoadQueue.Count == 0) {
+            isLoading = false;
         }
 
         if (!loading) {
@@ -606,11 +613,6 @@ public partial class World : IDisposable {
             // if we're loading, we can also mesh chunks
             // empty the meshing queue
             while (Game.renderer.meshingQueue.TryDequeue(out var sectionCoord)) {
-
-                // if too much time has passed, stop meshing for this frame
-                if (Game.permanentStopwatch.ElapsedMilliseconds - startTime >= MAX_MESHING_FRAMETIME) {
-                    break;
-                }
 
                 // if this chunk doesn't exist anymore (because we unloaded it)
                 // then don't mesh! otherwise we'll fucking crash
@@ -629,6 +631,8 @@ public partial class World : IDisposable {
                     for (int i = 0; i < Chunk.CHUNKHEIGHT; i++) {
                         if (!chunk.subChunks[i].isMeshed()) {
                             allMeshed = false;
+                            // requeue for next time
+                            Game.renderer.chunksToMesh.Add(new SubChunkCoord(sectionCoord.x, i, sectionCoord.z));
                             break;
                         }
                     }
@@ -636,6 +640,11 @@ public partial class World : IDisposable {
                     if (allMeshed) {
                         chunk.status = ChunkStatus.MESHED;
                     }
+                }
+
+                // check time AFTER meshing - break if we've exceeded budget
+                if (Game.permanentStopwatch.ElapsedMilliseconds - startTime >= MAX_MESHING_FRAMETIME) {
+                    break;
                 }
             }
         }

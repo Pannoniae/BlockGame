@@ -31,7 +31,7 @@ public class SubChunk {
     public bool isEmpty => blocks.isEmpty();
 
     /** Returns true if this subchunk has been meshed (has VAO data) */
-    public bool isMeshed() => vao != null;
+    public bool isMeshed() => (vao != null || watervao != null) && (hasRenderOpaque || hasRenderTranslucent);
 
     public int worldX => coord.x << 4;
     public int worldY => coord.y << 4;
