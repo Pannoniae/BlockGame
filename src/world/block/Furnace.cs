@@ -94,9 +94,11 @@ public class Furnace : EntityBlock {
                     // send furnace state (smelting progress, fuel)
                     conn.send(new FurnaceSyncPacket {
                         position = new Vector3I(x, y, z),
+                        smeltProgress = be.smeltProgress,
+                        smeltTime = be.smeltTime,
                         fuelRemaining = be.fuelRemaining,
                         fuelMax = be.fuelMax,
-                        smeltProgress = be.smeltProgress
+                        lit = be.isLit()
                     }, DeliveryMethod.ReliableOrdered);
                 }
             );

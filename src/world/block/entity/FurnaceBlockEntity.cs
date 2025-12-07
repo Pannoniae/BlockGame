@@ -13,6 +13,7 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
 
     // smelting state
     public int smeltProgress = 0;       // current smelting time in ticks
+    public int smeltTime = 200;         // total time for current recipe
     public int fuelRemaining = 0;       // fuel ticks left
     public int fuelMax = 0;             // total fuel from current fuel item (mostly for UI % lol)
     public SmeltingRecipe? currentRecipe = null;
@@ -31,6 +32,9 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
         // try to start new recipe if idle
         if (currentRecipe == null && slots[0] != ItemStack.EMPTY) {
             currentRecipe = SmeltingRecipe.findRecipe(slots[0].getItem());
+            if (currentRecipe != null) {
+                smeltTime = currentRecipe.getSmeltTime();
+            }
         }
 
         // consume fuel if we're out and have fuel in the slot (mfs shouldn't overcook)
@@ -136,7 +140,7 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
         }
     }
 
-    public float getSmeltProgress() => currentRecipe != null ? (float)smeltProgress / currentRecipe.getSmeltTime() : 0f;
+    public float getSmeltProgress() => smeltTime > 0 ? (float)smeltProgress / smeltTime : 0f;
     public float getFuelProgress() => fuelMax > 0 ? (float)fuelRemaining / fuelMax : 0f;
     public bool isLit() => fuelRemaining > 0;
 

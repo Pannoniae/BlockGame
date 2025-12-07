@@ -1029,6 +1029,7 @@ public class GameServer : INetEventListener {
                     conn.send(new FurnaceSyncPacket {
                         position = furnace.pos,
                         smeltProgress = furnace.smeltProgress,
+                        smeltTime = furnace.smeltTime,
                         fuelRemaining = furnace.fuelRemaining,
                         fuelMax = furnace.fuelMax,
                         lit = furnace.isLit()

@@ -1157,18 +1157,19 @@ public class ClientPacketHandler : PacketHandler {
         // update furnace state
         var blockEntity = Game.world.getBlockEntity(p.position.X, p.position.Y, p.position.Z);
         if (blockEntity is FurnaceBlockEntity furnace) {
+            furnace.smeltProgress = p.smeltProgress;
+            furnace.smeltTime = p.smeltTime;       // direct from server - makes UI resilient to packet ordering
             furnace.fuelRemaining = p.fuelRemaining;
             furnace.fuelMax = p.fuelMax;
-            furnace.smeltProgress = p.smeltProgress;
 
-            // update currentRecipe on client (needed for getSmeltProgress() calculation)
-            // server sets this during update(), but client doesn't run update() :)
+            // still update currentRecipe for other uses, but UI no longer depends on it
+            // this can be temporarily wrong due to packet ordering, but it FINALLY won't break rendering
             if (p.smeltProgress > 0 && furnace.slots[0] != ItemStack.EMPTY) {
                 furnace.currentRecipe = SmeltingRecipe.findRecipe(furnace.slots[0].getItem());
-            } else {
-                // no progress or no item = no recipe
+            } else if (p.smeltProgress == 0) {
                 furnace.currentRecipe = null;
             }
+            // else: keep existing recipe, slot data might be stale
         }
     }
 

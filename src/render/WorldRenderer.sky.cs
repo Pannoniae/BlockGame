@@ -148,6 +148,7 @@ public sealed partial class WorldRenderer {
         Game.graphics.tex(0, Game.textures.sunTexture);
         mat.rotate(Meth.rad2deg(sunAngle), 0, 0, 1);
 
+        idt.model(mat);
         idt.setColour(new Color(sunIntensity, sunIntensity, sunIntensity * 0.9f, sunIntensity));
 
         idt.begin(PrimitiveType.Quads);
@@ -168,6 +169,7 @@ public sealed partial class WorldRenderer {
 
         mat.push();
         mat.rotate(180f, 0, 0, 1);
+        idt.model(mat);
         idt.setColour(new Color(moonIntensity * 0.9f, moonIntensity * 0.9f, moonIntensity, moonIntensity));
 
         idt.begin(PrimitiveType.Quads);
