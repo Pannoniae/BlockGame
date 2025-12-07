@@ -674,9 +674,19 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
             // update chunk status to MESHED (once per chunk, not per subchunk)
             // this makes the chunk visible in the renderer
-            if (chunk.status < ChunkStatus.MESHED && Net.mode.isMPC()) {
-                chunk.status = ChunkStatus.MESHED;
-                //Console.Out.WriteLine($"  -> Updated status to MESHED");
+            if (chunk.status < ChunkStatus.MESHED) {
+                // check if ALL subchunks in this chunk are now meshed
+                bool allMeshed = true;
+                for (int i = 0; i < Chunk.CHUNKHEIGHT; i++) {
+                    if (!chunk.subChunks[i].isMeshed()) {
+                        allMeshed = false;
+                        break;
+                    }
+                }
+
+                if (allMeshed) {
+                    chunk.status = ChunkStatus.MESHED;
+                }
             }
         }
     }

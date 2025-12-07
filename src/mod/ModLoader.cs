@@ -12,7 +12,7 @@ public static class ModLoader {
     public const string MOD_DIR = "mods";
 
     /**
-     * Discover and load mods from Mods/ directory.
+     * Discover and load mods from the mods/ directory.
      * Called early during game initialization.
      */
     public static void discover() {
@@ -92,7 +92,7 @@ public static class ModLoader {
                 Log.info("ModLoader", $"Initializing mod: {mod.internalname}");
                 mod.instance.onInit();
             } catch (Exception e) {
-                // TODO: use ErrorHandler.crash instead of just logging
+                // TODO: implement something like ErrorHandler.crash instead of just logging? with contextual info
                 Log.error("ModLoader", $"Mod {mod.internalname} failed to initialize:");
                 Log.error(e);
                 throw;
