@@ -52,8 +52,8 @@ public class Particles {
     }
 
     public void render(double interp) {
-        var currentTexture = "textures/blocks.png";
-        Game.graphics.tex(0, Game.textures.blockTexture);
+        BTexture2D currentTexture = Game.textures.blockTexture;
+        Game.graphics.tex(0, currentTexture);
         drawer.batch();
 
         Matrix4x4 mat = Game.camera.getViewMatrix(interp) * Game.camera.getProjectionMatrix();
@@ -74,18 +74,17 @@ public class Particles {
 
                 drawer.begin(PrimitiveType.Triangles);
                 currentTexture = particle.texture;
-                var tex = Game.textures.get(particle.texture);
-                Game.graphics.tex(0, tex);
+                Game.graphics.tex(0,  particle.texture);
             }
             // get interp pos
             var pos = Vector3D.Lerp(particle.prevPosition, particle.position, (float)interp);
             var blockPos = pos.toBlockPos();
             var right = Vector3.Cross(Game.camera.up(interp).toVec3(), Game.camera.forward(interp).toVec3());
             var up = Game.camera.up(interp).toVec3();
-            var ul = pos.toVec3() - right * particle.size.X / 2 + up * particle.size.Y / 2;
-            var ll = pos.toVec3() - right * particle.size.X / 2 - up * particle.size.Y / 2;
-            var lr = pos.toVec3() + right * particle.size.X / 2 - up * particle.size.Y / 2;
-            var ur = pos.toVec3() + right * particle.size.X / 2 + up * particle.size.Y / 2;
+            var ul = pos.toVec3() - right * particle.size.X * 0.5f + up * particle.size.Y * 0.5f;
+            var ll = pos.toVec3() - right * particle.size.X * 0.5f - up * particle.size.Y * 0.5f;
+            var lr = pos.toVec3() + right * particle.size.X * 0.5f - up * particle.size.Y * 0.5f;
+            var ur = pos.toVec3() + right * particle.size.X * 0.5f + up * particle.size.Y * 0.5f;
             var l = world.getLightC(blockPos.X, blockPos.Y, blockPos.Z);
 
 

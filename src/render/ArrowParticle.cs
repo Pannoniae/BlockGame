@@ -17,7 +17,7 @@ public class ArrowParticle : Particle {
         maxAge = 10; // short lifetime
         noGravity = true;
 
-        texture = "textures/particle.png";
+        texture = Game.textures.particleTex;
         u = UVPair.texCoords(Game.textures.particleTex, 0, 0).X;
         v = UVPair.texCoords(Game.textures.particleTex, 0, 0).Y;
         uvsize = UVPair.texCoords(Game.textures.particleTex, 3, 3);
@@ -44,7 +44,7 @@ public class WaterParticle : Particle {
         maxAge = 60; // short lifetime
         noGravity = true;
 
-        texture = "textures/particle.png";
+        texture = Game.textures.particleTex;
         u = UVPair.texCoords(Game.textures.particleTex, 0, 3).X;
         v = UVPair.texCoords(Game.textures.particleTex, 0, 3).Y;
         uvsize = UVPair.texCoords(Game.textures.particleTex, 4, 4);

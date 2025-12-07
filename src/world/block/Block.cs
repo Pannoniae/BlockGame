@@ -1093,6 +1093,7 @@ public class Block {
         TORCH.setTex(cubeUVs(9, 3));
         TORCH.itemLike();
         TORCH.material(Material.WOOD);
+        hardness[TORCH.id] = 0;
 
         CRAFTING_TABLE = register("craftingTable", new CraftingTable("Crafting Table"));
         CRAFTING_TABLE.setTex(CTUVs(4, 3, 3, 3, 2, 3, 5, 3));
@@ -1723,7 +1724,7 @@ public class Block {
                     var particle = new Particle(
                         world,
                         particlePosition);
-                    particle.texture = "textures/blocks.png";
+                    particle.texture = Game.textures.blockTexture;
                     particle.u = us.X;
                     particle.v = us.Y;
                     particle.size = new Vector2(size);
@@ -1825,7 +1826,7 @@ public class Block {
             var motion = Particle.abbMotion(new Vector3(rx, 0.5f, rz));
 
             var particle = new Particle(world, particlePosition);
-            particle.texture = "textures/blocks.png";
+            particle.texture = Game.textures.blockTexture;
             particle.u = us.X;
             particle.v = us.Y;
             particle.size = new Vector2(size);

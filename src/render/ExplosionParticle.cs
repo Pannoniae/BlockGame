@@ -13,7 +13,7 @@ public class ExplosionParticle : Particle {
         maxAge = 70;
         noGravity = false;
 
-        texture = "textures/particle.png";
+        texture = Game.textures.particleTex;
 
         var variant = Game.clientRandom.Next(3);
         u = UVPair.texCoords(Game.textures.particleTex, 0, 0).X;

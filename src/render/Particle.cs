@@ -1,4 +1,5 @@
 using System.Numerics;
+using BlockGame.GL;
 using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world;
@@ -34,7 +35,7 @@ public class Particle {
     public int maxAge;
 
     /** texture path */
-    public string texture = null!;
+    public BTexture2D texture = null!;
 
     /** texture U coordinate */
     public float u;
@@ -206,7 +207,7 @@ public class FlameParticle : Particle {
 
 
         // texture maths
-        texture = "textures/particle.png";
+        texture = Game.textures.particleTex;
         u = UVPair.texCoords(Game.textures.particleTex, 0, 10).X;
         v = UVPair.texCoords(Game.textures.particleTex, 0, 10).Y;
 
