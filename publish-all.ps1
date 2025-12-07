@@ -35,10 +35,6 @@ function Build-Platform {
     Copy-Item -Force .\publishs\server.pdb .\publish\
     Copy-Item -Force .\publishs\server.runtimeconfig.json .\publish\
 
-    # copy server dll (srv.dll) to client publish folder
-    Copy-Item -Force .\publishs\libs\srv.dll .\publish\libs\
-    Copy-Item -Force .\publishs\libs\srv.pdb .\publish\libs\
-
     # publish tools (they go to publish/ root via NetBeauty config)
     dotnet publish SNBT2NBT/SNBT2NBT.csproj -r $runtime -c Release --no-restore
     dotnet publish NBT2SNBT/NBT2SNBT.csproj -r $runtime -c Release --no-restore

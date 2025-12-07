@@ -21,10 +21,6 @@ Copy-Item -Force .\publishs\server.deps.json .\publish\
 Copy-Item -Force .\publishs\server.pdb .\publish\
 Copy-Item -Force .\publishs\server.runtimeconfig.json .\publish\
 
-# copy server dll (srv.dll) to client publish folder
-Copy-Item -Force .\publishs\libs\srv.dll .\publish\libs\
-Copy-Item -Force .\publishs\libs\srv.pdb .\publish\libs\
-
 # publish tools
 dotnet publish SNBT2NBT/SNBT2NBT.csproj -r "win-x64" -c Release --no-restore
 dotnet publish NBT2SNBT/NBT2SNBT.csproj -r "win-x64" -c Release --no-restore

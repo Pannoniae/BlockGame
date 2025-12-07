@@ -245,7 +245,8 @@ public class GameServer : INetEventListener {
     public void update() {
         // 60 TPS game loop
         updateCounter++;
-        if (sw.ElapsedMilliseconds - lastLogTime >= 1000) {
+        // log TPS every 2 minutes
+        if (sw.ElapsedMilliseconds - lastLogTime >= 120000) {
             Log.info($"TPS: {updateCounter} (expected 60)");
             updateCounter = 0;
             lastLogTime += 1000;

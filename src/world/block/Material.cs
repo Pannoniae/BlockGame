@@ -123,7 +123,7 @@ public static class SoundMaterialExtensions {
             SoundMaterial.METAL => "step/stone",
             SoundMaterial.DIRT => "step/grass",
             SoundMaterial.GLASS => "step/stone",
-            SoundMaterial.ORGANIC => "knock/grass",
+            SoundMaterial.ORGANIC => "step/grass",
             _ => "step"
         };
     }

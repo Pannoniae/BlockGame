@@ -65,8 +65,8 @@ namespace FontStashSharp.Rasterizers.FreeType
 			var result = FT.FT_Get_Char_Index(_faceHandle, (UIntPtr)codepoint);
 			if (result == 0)
 			{
-                Console.Out.WriteLine(
-                    $"FreeTypeSource.GetGlyphId: FT_Get_Char_Index returned 0 for codepoint {codepoint}");
+                //Console.Out.WriteLine(
+                //    $"FreeTypeSource.GetGlyphId: FT_Get_Char_Index returned 0 for codepoint {codepoint}");
                 //Console.Out.WriteLine(Environment.StackTrace);
 				return null;
 			}

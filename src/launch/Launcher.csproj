@@ -26,7 +26,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\client\Client.csproj" />
+        <Compile Include="..\launchshared\CoremodLoader.cs" Link="CoremodLoader.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Core.csproj" />
     </ItemGroup>
 
     <Import Project="..\..\NetBeauty.targets" />
