@@ -1002,6 +1002,9 @@ public partial class Game {
         // exit world (don't save multiplayer worlds)
         exitWorld(save: false);
 
+        // unlock mouse!!
+        instance.unlockMouse();
+
         // return to main menu
         instance.switchToScreen(Screen.MAIN_MENU_SCREEN);
     }
