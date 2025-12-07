@@ -258,7 +258,8 @@ public class ServerPacketHandler : PacketHandler {
             spawnPos = player.position,
             rotation = player.rotation,
             worldTick = world.worldTick,
-            creative = player.gameMode == GameMode.creative
+            creative = player.gameMode == GameMode.creative,
+            initialHP = player.hp
         }, DeliveryMethod.ReliableOrdered);
 
         // send initial inventory (invID=0 for player inventory)
@@ -1413,6 +1414,9 @@ public class ServerPacketHandler : PacketHandler {
             DeliveryMethod.ReliableOrdered,
             exclude: conn
         );
+ 
+        // save player data immediately to prevent (potential...) data loss if server crashes
+        GameServer.instance.savePlayerData(conn);
     }
 
     /** normalise rotation angles to [-180, 180] NO SPINNING */

@@ -43,7 +43,6 @@ public class Textures {
     // texture pack management
     private readonly List<TexturePack> availablePacks = [];
     private TexturePack? currentPack;
-    private PackSource? activePack;
 
     // source registry
     private readonly List<AtlasSource> blockSources = [];
@@ -340,18 +339,11 @@ public class Textures {
     }
 
     /**
-     * Set the active pack source for non-atlas texture resolution
-     */
-    public void setPack(PackSource? pack) {
-        activePack = pack;
-    }
-
-    /**
      * Open a texture stream, checking pack first, then falling back to assets
      */
     public Stream open(string path) {
-        if (activePack?.exists(path) == true) {
-            return activePack.open(path);
+        if (currentPack?.source?.exists(path) == true) {
+            return currentPack?.source?.open(path)!;
         }
         return Assets.open(path);
     }
@@ -389,7 +381,6 @@ public class Textures {
     }
 
     private unsafe void updateLightmap(float skyDarken) {
-        const int LIGHTMAP_SIZE = 16;
 
         const float BASE = 0.04f;
         const float BASE2 = 0.16f;

@@ -515,7 +515,7 @@ public partial class Entity(World world, string type) : Persistent {
         }
 
         // splash particles/sound
-        if (inWater && !wasInLiquid && splashing) {
+        if (inWater && !wasInLiquid && splashing && !Net.mode.isDed()) {
             world.particles.add(new WaterParticle(
                 world,
                 new Vector3D(
@@ -645,7 +645,7 @@ public partial class Entity(World world, string type) : Persistent {
         // apply knockback
         if (kb) {
             var dir = Vector3D.Normalize(position - source.position);
-            var kbStrength = 9 + double.Sqrt(damage * 2);
+            var kbStrength = 14 + double.Sqrt(damage * 2);
 
             // don't yeet into the air *too* much
             // only apply upward force if on ground

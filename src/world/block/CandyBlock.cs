@@ -90,6 +90,7 @@ public class CandyBlock : Block {
 
     public override UVPair getTexture(int faceIdx, int metadata) {
         // handle two rows
+        metadata &= 0x0F;
         return uvs[metadata];
     }
 }

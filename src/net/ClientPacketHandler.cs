@@ -204,7 +204,8 @@ public class ClientPacketHandler : PacketHandler {
             position = p.spawnPos,
             rotation = p.rotation,
             gameMode = p.creative ? GameMode.creative : GameMode.survival,
-            name = Settings.instance.playerName
+            name = Settings.instance.playerName,
+            hp = p.initialHP // set initial health from server
         };
 
         // set correct inventory context based on gamemode (Player constructor defaults to creative :()

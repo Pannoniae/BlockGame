@@ -10,6 +10,7 @@ public struct LoginSuccessPacket : Packet {
     public Vector3 rotation;
     public int worldTick;
     public bool creative;
+    public double initialHP;
 
     public byte channel => 0;
 
@@ -19,6 +20,7 @@ public struct LoginSuccessPacket : Packet {
         buf.writeVec3(rotation);
         buf.writeInt(worldTick);
         buf.writeBool(creative);
+        buf.writeDouble(initialHP);
     }
 
     public void read(PacketBuffer buf) {
@@ -27,5 +29,6 @@ public struct LoginSuccessPacket : Packet {
         rotation = buf.readVec3();
         worldTick = buf.readInt();
         creative = buf.readBool();
+        initialHP = buf.readDouble();
     }
 }

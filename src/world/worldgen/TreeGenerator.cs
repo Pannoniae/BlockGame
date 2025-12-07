@@ -257,8 +257,8 @@ public class TreeGenerator {
         else if (Math.Abs(delta.Y) == maxdist) primidx = 1;
         else primidx = 2;
 
-        var secidx1 = mod(primidx - 1, 3);
-        var secidx2 = mod((1 + primidx), 3);
+        var secidx1 = Meth.mod(primidx - 1, 3);
+        var secidx2 = Meth.mod((1 + primidx), 3);
         var primsign = Math.Sign(delta[primidx]);
         var secfac1 = (float)(delta[secidx1]) / delta[primidx];
         var secfac2 = (float)(delta[secidx2]) / delta[primidx];

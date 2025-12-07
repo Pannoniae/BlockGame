@@ -201,7 +201,19 @@ public class WorldIO {
         // check for lock file
         var lockPath = getLockFilePath(filename);
         if (File.Exists(lockPath)) {
-            throw new IOException($"World '{filename}' is already open in another instance! Close the other instance first.");
+            // check if lock is stale (process died)
+            if (isLockStale(lockPath)) {
+                Log.warn($"Removing stale lock file for world '{filename}' (previous process crashed or was killed)");
+                try {
+                    File.Delete(lockPath);
+                }
+                catch (Exception e) {
+                    Log.warn($"Failed to delete stale lock: {e.Message}");
+                }
+            }
+            else {
+                throw new IOException($"World '{filename}' is already open in another instance! Close the other instance first.");
+            }
         }
 
         NBTCompound tag;
@@ -220,10 +232,14 @@ public class WorldIO {
         var world = new World(filename, seed, displayName, generatorName);
         world.toBeLoadedNBT = tag;
 
-        // create lock file
+        // create lock file with PID
         try {
-            world.worldIO.lockFile = File.Open(lockPath, FileMode.Create, FileAccess.Write, FileShare.None);
-            Log.info($"Created lock file for world '{filename}'");
+            world.worldIO.lockFile = File.Open(lockPath, FileMode.Create, FileAccess.Write, FileShare.Read);
+            var pid = Environment.ProcessId.ToString();
+            var pidBytes = System.Text.Encoding.UTF8.GetBytes(pid);
+            world.worldIO.lockFile.Write(pidBytes, 0, pidBytes.Length);
+            world.worldIO.lockFile.Flush();
+            Log.info($"Created lock file for world '{filename}' (PID: {pid})");
         }
         catch (Exception e) {
             throw new IOException($"Failed to create lock file for world '{filename}': {e.Message}", e);
@@ -412,6 +428,35 @@ public class WorldIO {
 
     public static string getLockFilePath(string worldName) {
         return Net.mode.isDed() ? $"{worldName}/world.lock" : $"level/{worldName}/world.lock";
+    }
+
+    /** Check if lock file is stale (process no longer running) */
+    private static bool isLockStale(string lockPath) {
+        try {
+            using var fs = File.Open(lockPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            var pidBytes = new byte[16];
+            int read = fs.Read(pidBytes, 0, pidBytes.Length);
+            if (read == 0) {
+                return true; // empty lockfile = stale
+            }
+
+            var pidStr = System.Text.Encoding.UTF8.GetString(pidBytes, 0, read);
+            if (!int.TryParse(pidStr, out int pid)) {
+                return true; // invalid PID = stale
+            }
+
+            // check if process exists
+            try {
+                var proc = System.Diagnostics.Process.GetProcessById(pid);
+                return false; // process alive = not stale
+            }
+            catch (ArgumentException) {
+                return true; // process doesn't exist = stale
+            }
+        }
+        catch {
+            return true; // can't read = assume stale
+        }
     }
 
     public static NBTCompound serialiseChunkIntoNBT(Chunk chunk) {

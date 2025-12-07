@@ -762,6 +762,15 @@ public class NBTCompound : NBTTag {
         return dict.TryGetValue(name, out NBTTag? value) ? (NBTCompound)value : d;
     }
 
+    public bool get(string name, out NBTTag value) {
+        if (dict.TryGetValue(name, out NBTTag tag)) {
+            value = tag;
+            return true;
+        }
+        value = null!;
+        return false;
+    }
+
 
     public override string ToString() {
         StringBuilder str = new StringBuilder();
