@@ -261,14 +261,14 @@ public class Recipe {
             .ingredients(Block.SAND_BRICK.item);
 
         // door (6 planks in 2x3)
-        /*OAK_DOOR = register(new ItemStack(Item.OAK_DOOR, 1));
+        OAK_DOOR = register(new ItemStack(Item.OAK_DOOR, 1));
         OAK_DOOR.shape(110_110_110, 3);
         OAK_DOOR.ingredients(Block.OAK_PLANKS.item);
             register(new ItemStack(Item.MAHOGANY_DOOR,1))
             .shape(110_110_110, 3)
             .ingredients(Block.MAHOGANY_PLANKS.item);
 
-        OAK_FENCE = register(new ItemStack(Block.OAK_FENCE.item, 4));
+        /*OAK_FENCE = register(new ItemStack(Block.OAK_FENCE.item, 4));
         OAK_FENCE.shape(110_220_110, 3);
         OAK_FENCE.ingredients(Block.OAK_PLANKS.item, Item.STICK);
             register(new ItemStack(Block.MAHOGANY_FENCE.item,4))
