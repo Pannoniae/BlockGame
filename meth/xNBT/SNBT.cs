@@ -15,7 +15,7 @@ namespace BlockGame.util.xNBT;
 public static class SNBT {
     public static string toString(NBTTag tag, bool prettyPrint = false) {
         // root tag can't have a name if compound
-        if (tag is NBTCompound compound && !string.IsNullOrEmpty(compound.name)) { 
+        if (tag is NBTCompound compound && !string.IsNullOrEmpty(compound.name)) {
             throw new ArgumentException("Root tag must not have a name!", nameof(tag));
         }
 
@@ -54,7 +54,7 @@ public class SNBTWriter {
     private readonly bool prettyPrint;
     private int indentLevel;
     private const string INDENT = "  ";
-    
+
     private static readonly HashSet<string> ReservedSuffixes = ["b", "ub", "s", "us", "u", "L", "uL", "f", "d", "END"];
 
     public SNBTWriter(bool prettyPrint = false) {
@@ -83,11 +83,11 @@ public class SNBTWriter {
     private static bool canBeUnquoted(string s) {
         if (string.IsNullOrEmpty(s)) return false;
         if (ReservedSuffixes.Contains(s)) return false;
-        
+
         // First char must be letter or underscore
         char first = s[0];
         if (!char.IsLetter(first) && first != '_') return false;
-        
+
         // Rest can be alphanumeric, underscore, dot, plus, minus
         for (int i = 1; i < s.Length; i++) {
             char c = s[i];
@@ -95,7 +95,7 @@ public class SNBTWriter {
                 return false;
             }
         }
-        
+
         return true;
     }
 
@@ -138,7 +138,7 @@ public class SNBTWriter {
                 writeCompound(t);
                 break;
             case INBTList list:
-                writeListInterface(list, tag);
+                writeListInterface(list);
                 break;
             case NBTByteArray t:
                 writeArray("B", t.data);
@@ -176,30 +176,28 @@ public class SNBTWriter {
         }
     }
 
-    private void writeListInterface(INBTList list, NBTTag tag) {
-        // Extract the list items via reflection (necessary due to generic constraints)
-        var listField = tag.GetType().GetField("list");
-        if (listField?.GetValue(tag) is IEnumerable items) {
-            var tagList = new List<NBTTag>();
-            foreach (var item in items) {
-                if (item is NBTTag nbtTag) {
-                    tagList.Add(nbtTag);
-                }
-                else {
-                    SkillIssueException.throwNew($"List contains non-NBTTag items! ({item.GetType().Name})");
-                }
+    private void writeListInterface(INBTList list) {
+        // we updated this from reflection to dynamic! oh how nice ;)
+        var theList = (dynamic)list;
+
+        var tagList = new List<NBTTag>();
+        foreach (var item in theList.list) {
+            if (item is NBTTag nbtTag) {
+                tagList.Add(nbtTag);
             }
-            writeList(tagList, list.listType);
-        } else {
-            // Empty list
-            writeList([], list.listType);
+            else {
+                SkillIssueException.throwNew($"List contains non-NBTTag items! ({item.GetType().Name})");
+            }
         }
+
+        writeList(tagList, list.listType);
     }
 
     private void writeString(string s) {
         if (canBeUnquoted(s)) {
             sb.Append(s);
-        } else {
+        }
+        else {
             sb.Append('"');
             foreach (char c in s) {
                 switch (c) {
@@ -214,6 +212,7 @@ public class SNBTWriter {
                         break;
                 }
             }
+
             sb.Append('"');
         }
     }
@@ -224,24 +223,26 @@ public class SNBTWriter {
             writeNewLine();
             indentLevel++;
         }
-        
+
         bool first = true;
         foreach (var kvp in compound.dict.Pairs) {
             if (!first) {
                 sb.Append(',');
                 if (prettyPrint) {
                     writeNewLine();
-                } else {
+                }
+                else {
                     sb.Append(' ');
                 }
             }
+
             first = false;
-            
+
             if (prettyPrint) writeIndent();
-            
+
             // Write key
             writeString(kvp.Key);
-            
+
             sb.Append(": ");
             writeValue(kvp.Value);
         }
@@ -251,12 +252,13 @@ public class SNBTWriter {
             writeNewLine();
             writeIndent();
         }
+
         sb.Append('}');
     }
 
     private void writeList(List<NBTTag> list, NBTType listType) {
         sb.Append('[');
-        
+
         if (list.Count == 0) {
             sb.Append(NBTTag.getTypeName(listType)).Append(';');
         }
@@ -266,28 +268,30 @@ public class SNBTWriter {
                 writeNewLine();
                 indentLevel++;
             }
-            
+
             for (int i = 0; i < list.Count; i++) {
                 if (i > 0) {
                     sb.Append(',');
                     if (prettyPrint) {
                         if (complexItems) {
                             writeNewLine();
-                        } else {
+                        }
+                        else {
                             sb.Append(' ');
                         }
-                    } else {
+                    }
+                    else {
                         sb.Append(' ');
                     }
                 }
-                
+
                 if (prettyPrint && complexItems) {
                     writeIndent();
                 }
-                
+
                 writeValue(list[i]);
             }
-            
+
             if (prettyPrint && complexItems) {
                 indentLevel--;
                 writeNewLine();
@@ -300,7 +304,7 @@ public class SNBTWriter {
 
     private void writeArray<T>(string prefix, T[] data) {
         sb.Append('[').Append(prefix).Append("; ");
-        
+
         for (int i = 0; i < data.Length; i++) {
             if (i > 0) sb.Append(", ");
             sb.Append(data[i]?.ToString() ?? "0");
@@ -432,71 +436,80 @@ internal class SNBTParser {
             char c = input[pos];
             if (char.IsLetterOrDigit(c) || c == '_' || c == '.' || c == '+' || c == '-') {
                 pos++;
-            } else {
+            }
+            else {
                 break;
             }
         }
-        
+
         if (pos == start) {
             throw new FormatException($"Expected key at position {pos}");
         }
-        
+
         return input.Substring(start, pos - start);
     }
 
     private NBTTag parseUnquotedValue(string? name) {
         string token = parseUnquotedKey();
-        
+
         // Try to parse as number with suffix
         if (tryParseTypedNumber(token, name, out var numberTag)) {
             return numberTag;
         }
-        
+
         // It's an unquoted string
         return new NBTString(name, token);
     }
 
     private bool tryParseTypedNumber(string token, string? name, out NBTTag result) {
         result = null!;
-        
+
         // Check suffixes from longest to shortest
         if (token.EndsWith("ub") && isValidInteger(token.AsSpan(0, token.Length - 2))) {
             result = new NBTByte(name, byte.Parse(token[..^2]));
             return true;
         }
+
         if (token.EndsWith("us") && isValidInteger(token.AsSpan(0, token.Length - 2))) {
             result = new NBTUShort(name, ushort.Parse(token[..^2]));
             return true;
         }
+
         if (token.EndsWith("uL") && isValidInteger(token.AsSpan(0, token.Length - 2))) {
             result = new NBTULong(name, ulong.Parse(token[..^2]));
             return true;
         }
+
         if (token.EndsWith('b') && isValidInteger(token.AsSpan(0, token.Length - 1))) {
             result = new NBTByte(name, byte.Parse(token[..^1]));
             return true;
         }
+
         if (token.EndsWith('s') && isValidInteger(token.AsSpan(0, token.Length - 1))) {
             result = new NBTShort(name, short.Parse(token[..^1]));
             return true;
         }
+
         if (token.EndsWith('u') && isValidInteger(token.AsSpan(0, token.Length - 1))) {
             result = new NBTUInt(name, uint.Parse(token[..^1]));
             return true;
         }
+
         if (token.EndsWith('L') && isValidInteger(token.AsSpan(0, token.Length - 1))) {
             result = new NBTLong(name, long.Parse(token[..^1]));
             return true;
         }
+
         if (token.EndsWith('f') && isValidFloat(token.AsSpan(0, token.Length - 1))) {
             result = new NBTFloat(name, float.Parse(token[..^1], CultureInfo.InvariantCulture));
             return true;
         }
+
         if (token.EndsWith('d') && isValidFloat(token.AsSpan(0, token.Length - 1))) {
             result = new NBTDouble(name, double.Parse(token[..^1], CultureInfo.InvariantCulture));
             return true;
         }
-        
+
         return false;
     }
 
@@ -504,10 +517,11 @@ internal class SNBTParser {
         if (s.Length == 0) return false;
         int start = s[0] == '-' ? 1 : 0;
         if (start >= s.Length) return false;
-        
+
         for (int i = start; i < s.Length; i++) {
             if (!char.IsDigit(s[i])) return false;
         }
+
         return true;
     }
 
@@ -515,16 +529,18 @@ internal class SNBTParser {
         if (s.Length == 0) return false;
         int start = s[0] == '-' ? 1 : 0;
         if (start >= s.Length) return false;
-        
+
         bool hasDot = false;
         for (int i = start; i < s.Length; i++) {
             if (s[i] == '.') {
                 if (hasDot) return false;
                 hasDot = true;
-            } else if (!char.IsDigit(s[i])) {
+            }
+            else if (!char.IsDigit(s[i])) {
                 return false;
             }
         }
+
         return true;
     }
 
@@ -554,7 +570,7 @@ internal class SNBTParser {
 
     private string? tryParseArrayPrefix() {
         int start = pos;
-        
+
         // Collect letters for prefix
         while (pos < input.Length && char.IsLetter(input[pos])) {
             pos++;
@@ -574,7 +590,7 @@ internal class SNBTParser {
 
     private NBTType? tryParseEmptyListType() {
         int start = pos;
-        
+
         // Collect type name
         while (pos < input.Length && (char.IsLetter(input[pos]) || input[pos] == '_')) {
             pos++;
@@ -607,6 +623,7 @@ internal class SNBTParser {
                 return type;
             }
         }
+
         return null;
     }
 
@@ -645,6 +662,7 @@ internal class SNBTParser {
         while (pos < input.Length && input[pos] != ',' && input[pos] != ']' && !char.IsWhiteSpace(input[pos])) {
             pos++;
         }
+
         return input.Substring(start, pos - start);
     }
 
@@ -673,18 +691,14 @@ internal class SNBTParser {
         NBTType listType = items[0].id;
         var list = NBTTag.createListTag(listType, name);
 
-        // Add items via reflection (unavoidable due to generic constraints ::()
-        var listField = list.GetType().GetField("list");
-        if (listField?.GetValue(list) is object listObj) {
-            var addMethod = listObj.GetType().GetMethod("Add");
-            if (addMethod != null) {
-                foreach (var item in items) {
-                    if (item.id != listType) {
-                        throw new FormatException($"Mixed types in list: expected {listType}, got {item.id}");
-                    }
-                    addMethod.Invoke(listObj, [item]);
-                }
+        // Add items to list
+        foreach (var item in items) {
+            if (item.id != listType) {
+                throw new FormatException($"Mixed types in list: expected {listType}, got {item.id}");
             }
+
+            // the problem is that we're trying to add a NBTTag to a generic list of a specific type..
+            ((dynamic)list).add((dynamic)item);
         }
 
         return list;
@@ -701,9 +715,11 @@ internal class SNBTParser {
             if (c == '\0') {
                 throw new FormatException("Unterminated string");
             }
+
             if (c == '"') {
                 break;
             }
+
             if (c == '\\') {
                 char escaped = next();
                 switch (escaped) {

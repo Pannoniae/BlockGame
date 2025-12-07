@@ -12,6 +12,7 @@ using BlockGame.world.item.inventory;
 using BlockGame.world.worldgen.generator;
 using Molten;
 using Molten.DoublePrecision;
+using MonoMod.Utils;
 
 namespace BlockGame.world;
 

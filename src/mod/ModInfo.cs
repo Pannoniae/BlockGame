@@ -31,24 +31,17 @@ public class ModInfo {
 
         // parse dependencies
         this.dependencies = [];
-        if (metadata.get("dependencies", out var depsTag) && depsTag is NBTList depsList) {
+        if (metadata.get("dependencies", out var depsTag) && depsTag is NBTList<NBTString> depsList) {
             foreach (var dep in depsList.list) {
-                if (dep is NBTCompound depCompound) {
-                    var depName = depCompound.getString("internalname");
-                    if (depName != null) {
-                        dependencies.Add(depName);
-                    }
-                }
+                dependencies.Add(dep.data);
             }
         }
 
         // parse conflicts
         this.conflicts = [];
-        if (metadata.get("conflicts", out var conflictsTag) && conflictsTag is NBTList conflictsList) {
+        if (metadata.get("conflicts", out var conflictsTag) && conflictsTag is NBTList<NBTString> conflictsList) {
             foreach (var conflict in conflictsList.list) {
-                if (conflict is NBTString str) {
-                    conflicts.Add(str.data);
-                }
+                conflicts.Add(conflict.data);
             }
         }
     }

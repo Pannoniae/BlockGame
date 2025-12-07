@@ -26,7 +26,7 @@ public class ChestBlockEntity : BlockEntity, Inventory {
     }
 
     protected override void writex(NBTCompound data) {
-        var items = new NBTList(NBTType.TAG_Compound, "items");
+        var items = new NBTList<NBTCompound>(NBTType.TAG_Compound, "items");
         foreach (var slot in slots) {
             var slotData = new NBTCompound("");
             slot.write(slotData);
