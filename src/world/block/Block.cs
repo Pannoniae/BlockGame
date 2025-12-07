@@ -194,6 +194,8 @@ public class Block {
     public static Block PALM_LOG;
     public static Block PALM_LEAVES;
 
+    public static Block WILDCHERRY_LOG;
+
     public static Block REDWOOD_LOG;
     public static Block REDWOOD_PLANKS;
     public static Block REDWOOD_STAIRS;
@@ -1030,7 +1032,7 @@ public class Block {
         leaves[REDWOOD_LEAVES.id] = true;
         REDWOOD_LEAVES.setFlammable(60);
 
-        REDWOOD_SAPLING= register("redwoodSapling", new Sapling("Redwood Sapling", SaplingType.REDWOOD));
+        REDWOOD_SAPLING = register("redwoodSapling", new Sapling("Redwood Sapling", SaplingType.REDWOOD));
         REDWOOD_SAPLING.setTex(crossUVs(16, 6));
         REDWOOD_SAPLING.setModel(BlockModel.makeGrass(REDWOOD_SAPLING));
         REDWOOD_SAPLING.transparency();
@@ -1039,6 +1041,13 @@ public class Block {
         REDWOOD_SAPLING.itemLike();
         REDWOOD_SAPLING.material(Material.ORGANIC);
         REDWOOD_SAPLING.setFlammable(60);
+
+        WILDCHERRY_LOG = register("wildcherryLog", new Block("Wild Cherry Log"));
+        WILDCHERRY_LOG.setTex(grassUVs(24, 2, 23, 2, 25, 2));
+        WILDCHERRY_LOG.setModel(BlockModel.makeCube(WILDCHERRY_LOG));
+        WILDCHERRY_LOG.material(Material.WOOD);
+        log[WILDCHERRY_LOG.id] = true;
+        WILDCHERRY_LOG.setFlammable(5);
 
 
         ICE = register("ice", new Block("Ice"));

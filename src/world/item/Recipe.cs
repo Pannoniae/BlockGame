@@ -514,7 +514,7 @@ public class Recipe {
         WW_BOOTS.shape(000_101_101, 3);
         WW_BOOTS.ingredients(Block.ICE.item);
 
-        register(new ItemStack(Item.WATER_BUCKET, 1))
+        register(new ItemStack(Item.LAVA_BUCKET, 1))
             .noShape()
             .ingredients(Item.LW_BOOTS);
     }
