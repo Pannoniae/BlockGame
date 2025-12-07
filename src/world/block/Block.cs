@@ -506,7 +506,7 @@ public class Block {
         //renderType[CALCITE.id] = RenderType.CUBE;
         //CALCITE.material(Material.STONE);
 
-        CLAY_BLOCK = register("clayBlock", new Block("Clay"));
+        CLAY_BLOCK = register("clayBlock", new ClayBlock("Clay"));
         CLAY_BLOCK.setTex(uv("blocks.png", 12, 0));
         renderType[CLAY_BLOCK.id] = RenderType.CUBE;
         CLAY_BLOCK.material(Material.EARTH);

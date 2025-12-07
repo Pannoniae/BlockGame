@@ -159,6 +159,9 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
         // restore recipe reference
         if (data.has("smeltProgress") && smeltProgress > 0 && slots[0] != ItemStack.EMPTY) {
             currentRecipe = SmeltingRecipe.findRecipe(slots[0].getItem());
+            if (currentRecipe != null) {
+                smeltTime = currentRecipe.getSmeltTime();
+            }
         }
     }
 
