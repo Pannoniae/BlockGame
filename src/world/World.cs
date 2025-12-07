@@ -593,7 +593,8 @@ public partial class World : IDisposable {
             }
         }
 
-        if (!loading && !Net.mode.isMPC()) {
+        if (!loading) {
+            // don't bother meshing if we're not loading
             return;
         }
 
@@ -619,10 +620,21 @@ public partial class World : IDisposable {
                 var section = getSubChunk(sectionCoord);
                 Game.blockRenderer.meshChunk(section);
 
-                // set chunk status to meshed
+                // set chunk status to meshed (only after ALL subchunks are meshed)
                 var chunk = getChunk(new ChunkCoord(sectionCoord.x, sectionCoord.z));
                 if (chunk.status < ChunkStatus.MESHED) {
-                    chunk.status = ChunkStatus.MESHED;
+                    // check if ALL subchunks in this chunk are now meshed
+                    bool allMeshed = true;
+                    for (int i = 0; i < Chunk.CHUNKHEIGHT; i++) {
+                        if (!chunk.subChunks[i].isMeshed()) {
+                            allMeshed = false;
+                            break;
+                        }
+                    }
+
+                    if (allMeshed) {
+                        chunk.status = ChunkStatus.MESHED;
+                    }
                 }
             }
         }

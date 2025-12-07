@@ -7,6 +7,9 @@ using BlockGame.world.item;
 namespace BlockGame.world.block;
 
 public class Door : Block {
+
+    public Item theDoor;
+
     public Door(string name) : base(name) { }
 
     protected override void onRegister(int id) {
@@ -201,7 +204,7 @@ public class Door : Block {
 
     public override byte maxValidMetadata() => 31; // 5 bits
 
-    public override void getDrop(List<ItemStack> drops, World world, int y, int z, int i, byte metadata, bool canBreak) {
+    public override void getDrop(List<ItemStack> drops, World world, int x, int y, int z, byte metadata, bool canBreak) {
         // onBreak removes the other half via setBlock which doesn't trigger getDrop!
         if (!upper(metadata) && canBreak) {
             drops.Add(getActualItem(metadata));
@@ -209,6 +212,6 @@ public class Door : Block {
     }
 
     public override ItemStack getActualItem(byte metadata) {
-        return new ItemStack(Item.OAK_DOOR, 1, 0);
+        return new ItemStack(theDoor, 1, 0);
     }
 }

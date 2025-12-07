@@ -192,7 +192,13 @@ public class Item {
         MAHOGANY_DOOR.tex = uv("items.png", 5, 8);
 
         MAPLE_DOOR = register("mapleDoorItem", new DoorItem("Maple Door", Block.MAPLE_DOOR));
-        MAPLE_DOOR.tex = uv("items.png", 6, 8);
+        MAPLE_DOOR.tex = uv("items.png", 8, 8);
+
+        PINE_DOOR = register("pineDoorItem", new DoorItem("Pine Door", Block.PINE_DOOR));
+        PINE_DOOR.tex = uv("items.png", 7, 8);
+
+        GLASS_DOOR = register("glassDoorItem", new DoorItem("Glass Door", Block.GLASS_DOOR));
+        GLASS_DOOR.tex = uv("items.png", 6, 8);
 
 
         COPPER_INGOT = register("copperIngot", new Item("Copper Ingot"));
@@ -333,8 +339,8 @@ public class Item {
         WHEAT = register("wheat", new Item("Wheat"));
         WHEAT.tex = uv("items.png", 9, 10);
         material[WHEAT.id] = true;
-        ((Crop)Block.CROP_WHEAT).product = WHEAT;
-        ((Crop)Block.CROP_WHEAT).seedItem = WHEAT_SEEDS;
+        Block.CROP_WHEAT.product = WHEAT;
+        Block.CROP_WHEAT.seedItem = WHEAT_SEEDS;
 
         CARROT_SEEDS = register("carrotseeds", new SeedItem("Carrot Seeds", Block.CROP_CARROT, Block.FARMLAND));
         CARROT_SEEDS.tex = uv("items.png", 12, 10);
@@ -368,8 +374,8 @@ public class Item {
         CARROT = register("carrot", new Food("Carrot", 10));
         CARROT.tex = uv("items.png", 11, 10);
         material[CARROT.id] = true;
-        ((Crop)Block.CROP_CARROT).product = CARROT;
-        ((Crop)Block.CROP_CARROT).seedItem = CARROT_SEEDS;
+        Block.CROP_CARROT.product = CARROT;
+        Block.CROP_CARROT.seedItem = CARROT_SEEDS;
 
         BREAD = register("bread", new Food("Bread", 25));
         BREAD.tex = uv("items.png", 10, 10);

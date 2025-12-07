@@ -41,7 +41,7 @@ public class Block {
     /// <summary>
     /// Display name
     /// </summary>
-    public string name;
+    public readonly string name;
 
     public BlockItem item;
 
@@ -206,11 +206,11 @@ public class Block {
     public static Block CACTUS;
 
     public static Block OAK_CHEST;
-    public static Block OAK_DOOR;
-    public static Block MAHOGANY_DOOR;
-    public static Block MAPLE_DOOR;
-    public static Block PINE_DOOR;
-    public static Block GLASS_DOOR;
+    public static Door OAK_DOOR;
+    public static Door MAHOGANY_DOOR;
+    public static Door MAPLE_DOOR;
+    public static Door PINE_DOOR;
+    public static Door GLASS_DOOR;
 
     public static Block CANDY;
     public static Block CANDY_SLAB;
@@ -266,8 +266,8 @@ public class Block {
     public static Block MAPLE_GATE;*/
 
     public static Block FARMLAND;
-    public static Block CROP_WHEAT;
-    public static Block CROP_CARROT;
+    public static Crop CROP_WHEAT;
+    public static Crop CROP_CARROT;
 
     // Compatibility wrappers for old static arrays
     public static XUList<Block> blocks => Registry.BLOCKS.values;
@@ -312,6 +312,26 @@ public class Block {
     public static int currentID => Registry.BLOCKS.count();
 
     public static Block register(string stringID, Block block) {
+        int id = Registry.BLOCKS.register(stringID, block);
+        block.id = (ushort)id; // assign runtime ID to block
+        block.onRegister(id); // call hook after ID assignment
+
+        // auto-register corresponding BlockItem with same string ID
+
+        if (noItem[block.id]) {
+            return block;
+        }
+
+        var blockItem = block.createItem();
+        Item.register(stringID, blockItem);
+        Item.material[blockItem.id] = true; // all blocks are materials lol
+
+        block.item = blockItem;
+
+        return block;
+    }
+
+    public static T register<T>(string stringID, T block) where T : Block {
         int id = Registry.BLOCKS.register(stringID, block);
         block.id = (ushort)id; // assign runtime ID to block
         block.onRegister(id); // call hook after ID assignment
@@ -1209,7 +1229,7 @@ public class Block {
         FARMLAND.material(Material.EARTH);
         FARMLAND.setHardness(0.6);
 
-        CROP_WHEAT = register("wheatCrop", new Crop("Wheat", 6));
+        CROP_WHEAT = (Crop)register("wheatCrop", new Crop("Wheat", 6));
         CROP_WHEAT.setTex(uvRange("blocks.png", 20, 5, 6));
         renderType[CROP_WHEAT.id] = RenderType.CROP;
         CROP_WHEAT.transparency();
@@ -1218,7 +1238,7 @@ public class Block {
         CROP_WHEAT.waterTransparent();
         CROP_WHEAT.material(Material.ORGANIC);
 
-        CROP_CARROT = register("carrotCrop", new Crop("Carrot", 6));
+        CROP_CARROT = (Crop)register("carrotCrop", new Crop("Carrot", 6));
         CROP_CARROT.setTex(uvRange("blocks.png", 20, 6, 6));
         renderType[CROP_CARROT.id] = RenderType.CROP;
         CROP_CARROT.transparency();

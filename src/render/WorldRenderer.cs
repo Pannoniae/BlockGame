@@ -630,7 +630,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 continue;
             }
 
-            // in multiplayer, wait for neighbors before meshing
+            // in multiplayer, wait for neighbours before meshing
             // otherwise we mesh against air/null and create holes
             if (Net.mode.isMPC()) {
                 var anyMissing = false;

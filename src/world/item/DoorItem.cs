@@ -7,8 +7,11 @@ namespace BlockGame.world.item;
 public class DoorItem : Item {
     private readonly Block doorBlock;
 
-    public DoorItem(string name, Block doorBlock) : base(name) {
+    public DoorItem(string name, Door doorBlock) : base(name) {
         this.doorBlock = doorBlock;
+        // also set the item field of the door block
+        doorBlock.theDoor = this;
+
     }
 
     public override ItemStack? useBlock(ItemStack stack, World world, Player player, int x, int y, int z, Placement info) {
