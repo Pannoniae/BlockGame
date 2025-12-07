@@ -267,6 +267,15 @@ public class Recipe {
             register(new ItemStack(Item.MAHOGANY_DOOR,1))
             .shape(110_110_110, 3)
             .ingredients(Block.MAHOGANY_PLANKS.item);
+            register(new ItemStack(Item.MAPLE_DOOR,1))
+            .shape(110_110_110, 3)
+            .ingredients(Block.MAPLE_PLANKS.item);
+            register(new ItemStack(Item.PINE_DOOR,1))
+            .shape(110_110_110, 3)
+            .ingredients(Block.PINE_PLANKS.item);
+            register(new ItemStack(Item.GLASS_DOOR,1))
+                .shape(110_110_110, 3)
+                .ingredients(Block.GLASS.item);
 
         /*OAK_FENCE = register(new ItemStack(Block.OAK_FENCE.item, 4));
         OAK_FENCE.shape(110_220_110, 3);

@@ -208,6 +208,9 @@ public class Block {
     public static Block OAK_CHEST;
     public static Block OAK_DOOR;
     public static Block MAHOGANY_DOOR;
+    public static Block MAPLE_DOOR;
+    public static Block PINE_DOOR;
+    public static Block GLASS_DOOR;
 
     public static Block CANDY;
     public static Block CANDY_SLAB;
@@ -1095,6 +1098,21 @@ public class Block {
         MAHOGANY_DOOR = register("mahoganyDoor", new Door("Mahogany Door"));
         MAHOGANY_DOOR.setTex(uv("blocks.png", 1, 10), uv("blocks.png", 1, 11));
         MAHOGANY_DOOR.material(Material.WOOD);
+        MAHOGANY_DOOR.setFlammable(30);
+
+        MAPLE_DOOR = register("mapleDoor", new Door("Maple Door"));
+        MAPLE_DOOR.setTex(uv("blocks.png", 6, 10), uv("blocks.png", 6, 11));
+        MAPLE_DOOR.material(Material.WOOD);
+        MAPLE_DOOR.setFlammable(30);
+
+        PINE_DOOR = register("pineDoor", new Door("Pine Door"));
+        PINE_DOOR.setTex(uv("blocks.png", 5, 10), uv("blocks.png", 5, 11));
+        PINE_DOOR.material(Material.WOOD);
+        PINE_DOOR.setFlammable(30);
+
+        GLASS_DOOR = register("glassDoor", new Door("Glass Door"));
+        GLASS_DOOR.setTex(uv("blocks.png", 4, 10), uv("blocks.png", 4, 11));
+        GLASS_DOOR.material(Material.GLASS);
 
         BRICK_FURNACE = register("brickFurnace", new Furnace("Brick Furnace", false));
         BRICK_FURNACE.setTex(furnaceUVs(4, 4, 5, 4, 6, 4, 7, 4));

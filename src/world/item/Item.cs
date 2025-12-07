@@ -84,6 +84,9 @@ public class Item {
     public static Item COOKED_PORKCHOP;
     public static Item OAK_DOOR;
     public static Item MAHOGANY_DOOR;
+    public static Item MAPLE_DOOR;
+    public static Item PINE_DOOR;
+    public static Item GLASS_DOOR;
     public static Item SIGN_ITEM;
     public static Item BUCKET;
     public static Item WATER_BUCKET;
@@ -187,6 +190,10 @@ public class Item {
 
         MAHOGANY_DOOR = register("mahoganyDoorItem", new DoorItem("Mahogany Door", Block.MAHOGANY_DOOR));
         MAHOGANY_DOOR.tex = uv("items.png", 5, 8);
+
+        MAPLE_DOOR = register("mapleDoorItem", new DoorItem("Maple Door", Block.MAPLE_DOOR));
+        MAPLE_DOOR.tex = uv("items.png", 6, 8);
+
 
         COPPER_INGOT = register("copperIngot", new Item("Copper Ingot"));
         COPPER_INGOT.tex = uv("items.png", 4, 0);
@@ -444,6 +451,9 @@ public class Item {
         Registry.ITEMS.blackList[Block.SIGN.item.id] = true;
         Registry.ITEMS.blackList[Block.OAK_DOOR.item.id] = true;
         Registry.ITEMS.blackList[Block.MAHOGANY_DOOR.item.id] = true;
+        Registry.ITEMS.blackList[Block.MAPLE_DOOR.item.id] = true;
+        Registry.ITEMS.blackList[Block.PINE_DOOR.item.id] = true;
+        Registry.ITEMS.blackList[Block.GLASS_DOOR.item.id] = true;
         Registry.ITEMS.blackList[Block.FURNACE_LIT.item.id] = true;
         Registry.ITEMS.blackList[Block.BRICK_FURNACE_LIT.item.id] = true;
         Registry.ITEMS.blackList[Block.CROP_WHEAT.item.id] = true;
@@ -463,6 +473,8 @@ public class Item {
         Registry.ITEMS.fuelValue[SIGN_ITEM.id] = 300; // 5 seconds
         Registry.ITEMS.fuelValue[OAK_DOOR.id] = 1200; // 20 seconds
         Registry.ITEMS.fuelValue[MAHOGANY_DOOR.id] = 1200; // 20 seconds
+        Registry.ITEMS.fuelValue[MAPLE_DOOR.id] = 1200; // 20 seconds
+        Registry.ITEMS.fuelValue[PINE_DOOR.id] = 1200; // 20 seconds
     }
 
     public virtual UVPair getTexture(ItemStack stack) {
