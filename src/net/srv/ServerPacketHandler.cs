@@ -812,8 +812,11 @@ public class ServerPacketHandler : PacketHandler {
 
         var stack = conn.player.inventory.getSelected();
         if (stack == ItemStack.EMPTY) {
+            Log.warn($"Player '{conn.username}' tried to use empty item (selected slot: {conn.player.inventory.selected})");
             return;
         }
+
+        Log.info($"Player '{conn.username}' using item: {stack.getItem().name} from slot {conn.player.inventory.selected}");
 
         // call item's use hook (eat food, throw, shoot bow, etc)
         var result = stack.getItem().use(stack, GameServer.instance.world, conn.player);

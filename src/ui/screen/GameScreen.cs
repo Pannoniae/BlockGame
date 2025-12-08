@@ -69,6 +69,12 @@ public class GameScreen : Screen {
         };
         INGAME_MENU.addElement(hotbar);
 
+        // if already dead, switch to death menu
+        if (Game.player.dead) {
+            switchToMenu(DEATH_MENU);
+            Game.instance.unlockMouse();
+        }
+
         umt?.stop();
         umt = new UpdateMemoryThread(this);
 

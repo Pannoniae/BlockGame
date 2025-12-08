@@ -23,6 +23,10 @@ public class DeathMenu : Menu {
         addElement(mainMenu);
     }
 
+    public override void activate() {
+        Game.instance.unlockMouse();
+    }
+
     public override void update(double dt) {
         base.update(dt);
         // update ingame menu (world keeps running while dead)

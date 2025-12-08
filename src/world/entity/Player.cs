@@ -843,8 +843,11 @@ public class Player : Mob, CommandSource {
         }
 
         if (!Net.mode.isDed()) {
-            // switch to death screen
+            // switch to death screen only if loaded
             Game.instance.executeOnMainThread(() => {
+                if (Game.instance.currentScreen != Screen.GAME_SCREEN) {
+                    return;
+                }
                 Game.instance.currentScreen.switchToMenu(Screen.GAME_SCREEN.DEATH_MENU);
                 Game.instance.unlockMouse();
             });

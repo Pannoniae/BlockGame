@@ -45,7 +45,7 @@ public class GameServer : INetEventListener {
     public readonly Dictionary<string, string> userPasswords = new(); // username -> hashed password
     public readonly HashSet<string> ops = new(); // op usernames
 
-    public EntityTracker entityTracker;
+    public readonly EntityTracker entityTracker;
 
     /** chunk trackers for batching block updates */
     public readonly XLongMap<ChunkTracker> chunkTrackers = new();
