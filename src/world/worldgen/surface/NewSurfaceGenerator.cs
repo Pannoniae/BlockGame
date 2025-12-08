@@ -37,6 +37,65 @@ public class NewSurfaceGenerator : SurfaceGenerator {
         foliagen = new SimplexNoise(random.Next(seed));
     }
 
+    /** place small fern - 1-2 blocks tall, sparse leaves */
+    private void placeSmallFern(World world, XRandom random, int x, int y, int z) {
+        int height = random.Next(1, 3);
+
+        // fern trunk
+        for (int h = 0; h < height; h++) {
+            world.setBlockSilent(x, y + h, z, Block.FERN_LOG.id);
+        }
+
+        // small irregular leaf cluster at top
+        int topY = y + height;
+        int radius = random.Next(1, 3);
+
+        for (int xo = -radius; xo <= radius; xo++) {
+            for (int zo = -radius; zo <= radius; zo++) {
+                if (xo == 0 && zo == 0) continue;
+
+                // irregular - skip some randomly
+                if (random.NextSingle() < 0.3f) continue;
+
+                // rough distance check
+                if (xo * xo + zo * zo > radius * radius + random.Next(-1, 2)) continue;
+
+                world.setBlockSilent(x + xo, topY, z + zo, Block.MAHOGANY_LEAVES.id);
+                world.setBlockSilent(x + xo, topY + 1, z + zo, Block.MAHOGANY_LEAVES.id);
+            }
+        }
+    }
+
+    /** place dense bush - short but very leafy */
+    private void placeDenseBush(World world, XRandom random, int x, int y, int z) {
+        int height = random.Next(1, 3);
+
+        world.setBlockSilent(x, y, z, Block.MAHOGANY_LOG.id);
+        if (height > 1) {
+            world.setBlockSilent(x, y + 1, z, Block.MAHOGANY_LOG.id);
+        }
+
+        // very dense compact leaves
+        for (int h = 0; h <= height; h++) {
+            int layerY = y + h;
+            int radius = random.Next(2, 4);
+
+            for (int xo = -radius; xo <= radius; xo++) {
+                for (int zo = -radius; zo <= radius; zo++) {
+                    // denser - only 15% skip rate
+                    if (random.NextSingle() < 0.15f) continue;
+
+                    int distSq = xo * xo + zo * zo;
+                    if (distSq > radius * radius) continue;
+
+                    if (world.getBlock(x + xo, layerY, z + zo) == Block.AIR.id) {
+                        world.setBlockSilent(x + xo, layerY, z + zo, Block.MAHOGANY_LEAVES.id);
+                    }
+                }
+            }
+        }
+    }
+
     public void surface(XRandom random, ChunkCoord coord) {
         var chunk = world.getChunk(coord);
 
@@ -309,44 +368,26 @@ public class NewSurfaceGenerator : SurfaceGenerator {
             WorldgenUtil.placeCandyTree(world, random, coord);
         }
 
-        // place undergrowth in jungles
+        // place undergrowth in jungles - much denser and more varied
         if (cb == BiomeType.Jungle && finalTreeCount > 1) {
-            var undergrowthCount = random.Next(96, 160);
+            var undergrowthCount = random.Next(200, 320);
             for (int i = 0; i < undergrowthCount; i++) {
                 var x = random.Next(0, Chunk.CHUNKSIZE);
                 var z = random.Next(0, Chunk.CHUNKSIZE);
                 var y = random.Next(64, World.WORLDHEIGHT - 1);
 
                 // place on grass
-                if (chunk.getBlock(x, y, z) == Block.GRASS.id && y < World.WORLDHEIGHT - 2) {
-                    if (chunk.getBlock(x, y + 1, z) == Block.AIR.id) {
+                if (chunk.getBlock(x, y, z) == Block.GRASS.id && y < World.WORLDHEIGHT - 6) {
+                    if (!Block.log[chunk.getBlock(x, y + 1, z)]) {
                         var wx = x + chunk.worldX;
                         var wz = z + chunk.worldZ;
 
-                        // centre log
-                        world.setBlockSilent(wx, y + 1, wz, Block.OAK_LOG.id);
-
-                        // leaves in 4-block radius (9x9 area)
-                        for (int xo = -4; xo <= 4; xo++) {
-                            for (int zo = -4; zo <= 4; zo++) {
-                                // circular-ish shape
-                                if (xo * xo + zo * zo > 18 + random.Next(0, 4)) {
-                                    continue;
-                                }
-
-                                // todo implement proper tags and not this hackjob!!
-                                if (world.getBlock(wx + xo, y + 1, wz + zo) == Block.AIR.id ||
-                                    world.getBlock(wx + xo, y + 1, wz + zo) == Block.LEAVES.id ||
-                                    world.getBlock(wx + xo, y + 1, wz + zo) == Block.SHORT_GRASS.id ||
-                                    world.getBlock(wx + xo, y + 1, wz + zo) == Block.TALL_GRASS.id) {
-                                    world.setBlockSilent(wx + xo, y + 1, wz + zo, Block.MAHOGANY_LEAVES.id);
-                                }
-                            }
+                        // 50/50 ferns and bushes
+                        if (random.NextSingle() < 0.5f) {
+                            placeSmallFern(world, random, wx, y + 1, wz);
                         }
-
-                        // leaves on top of log
-                        if (world.getBlock(wx, y + 2, wz) == Block.AIR.id) {
-                            world.setBlockSilent(wx, y + 2, wz, Block.MAHOGANY_LEAVES.id);
+                        else {
+                            placeDenseBush(world, random, wx, y + 1, wz);
                         }
                     }
                 }

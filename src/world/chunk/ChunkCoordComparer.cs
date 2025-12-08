@@ -61,6 +61,6 @@ public class ChunkTicketComparerSegregated : IComparer<ChunkLoadTicket> {
         if (x.level == y.level) {
             return comparison;
         }
-        return (int)x.level - (int)y.level;
+        return (int)y.level - (int)x.level;
     }
 }

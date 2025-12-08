@@ -1088,7 +1088,7 @@ public partial class BlockRenderer {
                     // yes this shouldn't work but it does
                     // it makes EVERYTHING positive by cutting off the sign bit
                     // so -1 becomes 15, -2 becomes 14, etc.
-                    int offset = (y & 0xF) * Chunk.CHUNKSIZESQ + (z & 0xF) * Chunk.CHUNKSIZE + (x & 0xF);
+                    //int offset = (y & 0xF) * Chunk.CHUNKSIZESQ + (z & 0xF) * Chunk.CHUNKSIZE + (x & 0xF);
 
                     // section position (can be -1, 0, 1)
                     // get neighbouring section

@@ -450,7 +450,7 @@ public partial class World : IDisposable {
 
         // note: removal is faster from the end so we sort by the reverse - closest entries are at the end of the list
         if (Net.mode.isSP()) {
-            chunkLoadQueue.Sort(new ChunkTicketComparerSegregated(player.position.toBlockPos()));
+            chunkLoadQueue.Sort(new ChunkTicketComparerReverse(player.position.toBlockPos()));
         }
     }
 
@@ -564,6 +564,10 @@ public partial class World : IDisposable {
             : loading ? MAX_CHUNKLOAD_FRAMETIME_FAST
             : MAX_CHUNKLOAD_FRAMETIME;
         while (chunkLoadQueue.Count > 0) {
+            // check time BEFORE loading - break if we've already used our budget
+            if (Game.permanentStopwatch.ElapsedMilliseconds - startTime >= limit) {
+                break;
+            }
 
             // check if queue is stuck and shuffle only when needed
             var currentQueueSize = chunkLoadQueue.Count;
@@ -626,6 +630,12 @@ public partial class World : IDisposable {
                 // set chunk status to meshed (only after ALL subchunks are meshed)
                 var chunk = getChunk(new ChunkCoord(sectionCoord.x, sectionCoord.z));
                 if (chunk.status < ChunkStatus.MESHED) {
+                    // don't set MESHED unless chunk has been properly lighted
+                    if (chunk.status < ChunkStatus.LIGHTED) {
+                        // chunk not ready for meshing, skip
+                        continue;
+                    }
+
                     // check if ALL subchunks in this chunk are now meshed
                     bool allMeshed = true;
                     for (int i = 0; i < Chunk.CHUNKHEIGHT; i++) {

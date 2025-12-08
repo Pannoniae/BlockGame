@@ -675,6 +675,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             // update chunk status to MESHED (once per chunk, not per subchunk)
             // this makes the chunk visible in the renderer
             if (chunk.status < ChunkStatus.MESHED) {
+                // don't set MESHED status unless chunk has been properly lighted
+                if (chunk.status < ChunkStatus.LIGHTED) {
+                    // chunk not ready for meshing, re-queue for later
+                    continue;
+                }
+
                 // check if ALL subchunks in this chunk are now meshed
                 bool allMeshed = true;
                 for (int i = 0; i < Chunk.CHUNKHEIGHT; i++) {

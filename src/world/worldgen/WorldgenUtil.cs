@@ -800,18 +800,47 @@ public static class WorldgenUtil {
         var xWorld = coord.x * Chunk.CHUNKSIZE + x;
         var zWorld = coord.z * Chunk.CHUNKSIZE + z;
 
-        // if there's stuff in the bounding box, don't place a tree
-        for (int yd = 1; yd < 8; yd++) {
-            for (int zd = -2; zd <= 2; zd++) {
-                for (int xd = -2; xd <= 2; xd++) {
-                    if (world.getBlock(xWorld, y + yd, zWorld) != Block.AIR.id) {
+        // choose tree tier: 60% small, 30% medium, 10% huge
+        var roll = random.NextSingle();
+        int checkHeight, checkRadius;
+
+        if (roll < 0.6f) {
+            // small tree
+            checkHeight = 7;
+            checkRadius = 2;
+        }
+        else if (roll < 0.9f) {
+            // medium tree
+            checkHeight = 16;
+            checkRadius = 3;
+        }
+        else {
+            // huge tree
+            checkHeight = 36;
+            checkRadius = 6;
+        }
+
+        // bounding box check
+        for (int yd = 1; yd < checkHeight; yd++) {
+            for (int zd = -checkRadius; zd <= checkRadius; zd++) {
+                for (int xd = -checkRadius; xd <= checkRadius; xd++) {
+                    if (world.getBlock(xWorld + xd, y + yd, zWorld + zd) != Block.AIR.id) {
                         return;
                     }
                 }
             }
         }
 
-        TreeGenerator.placeMahoganyTree(world, random, xWorld, y + 1, zWorld);
+        // place chosen tree type
+        if (roll < 0.6f) {
+            TreeGenerator.placeSmallMahogany(world, random, xWorld, y + 1, zWorld);
+        }
+        else if (roll < 0.9f) {
+            TreeGenerator.placeMediumMahogany(world, random, xWorld, y + 1, zWorld);
+        }
+        else {
+            TreeGenerator.placeHugeMahogany(world, random, xWorld, y + 1, zWorld);
+        }
     }
 
     public static void placeTree(World world, XRandom random, ChunkCoord coord) {
