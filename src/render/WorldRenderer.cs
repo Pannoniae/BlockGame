@@ -674,10 +674,14 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
             // update chunk status to MESHED (once per chunk, not per subchunk)
             // this makes the chunk visible in the renderer
-            if (chunk.status < ChunkStatus.MESHED) {
+            // todo this breaks the frame limiting in singleplayer. Why? I have no fucking idea. Fix later.
+            //  for now we'll just restrict it to the MP client where we definitely don't generate anything.
+            //  In SP we shouldn't set any chunk status here anyway because it's done in World.loadChunk().
+            if (Net.mode.isMPC() && chunk.status < ChunkStatus.MESHED) {
                 // don't set MESHED status unless chunk has been properly lighted
                 if (chunk.status < ChunkStatus.LIGHTED) {
                     // chunk not ready for meshing, re-queue for later
+                    chunksToMesh.Add(sectionCoord);
                     continue;
                 }
 
@@ -697,6 +701,15 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                     chunk.status = ChunkStatus.MESHED;
                 }
             }
+            /*else
+            if (chunk.status < ChunkStatus.MESHED) {
+                // don't set MESHED status unless chunk has been properly lighted
+                if (chunk.status < ChunkStatus.LIGHTED) {
+                    // chunk not ready for meshing, re-queue for later
+                    continue;
+                }
+                chunk.status = ChunkStatus.MESHED;
+            }*/
         }
     }
 

@@ -550,7 +550,8 @@ public partial class World : IDisposable {
         if (!Net.mode.isMPC()) {
             processAsyncChunkLoads(startTime, loading, ref loadedChunks);
         }
-        else {
+        // if MPC, skip to meshing directly
+        else if (false) {
             goto mesh;
         }
 
@@ -605,7 +606,7 @@ public partial class World : IDisposable {
             isLoading = false;
         }
 
-        if (!loading) {
+        if (true || !loading) {
             // don't bother meshing if we're not loading
             return;
         }
@@ -1056,10 +1057,63 @@ public partial class World : IDisposable {
     /// TODO unload chunks which are renderDistance + 2 away (this is bigger to prevent chunk flicker)
     /// </summary>
     public void loadChunksAroundChunk(ChunkCoord chunkCoord, int renderDistance) {
+        // meshed needs lighted around it, lighted needs generated around it, populated needs generated around it
+        /*for (int x = chunkCoord.x - renderDistance - 2; x <= chunkCoord.x + renderDistance + 2; x++) {
+            for (int z = chunkCoord.z - renderDistance - 2; z <= chunkCoord.z + renderDistance + 2; z++) {
+                var coord = new ChunkCoord(x, z);
+                if (coord.distanceSq(chunkCoord) <= (renderDistance + 2) * (renderDistance + 2)) {
+                    addToChunkLoadQueue(coord, ChunkStatus.GENERATED);
+                }
+            }
+        }
+
+        // populated needs generated around it
+        for (int x = chunkCoord.x - renderDistance - 1; x <= chunkCoord.x + renderDistance + 1; x++) {
+            for (int z = chunkCoord.z - renderDistance - 1; z <= chunkCoord.z + renderDistance + 1; z++) {
+                var coord = new ChunkCoord(x, z);
+                if (coord.distanceSq(chunkCoord) <= (renderDistance + 1) * (renderDistance + 1)) {
+                    addToChunkLoadQueue(coord, ChunkStatus.POPULATED);
+                }
+            }
+        }
+
+        // lighted needs populated around it
+        for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
+            for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
+                var coord = new ChunkCoord(x, z);
+                if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
+                    addToChunkLoadQueue(coord, ChunkStatus.LIGHTED);
+                }
+            }
+        }
+
+        // finally, mesh around renderDistance
+        for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
+            for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
+                var coord = new ChunkCoord(x, z);
+                if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
+                    addToChunkLoadQueue(coord, ChunkStatus.MESHED);
+                }
+            }
+        }
+
+        // unload chunks which are far away
+        if (Net.mode.isSP()) {
+            var playerChunk = player.getChunk();
+            foreach (var chunk in chunks) {
+                var coord = chunk.coord;
+                // if distance is greater than renderDistance + 3, unload
+                if (playerChunk.distanceSq(coord) >= (renderDistance + 3) * (renderDistance + 3)) {
+                    unloadChunk(coord);
+                }
+            }
+        }*/
+
         loadChunksAroundChunk(chunkCoord, renderDistance, ChunkStatus.MESHED);
     }
 
     public void loadChunksAroundChunk(ChunkCoord chunkCoord, int renderDistance, ChunkStatus status) {
+
         // finally, mesh around renderDistance
         for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
             for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
