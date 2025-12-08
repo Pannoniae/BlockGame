@@ -28,14 +28,13 @@ public static class Biomes {
         }
 
         // above water - use temp/humidity
-        // todo make a better plains/forest selection rn its "forest" without trees half the time because foliagen is < the threshold, good enough for now tho
         //  release-deadline-driven design lol
         return (temp, hum) switch {
-            ( < -0.5f, > 0.4f) => BiomeType.Taiga,
-            ( < -0.5f, _) => BiomeType.Plains, // cold + dry = tundra/plains
-            ( > 0.5f, > 0.4f) => BiomeType.Jungle,
+            ( < -0.5f, > 0.5f) => BiomeType.Taiga,
+            ( > 0.5f, > 0.5f) => BiomeType.Jungle,
+            ( > -0.5f, > 0.5f) => BiomeType.Forest,
             ( > 0.5f, _) => BiomeType.Desert,
-            _ => BiomeType.Forest // temperate
+            _ => BiomeType.Plains // temperate
         };
     }
 
@@ -50,7 +49,7 @@ public static class Biomes {
                 ? (Block.SAND.id, Block.SAND.id)
                 : (Block.GRAVEL.id, Block.GRAVEL.id),
 
-            BiomeType.Taiga or BiomeType.Plains => (Block.SNOW_GRASS.id, Block.DIRT.id),
+            BiomeType.Taiga => (Block.SNOW_GRASS.id, Block.DIRT.id),
             BiomeType.Desert => (Block.SAND.id, Block.SAND.id),
             BiomeType.Jungle or BiomeType.Forest => (Block.GRASS.id, Block.DIRT.id),
             _ => (Block.GRASS.id, Block.DIRT.id)
@@ -63,8 +62,9 @@ public static class Biomes {
     public static float getTreeDensity(BiomeType biome) {
         return biome switch {
             BiomeType.Taiga => 0.8f,
-            BiomeType.Jungle => 0.6f,
+            BiomeType.Jungle => 1.4f,
             BiomeType.Forest => 1.0f,
+            BiomeType.Plains => 0.0f,
             _ => 0f
         };
     }

@@ -160,7 +160,7 @@ public static class WorldgenUtil {
                             // check if water should be ice (frozen)
                             if (y >= NewWorldGenerator.WATER_LEVEL - 1) {
                                 var temp = chunk.biomeData.getTemp(x, y, z);
-                                if (temp < -0.5f) {
+                                if (temp < -0.8f) {
                                     chunk.setBlockFast(x, y, z, Block.ICE.id);
                                     chunk.addToHeightMap(x, y, z);
                                     continue;
@@ -325,7 +325,7 @@ public static class WorldgenUtil {
                     // check if water should be ice (frozen)
                     if (y >= NewWorldGenerator.WATER_LEVEL - 1) {
                         var temp = chunk.biomeData.getTemp(x, y, z);
-                        if (temp < -0.5f) {
+                        if (temp < -0.8f) {
                             chunk.setBlockFast(x, y, z, Block.ICE.id);
                             chunk.addToHeightMap(x, y, z);
                             continue;
@@ -421,7 +421,7 @@ public static class WorldgenUtil {
                 // frozen water at surface in cold biomes
                 if (y >= NewWorldGenerator.WATER_LEVEL - 1) {
                     float temp = chunk.biomeData.getTemp(x, y, z);
-                    if (temp < -0.5f) {
+                    if (temp < -0.8f) {
                         chunk.setBlockFast(x, y, z, Block.ICE.id);
                         chunk.addToHeightMap(x, y, z);
                         continue;
@@ -516,7 +516,7 @@ public static class WorldgenUtil {
                 // frozen water at surface in cold biomes
                 if (y >= NewWorldGenerator.WATER_LEVEL - 1) {
                     float temp = chunk.biomeData.getTemp(x, y, z);
-                    if (temp < -0.5f) {
+                    if (temp < -0.8f) {
                         chunk.setBlockFast(x, y, z, Block.ICE.id);
                         chunk.addToHeightMap(x, y, z);
                         continue;
@@ -802,23 +802,22 @@ public static class WorldgenUtil {
 
         // choose tree tier: 60% small, 30% medium, 10% huge
         var roll = random.NextSingle();
-        int checkHeight, checkRadius;
+        int checkHeight;
 
         if (roll < 0.6f) {
             // small tree
             checkHeight = 7;
-            checkRadius = 2;
         }
         else if (roll < 0.9f) {
             // medium tree
             checkHeight = 16;
-            checkRadius = 3;
         }
         else {
             // huge tree
             checkHeight = 36;
-            checkRadius = 6;
         }
+
+        const int checkRadius = 1;
 
         // bounding box check
         for (int yd = 1; yd < checkHeight; yd++) {

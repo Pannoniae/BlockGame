@@ -35,7 +35,11 @@ public partial class NewWorldGenerator : WorldGenerator {
 
     public NewWorldGenerator(World world, int version) {
         this.world = world;
-        surfacegen = new NewSurfaceGenerator(this, world, version);
+
+        // testing : world == null
+        if (world != null!) {
+            surfacegen = new NewSurfaceGenerator(this, world, version);
+        }
 
         this.version = version;
     }
@@ -73,6 +77,8 @@ public partial class NewWorldGenerator : WorldGenerator {
         wn = new SimplexNoise(random.Next(seed));
         detailn = new SimplexNoise(random.Next(seed));
 
-        surfacegen.setup(random, seed);
+        if (surfacegen != null) {
+            surfacegen.setup(random, seed);
+        }
     }
 }

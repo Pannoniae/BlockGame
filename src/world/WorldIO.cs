@@ -53,7 +53,7 @@ public class WorldIO {
         }
     }
 
-    public void save(World world, string filename, bool saveChunks = true) {
+    public void save(World world, string filename, bool saveChunks = true, bool saveLighting = true) {
         // save metadata
         // create level folder
 
@@ -73,7 +73,7 @@ public class WorldIO {
         }
 
         try {
-            saveWorldData();
+            saveWorldData(saveLighting);
 
             // save chunks
             if (saveChunks) {
@@ -93,7 +93,7 @@ public class WorldIO {
         //regionCache.Clear();
     }
 
-    public void saveWorldData() {
+    public void saveWorldData(bool lighting = true) {
         var tag = new NBTCompound("");
         tag.addInt("seed", world.seed);
         tag.addInt("time", world.worldTick);
@@ -120,7 +120,10 @@ public class WorldIO {
         }
 
         // save lighting queues
-        saveLightingQueues(tag);
+        // except when autosave. we can get in a death spiral....
+        if (lighting) {
+            saveLightingQueues(tag);
+        }
 
         if (Net.mode.isDed()) {
             NBT.writeFile(tag, $"{world.name}/level.xnbt");

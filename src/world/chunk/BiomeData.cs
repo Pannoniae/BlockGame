@@ -82,10 +82,34 @@ public class BiomeData {
         value += detail * NewWorldGenerator.DETAIL_STRENGTH;
 
         // remap with sqrt to normalise the simplex noise and push values toward extremes
-        value = float.Sign(value) * float.Sqrt(float.Abs(value));
+        //value = float.Sign(value) * float.Cbrt(float.Abs(value));
+        // note: this is a bit inaccurate, especially |x|>0.9 (undercounts) but idk how to do it better without a lookup table
+        //  it's NOT gaussian, it's a shorter-tailed distribution... GOOD ENOUGH:TM:
+        value = fe(value * (1 / 0.356f));
+        //value = fe(value / 0.311f);
 
         return value;
     }
+
+    public static float fe(float x) {
+        const float a1 = 0.254829592f;
+        const float a2 = -0.284496736f;
+        const float a3 = 1.421413741f;
+        const float a4 = -1.453152027f;
+        const float a5 = 1.061405429f;
+        const float p = 0.3275911f;
+
+        int sign = x < 0 ? -1 : 1;
+
+        x = Math.Abs(x);
+
+        // A&S formula 7.1.26
+        float t = 1.0f / (1.0f + p * x);
+        float y = 1.0f - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * float.Exp(-x * x);
+
+        return sign * y;
+    }
+
 
     /** trilinear interpolation from block coords to biome values */
     private static float interpolate(sbyte[] data, int x, int y, int z) {
@@ -106,14 +130,14 @@ public class BiomeData {
         float fy = by - y0;
         float fz = bz - z0;
 
-        float c000 = data[idx(x0, y0, z0)] / 127f;
-        float c001 = data[idx(x0, y0, z1)] / 127f;
-        float c010 = data[idx(x0, y1, z0)] / 127f;
-        float c011 = data[idx(x0, y1, z1)] / 127f;
-        float c100 = data[idx(x1, y0, z0)] / 127f;
-        float c101 = data[idx(x1, y0, z1)] / 127f;
-        float c110 = data[idx(x1, y1, z0)] / 127f;
-        float c111 = data[idx(x1, y1, z1)] / 127f;
+        float c000 = data[idx(x0, y0, z0)] * (1 / 127f);
+        float c001 = data[idx(x0, y0, z1)] * (1 / 127f);
+        float c010 = data[idx(x0, y1, z0)] * (1 / 127f);
+        float c011 = data[idx(x0, y1, z1)] * (1 / 127f);
+        float c100 = data[idx(x1, y0, z0)] * (1 / 127f);
+        float c101 = data[idx(x1, y0, z1)] * (1 / 127f);
+        float c110 = data[idx(x1, y1, z0)] * (1 / 127f);
+        float c111 = data[idx(x1, y1, z1)] * (1 / 127f);
 
         float c00 = c000 * (1 - fx) + c100 * fx;
         float c01 = c001 * (1 - fx) + c101 * fx;

@@ -876,7 +876,7 @@ public class GameServer : INetEventListener {
         saveAllPlayers();
 
         // save world metadata
-        world.worldIO.saveWorldData();
+        world.worldIO.saveWorldData(false);
 
         // save modified chunks (async to prevent blocking)
         int saved = 0;

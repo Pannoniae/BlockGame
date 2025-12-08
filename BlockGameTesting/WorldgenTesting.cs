@@ -1,4 +1,5 @@
 ﻿using BlockGame.util;
+using BlockGame.world.chunk;
 using BlockGame.world.worldgen;
 using BlockGame.world.worldgen.generator;
 using SixLabors.ImageSharp;
@@ -12,8 +13,6 @@ public class WorldgenTesting {
     [SetUp]
     public void Setup() {
 
-        return;
-
         gen = new NewWorldGenerator(null!, 3);
         var rand = new XRandom(1338);
         gen.setup(rand, 1338);
@@ -22,15 +21,12 @@ public class WorldgenTesting {
     [Test]
     public void GenHighNoise() {
 
-        return;
-
         using var img = new Image<Rgba32>(512, 512);
         for (int x = 0; x < img.Width; x++) {
             for (int y = 0; y < img.Height; y++) {
                 var val = WorldgenUtil.getNoise3D(gen.t2n, x / 12f, 0, y / 12f, 4, 2f);
                 // "random" noise
                 var val2 = WorldgenUtil.getNoise3D(gen.t2n, x + 1444, 0, y + 1444, 1, 2f);
-                var orig = val;
                 //val = float.Tan(val);
                 //Console.Out.WriteLine(val);
                 var v = (byte)((val + 1) * 127.5f);
@@ -50,7 +46,7 @@ public class WorldgenTesting {
 
         for (int x = 0; x < img.Width; x++) {
             for (int y = 0; y < img.Height; y++) {
-                var val = WorldgenUtil.getNoise3D(gen.t2n, x / 20f, 0, y / 20f, 2, 2f);
+                var val = WorldgenUtil.getNoise3D(gen.t2n, x / 20f, 0, y / 20f, 4, 2f);
                 var orig = val;
                 //val = float.Tan(val);
                 //Console.Out.WriteLine(val);
@@ -62,7 +58,24 @@ public class WorldgenTesting {
             }
         }
 
-        img.Save(getPath("highNoiseT.png"));
+        img.Save(getPath("highNoiseU.png"));
+
+        // same but scaled with the function
+        for (int x = 0; x < img.Width; x++) {
+            for (int y = 0; y < img.Height; y++) {
+                var val = WorldgenUtil.getNoise3D(gen.t2n, x / 20f, 0, y / 20f, 4, 2f);
+                val = BiomeData.fe(val * (1 / 0.311f));
+                //val = float.Tan(val);
+                //Console.Out.WriteLine(val);
+                img[x, y] = new Rgba32(
+                    (byte)((val + 1) * 127.5f),
+                    (byte)((val + 1) * 127.5f),
+                    (byte)((val + 1) * 127.5f),
+                    255);
+            }
+        }
+
+        img.Save(getPath("highNoiseS.png"));
 
         for (int x = 0; x < img.Width; x++) {
             for (int y = 0; y < img.Height; y++) {
@@ -129,7 +142,7 @@ public class WorldgenTesting {
 
         img.Save(getPath("highNoiseH2.png"));
 
-        var xs = 1000;
+        const int xs = 1000;
 
         for (int x = 0; x < img.Width; x++) {
             for (int y = 0; y < img.Height; y++) {
@@ -154,8 +167,81 @@ public class WorldgenTesting {
         Assert.Pass();
     }
 
+    [Test]
+    public void GenBiomeDataDistribution() {
+        // unscaled
+        GenDistribution((x, y, z) => {
+            var val = WorldgenUtil.getNoise3D(gen.t2n, x / 12f, y / 12f, z / 12f, 4, 2f);
+            return val;
+        }, "u");
+
+        // scaled
+        GenDistribution((x, y, z) => {
+            var val = WorldgenUtil.getNoise3D(gen.t2n, x / 12f, y / 12f, z / 12f, 4, 2f);
+            val = BiomeData.fe(val * (1 / 0.356f));
+            return val;
+        }, "s");
+    }
+
+
+    public static void GenDistribution(Func<float, float, float, float> noise, string name) {
+        const int samples = 200_000;
+        const int buckets = 100;
+        var rng = new Random(42);
+
+        var values = new float[samples];
+        for (int i = 0; i < samples; i++)
+            values[i] = noise((float)rng.NextDouble() * 10000, (float)rng.NextDouble() * 10000, (float)rng.NextDouble() * 10000);
+
+        Array.Sort(values);
+
+        float sigma = MathF.Sqrt(values.Select(v => v * v).Average());
+        Console.WriteLine($"σ = {sigma}");
+        Console.WriteLine($"min = {values[0]}, max = {values[^1]}");
+
+        // Histogram CSV
+        float min = values[0], max = values[^1];
+        float step = (max - min) / buckets;
+        using (var w = new StreamWriter(getPath($"histogram{name}.csv")))
+        {
+            w.WriteLine("bin_centre,count");
+            for (int i = 0; i < buckets; i++)
+            {
+                float lo = min + i * step;
+                float hi = lo + step;
+                float center = (lo + hi) / 2;
+                int count = values.Count(v => v >= lo && v < hi);
+                w.WriteLine($"{center},{count}");
+            }
+        }
+
+        // CDF CSV (percentile -> value)
+        using (var w = new StreamWriter(getPath($"cdf{name}.csv")))
+        {
+            w.WriteLine("percentile,value");
+            for (int p = 0; p <= 100; p++)
+            {
+                int idx = (int)((p / 100.0) * (samples - 1));
+                w.WriteLine($"{p},{values[idx]}");
+            }
+        }
+
+        // inverse CDF CSV (value -> percentile)
+        using (var w = new StreamWriter(getPath($"inverse_cdf{name}.csv")))
+        {
+            w.WriteLine("value,uniform");
+            for (int i = 0; i < samples; i++)
+            {
+                float uniform = (i / (float)(samples - 1)) * 2f - 1f; // map to [-1,1]
+                w.WriteLine($"{values[i]},{uniform}");
+            }
+        }
+
+        Console.WriteLine("Wrote histogram.csv and cdf.csv");
+    }
+
     // use the PROJECT folder not the build folder lol
-    private string getPath(string path) {
+    private static string getPath(string path) {
         var projectDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
         var fullPath = Path.Combine(projectDir, path);
         return fullPath;

@@ -293,7 +293,7 @@ public class TreeGenerator {
         }
 
         // multi-layer canopy - 3 levels
-        int[] canopyHeights = [
+        Span<int> canopyHeights = [
             (int)(height * 0.5f), // lower canopy
             (int)(height * 0.7f), // mid canopy
             height - 3            // top canopy
@@ -311,10 +311,9 @@ public class TreeGenerator {
                 for (int xo = -layerRadius; xo <= layerRadius; xo++) {
                     for (int zo = -layerRadius; zo <= layerRadius; zo++) {
                         int distSq = xo * xo + zo * zo;
-                        if (distSq > layerRadius * layerRadius) continue;
-
-                        // irregular - more gaps
-                        if (random.NextSingle() < 0.35f) continue;
+                        if (distSq > layerRadius * layerRadius) {
+                            continue;
+                        }
 
                         // check if not trunk
                         int leafX = x + xo;
@@ -346,7 +345,6 @@ public class TreeGenerator {
                 if (b >= branchLength - 2) {
                     for (int xo = -1; xo <= 1; xo++) {
                         for (int zo = -1; zo <= 1; zo++) {
-                            if (random.NextSingle() < 0.3f) continue;
                             world.setBlockSilent(bx + xo, by, bz + zo, Block.MAHOGANY_LEAVES.id);
                         }
                     }

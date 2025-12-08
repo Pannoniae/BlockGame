@@ -139,22 +139,6 @@ public partial class World : IDisposable {
 
         entities = [];
         particles = new Particles(this);
-
-        // setup world saving every 5 seconds
-        // NOTE: this used to memory leak the ENTIRE WORLD because it was capturing the world reference in the method in Main.timerQueue.
-        // to avoid that, ALWAYS MAKE SURE methods aren't overwritten!
-
-        // SAFETY CHECK
-        if (saveWorld != null) {
-            Game.clearInterval(saveWorld);
-        }
-
-        // only setup autosave timer on client
-        if (Net.mode.isSP()) {
-            // in hot reload, don't save that much!! fucking lagspikes
-            var interval = Spy.enabled ? 180000 : 2000;
-            saveWorld = Game.setInterval(interval, saveWorldMethod);
-        }
     }
 
     public void preInit(bool loadingSave = false) {
@@ -213,6 +197,9 @@ public partial class World : IDisposable {
                     // load lighting queues (after chunks are loaded)
                     WorldIO.loadLightingQueues(this, tag);
                 }
+
+                // zero out toBeLoadedNBT to free memory
+                toBeLoadedNBT = null!;
             }
         }
         else {
@@ -239,7 +226,7 @@ public partial class World : IDisposable {
         // so the world is corrupted and we have horrible chunkglitches
 
         if (!isMP) {
-            worldIO.save(this, name, false);
+            worldIO.save(this, name, false, false);
         }
 
 
@@ -253,6 +240,36 @@ public partial class World : IDisposable {
     public void postInit(bool loadingSave = false) {
         // notify all entities of the chunks they're actually in
         // handled in loadChunk!
+        setupAutosave();
+
+        // process *all* the lighting so we won't get in a doomloop where we want to save, but lighting isn't done yet but saving is slow -> doomloop of constantly trying to save while game is frozen forever
+        // this is because our saving is fairly slow (nbtcompound + 5 elements for each element..... multiply that by a few million and it's fucked.)
+
+        while (skyLightQueue.Count > 0 || skyLightRemovalQueue.Count > 0 ||
+               blockLightQueue.Count > 0 || blockLightRemovalQueue.Count > 0) {
+            processSkyLightQueue();
+            processSkyLightRemovalQueue();
+            processBlockLightQueue();
+            processBlockLightRemovalQueue();
+        }
+    }
+
+    public void setupAutosave() {
+        // setup world saving every 5 seconds
+        // NOTE: this used to memory leak the ENTIRE WORLD because it was capturing the world reference in the method in Main.timerQueue.
+        // to avoid that, ALWAYS MAKE SURE methods aren't overwritten!
+
+        // SAFETY CHECK
+        if (saveWorld != null) {
+            Game.clearInterval(saveWorld);
+        }
+
+        // only setup autosave timer on client
+        if (Net.mode.isSP()) {
+            // in hot reload, don't save that much!! fucking lagspikes
+            var interval = Spy.enabled ? 180000 : 2000;
+            saveWorld = Game.setInterval(interval, saveWorldMethod);
+        }
     }
 
     private void saveWorldMethod() {

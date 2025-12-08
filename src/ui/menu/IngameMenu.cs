@@ -437,9 +437,12 @@ public class IngameMenu : Menu, IDisposable {
                 debugStr.AppendFormat("FB:{0}x{1} (0fx)\n", Game.width, Game.height);
             }
 
+            var currentBiome = w.getBiomeAtPlayer();
+
             if (Game.devMode) {
                 debugStr.AppendFormat("Seed: {0}\n", Game.world.seed);
                 debugStr.AppendFormat("c: {0}\n", SharedBlockVAO.c);
+                debugStr.AppendFormat("Biome: {0}\n", currentBiome);
             }
 
             long vmem = MemoryUtils.getVRAMUsage(out var stat);

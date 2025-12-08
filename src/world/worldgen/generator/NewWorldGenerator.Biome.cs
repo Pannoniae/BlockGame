@@ -47,10 +47,11 @@ public partial class NewWorldGenerator {
 
                     int idx = (ny * biomeNZ + nz) * biomeNX + nx;
 
+                    // note: do NOT change the falloff from 2! we're using the normaliser which only works for that. If you change this, recalculate the normaliser too! :D
                     tempb[idx] = WorldgenUtil.getNoise3D(tempn, x * TEMP_FREQ, y * TEMP_FREQ, z * TEMP_FREQ, 4, 2f);
-                    humb[idx] = WorldgenUtil.getNoise3D(humn, x * HUM_FREQ, y * HUM_FREQ, z * HUM_FREQ, 4, 1.5f);
-                    ageb[idx] = WorldgenUtil.getNoise3D(agen, x * AGE_FREQ, y * AGE_FREQ, z * AGE_FREQ, 4, Meth.phiF);
-                    wb[idx] = WorldgenUtil.getNoise3D(wn, x * W_FREQ, y * W_FREQ, z * W_FREQ, 4, Meth.etaF);
+                    humb[idx] = WorldgenUtil.getNoise3D(humn, x * HUM_FREQ, y * HUM_FREQ, z * HUM_FREQ, 4, 2f);
+                    ageb[idx] = WorldgenUtil.getNoise3D(agen, x * AGE_FREQ, y * AGE_FREQ, z * AGE_FREQ, 4, 2f);
+                    wb[idx] = WorldgenUtil.getNoise3D(wn, x * W_FREQ, y * W_FREQ, z * W_FREQ, 4, 2f);
                 }
             }
         }

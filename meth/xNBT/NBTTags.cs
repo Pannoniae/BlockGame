@@ -681,6 +681,10 @@ public class NBTCompound : NBTTag {
         return dict.ContainsKey(name);
     }
 
+    public bool hasType(string name, NBTType type) {
+        return dict.TryGetValue(name, out NBTTag? tag) && tag.id == type;
+    }
+
     public T get<T>(string name) where T : NBTTag {
         return (T)dict[name];
     }
@@ -1200,7 +1204,7 @@ public class NBTStruct : NBTTag {
 
     public override void readContents(BinaryReader stream) {
         int length = stream.ReadInt32();
-        if (length < 0 || length > 10_000) {
+        if (length is < 0 or > 10_000) {
             // sanity check - structs shouldn't be huge
             throw new IOException($"Invalid struct size: {length}");
         }

@@ -765,7 +765,7 @@ public partial class World {
         return result;
     }
 
-    private BiomeType getBiomeAtPlayer() {
+    public BiomeType getBiomeAtPlayer() {
         var playerPos = Game.player.position;
         // clamp!!
         playerPos.Y = double.Clamp(playerPos.Y, 0, WORLDHEIGHT - 1);
