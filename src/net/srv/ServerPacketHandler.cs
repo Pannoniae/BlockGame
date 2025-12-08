@@ -10,6 +10,7 @@ using BlockGame.world.entity;
 using BlockGame.world.item;
 using BlockGame.world.item.inventory;
 using LiteNetLib;
+using Molten;
 using Molten.DoublePrecision;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -653,118 +654,94 @@ public class ServerPacketHandler : PacketHandler {
         conn.breakProgress = 0;
     }
 
-    /**
-     * TODO unify the handling with the client-side PlaceBlock logic?? this is a fucking mess
-     */
+    /** mirrors ClientPlayer.placeBlock() logic */
     private void handlePlaceBlock(PlaceBlockPacket p) {
-        if (!conn.authenticated || conn.player == null) {
+        if (!conn.authenticated || conn.player == null) return;
+
+        // validate reach - early check before processing
+        if (!validateReach(p.position)) {
+            revertBlockAndInventory(p.position);
             return;
         }
 
+        // chain of responsibility - matches client precedence
+        if (tryInteractWithBlock(p)) return;
+        if (tryUseItemOnBlock(p)) return;
+        tryPlaceBlockItem(p);
+    }
+
+    /** block.onUse() - chests, furnaces, etc */
+    private bool tryInteractWithBlock(PlaceBlockPacket p) {
         var world = GameServer.instance.world;
+        var block = Block.get(world.getBlock(p.position));
 
-        // validate reach distance
-        var dist = Vector3D.Distance(conn.player.position, new Vector3D(p.position.X, p.position.Y, p.position.Z));
-        if (dist > 7.5) {
-            // too far - send revert (restore current block state)
-            var currentBlock = world.getBlock(p.position.X, p.position.Y, p.position.Z);
-            var currentMeta = world.getBlockRaw(p.position.X, p.position.Y, p.position.Z).getMetadata();
-            conn.send(new BlockChangePacket {
-                position = p.position,
-                blockID = currentBlock,
-                metadata = currentMeta
-            }, DeliveryMethod.ReliableOrdered);
+        if (block == null || block == Block.AIR) return false;
 
-            // resync the whole inventory since client consumed block optimistically
-            conn.player.inventoryCtx.notifyAllSlotsChanged();
-            return;
-        }
+        // execute onUse (opens inventory, etc)
+        return block.onUse(world, p.position.X, p.position.Y, p.position.Z, conn.player);
+    }
 
-        // check if target block has onUse behaviour first
-        var targetBlockID = world.getBlock(p.position.X, p.position.Y, p.position.Z);
-        var targetBlock = Block.get(targetBlockID);
-        if (targetBlock != null && targetBlock != Block.AIR) {
-            if (targetBlock.onUse(world, p.position.X, p.position.Y, p.position.Z, conn.player)) {
-                // block handled the interaction, done
-                return;
-            }
-        }
-
-        // otherwise, try to place/use held item
+    /** item.useBlock() - doors, buckets, etc */
+    private bool tryUseItemOnBlock(PlaceBlockPacket p) {
         var stack = conn.player.inventory.getSelected();
         if (stack == ItemStack.EMPTY) {
-            // can't place - send revert (restore current block state)
-            Log.warn($"Player '{conn.username}' tried to place block but has no item (slot={conn.player.inventory.selected})");
-            var b = world.getBlockRaw(p.position.X, p.position.Y, p.position.Z);
-            var currentBlock = b.getID();
-            var currentMeta = b.getMetadata();
-            conn.send(new BlockChangePacket {
-                position = p.position,
-                blockID = currentBlock,
-                metadata = currentMeta
-            }, DeliveryMethod.ReliableOrdered);
-
-            // also resync inventory!
-            conn.player.inventoryCtx.notifyAllSlotsChanged();
-
-            return;
+            Log.warn($"Player '{conn.username}' tried to use item on block but has no item");
+            revertBlockAndInventory(p.position);
+            return true; // handled (as error)
         }
 
-        // if item has useBlock hook, call it (use face from packet for correct placement)
-        var info = p.info;
-        var dir = p.info.face;
-        var replacement = stack.getItem().useBlock(stack, world, conn.player, p.position.X, p.position.Y, p.position.Z, info);
-        if (replacement != null) {
-            conn.player.inventory.setStack(conn.player.inventory.selected, replacement);
+        // try item's useBlock hook
+        var result = stack.getItem().useBlock(stack, GameServer.instance.world, conn.player, p.position.X, p.position.Y, p.position.Z, p.info);
+        if (result == null) return false;
 
-            // broadcast inventory change via context
-            conn.player.inventoryCtx.notifySlotChanged(conn.player.inventory.selected, replacement);
-            return;
-        }
+        // item handled it - update inventory
+        conn.player.inventory.setStack(conn.player.inventory.selected, result);
+        conn.player.inventoryCtx.notifySlotChanged(conn.player.inventory.selected, result);
 
-        // if item is a block, place it
-        if (!stack.getItem().isBlock()) {
-            return;
-        }
+        return true;
+    }
+
+    /** place block from item */
+    private void tryPlaceBlockItem(PlaceBlockPacket p) {
+        var stack = conn.player.inventory.getSelected();
+        if (stack == ItemStack.EMPTY || !stack.getItem().isBlock()) return;
 
         var block = Block.get(stack.getItem().getBlockID());
-        if (block == null || block.id == 0) {
+        if (block == null || block.id == 0) return;
+
+        var metadata = (byte)stack.metadata;
+
+        // validate placement
+        if (!block.canPlace(GameServer.instance.world, p.position.X, p.position.Y, p.position.Z, p.info)) {
+            revertBlockAndInventory(p.position);
             return;
         }
 
-        // check if block can be placed
-        if (!block.canPlace(world, p.position.X, p.position.Y, p.position.Z, info)) {
-            // can't place - send revert (restore current block state)
-            var currentBlock = world.getBlock(p.position.X, p.position.Y, p.position.Z);
-            var currentMeta = world.getBlockRaw(p.position.X, p.position.Y, p.position.Z).getMetadata();
-            conn.send(new BlockChangePacket {
-                position = p.position,
-                blockID = currentBlock,
-                metadata = currentMeta
-            }, DeliveryMethod.ReliableOrdered);
+        // validate collisions (matches client checks)
+        if (wouldCollideWithPlayer(block, p.position, metadata) || wouldCollideWithEntities(block, p.position, metadata)) {
+            revertBlockAndInventory(p.position);
+            return;
+        }
 
-            // resync the whole inventory since client consumed block optimistically
-            conn.player.inventoryCtx.notifyAllSlotsChanged();
+        // validate stack quantity in survival
+        if (conn.player.gameMode.gameplay && stack.quantity <= 0) {
+            revertBlockAndInventory(p.position);
             return;
         }
 
         // place block
-        var metadata = (byte)stack.metadata;
-        block.place(world, p.position.X, p.position.Y, p.position.Z, metadata, info);
+        block.place(GameServer.instance.world, p.position.X, p.position.Y, p.position.Z, metadata, p.info);
 
-        // read back actual metadata that was set (blocks like stairs calculate their own from the itemstack..)
-        metadata = world.getBlockMetadata(p.position.X, p.position.Y, p.position.Z);
+        // read back actual metadata (stairs, etc compute their own)
+        metadata = GameServer.instance.world.getBlockMetadata(p.position);
 
-        // consume block in survival
+        // consume in survival
         if (conn.player.gameMode.gameplay) {
             conn.player.inventory.removeStack(conn.player.inventory.selected, 1);
-
-            // broadcast inventory change via context
-            var newStack = conn.player.inventory.getSelected();
-            conn.player.inventoryCtx.notifySlotChanged(conn.player.inventory.selected, newStack);
+            conn.player.inventoryCtx.notifySlotChanged(conn.player.inventory.selected, conn.player.inventory.getSelected());
         }
 
-        // broadcast to all nearby clients (include sender in case of desync..)
+        // broadcast to nearby clients
         GameServer.instance.send(
             new Vector3D(p.position.X, p.position.Y, p.position.Z),
             128.0,
@@ -777,6 +754,57 @@ public class ServerPacketHandler : PacketHandler {
         );
     }
 
+    private bool wouldCollideWithPlayer(Block block, Vector3I pos, byte metadata) {
+        var world = GameServer.instance.world;
+        var aabbList = new List<AABB>();
+
+        world.getAABBsCollision(aabbList, pos.X, pos.Y, pos.Z);
+        foreach (var aabb in aabbList) {
+            if (AABB.isCollision(aabb, conn.player.aabb)) return true;
+        }
+
+        return false;
+    }
+
+    private bool wouldCollideWithEntities(Block block, Vector3I pos, byte metadata) {
+        if (!Block.collision[block.id]) return false;
+
+        var world = GameServer.instance.world;
+        var aabbList = new List<AABB>();
+        block.getAABBs(world, pos.X, pos.Y, pos.Z, metadata, aabbList);
+
+        var entities = new List<Entity>();
+        foreach (var aabb in aabbList) {
+            entities.Clear();
+            world.getEntitiesInBox(entities, aabb.min.toBlockPos(), aabb.max.toBlockPos() + 1);
+            foreach (var entity in entities) {
+                if (entity.blocksPlacement && AABB.isCollision(aabb, entity.aabb)) return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool validateReach(Vector3I pos) {
+        var dist = Vector3D.Distance(conn.player.position, new Vector3D(pos.X, pos.Y, pos.Z));
+        return dist <= 7.5;
+    }
+
+    private void revertBlockAndInventory(Vector3I pos) {
+        var world = GameServer.instance.world;
+
+        // revert block state
+        var raw = world.getBlockRaw(pos);
+        conn.send(new BlockChangePacket {
+            position = pos,
+            blockID = raw.getID(),
+            metadata = raw.getMetadata()
+        }, DeliveryMethod.ReliableOrdered);
+
+        // resync inventory
+        conn.player.inventoryCtx.notifyAllSlotsChanged();
+    }
+
     private void handleUseItem(UseItemPacket p) {
         if (!conn.authenticated || conn.player == null) {
             return;
@@ -787,10 +815,7 @@ public class ServerPacketHandler : PacketHandler {
             return;
         }
 
-        // store charge ratio for bow
-        conn.player.bowCharge = p.chargeRatio;
-
-        // call item's use hook (eat food, throw, etc)
+        // call item's use hook (eat food, throw, shoot bow, etc)
         var result = stack.getItem().use(stack, GameServer.instance.world, conn.player);
         if (result != null!) {
             conn.player.inventory.setStack(conn.player.inventory.selected, result);

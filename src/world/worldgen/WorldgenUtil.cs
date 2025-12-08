@@ -11,9 +11,9 @@ using BlockGame.world.worldgen.generator;
 
 namespace BlockGame.world.worldgen;
 
-public class WorldgenUtil {
+public static class WorldgenUtil {
 
-    public static float[] interps = new float[Chunk.MAXINDEXCOL];
+    public static readonly float[] interps = new float[Chunk.MAXINDEXCOL];
 
     public static void printNoiseResolution(float freq, int octaves, float falloff = 2f) {
         printNoiseResolution(freq, octaves, falloff, 1 / falloff);

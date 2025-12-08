@@ -469,21 +469,8 @@ public class ClientPlayer : Player {
             }
         }
         else {
-            // check if was charging bow and released
-            if (isChargingBow && !Game.inputs.right.down()) {
-                // calculate current charge ratio
-                var chargeRatio = Math.Min((double)bowChargeTime / BowItem.MAX_CHARGE_TIME, 1.0);
-
-                if (chargeRatio < 0.2) {
-                    // not charged enough, just cancel
-                    stopBowCharge();
-                } else {
-                    // charged enough, fire!
-                    fireBow();
-                }
-            }
-            else if (Game.inputs.right.down() && now - lastMouseAction > Constants.placeDelayMs &&
-                     now - lastAirHit > Constants.airHitDelayMs) {
+            if (Game.inputs.right.down() && now - lastMouseAction > Constants.placeDelayMs &&
+                now - lastAirHit > Constants.airHitDelayMs) {
                 // auto-use: continue firing if timer expired
                 if (item != null && Registry.ITEMS.autoUse[item.id]) {
                     if (autoUseTimer <= 0) {
@@ -525,158 +512,153 @@ public class ClientPlayer : Player {
     }
 
     public virtual void placeBlock() {
-        var facing = getFacing();
-        var hfacing = getHFacing();
+        // chain of responsibility - first match wins
+        if (tryInteractWithBlock()) return;
+        if (tryUseItemOnBlock()) return;
+        if (tryPlaceBlockItem()) return;
+        tryUseItemInAir();
+    }
 
-        // construct placement info
-        var info = new Placement {
+    /** block.onUse() - chests, furnaces, etc */
+    private bool tryInteractWithBlock() {
+        if (!Game.raycast.hit || Game.raycast.type != Result.BLOCK) return false;
+
+        var pos = Game.raycast.block;
+        var block = Block.get(world.getBlock(pos));
+        if (block == null || block == Block.AIR) return false;
+
+        var info = getPlacementInfo();
+
+        // execute locally (opens UI, etc)
+        if (!block.onUse(world, pos.X, pos.Y, pos.Z, this)) return false;
+
+        // send to server
+        if (Net.mode.isMPC()) {
+            ClientConnection.instance.send(
+                new PlaceBlockPacket { position = pos, info = info },
+                DeliveryMethod.ReliableOrdered
+            );
+        }
+
+        return true;
+    }
+
+    /** item.useBlock() - doors, buckets, etc */
+    private bool tryUseItemOnBlock() {
+        if (!Game.raycast.hit || Game.raycast.type != Result.BLOCK) return false;
+
+        var stack = inventory.getSelected();
+        if (stack == ItemStack.EMPTY) return false;
+
+        var pos = Game.raycast.previous;
+        var info = getPlacementInfo();
+
+        // try item's useBlock hook
+        var result = stack.getItem().useBlock(stack, world, this, pos.X, pos.Y, pos.Z, info);
+        if (result == null) return false;
+
+        // item handled it - update inventory locally
+        inventory.setStack(inventory.selected, result);
+        setSwinging(true);
+
+        // send to server
+        if (Net.mode.isMPC()) {
+            ClientConnection.instance.send(
+                new PlaceBlockPacket { position = pos, info = info },
+                DeliveryMethod.ReliableOrdered
+            );
+        }
+
+        return true;
+    }
+
+    /** place block from item */
+    private bool tryPlaceBlockItem() {
+        if (!Game.raycast.hit || Game.raycast.type != Result.BLOCK) return false;
+
+        var stack = inventory.getSelected();
+        if (stack == ItemStack.EMPTY || !stack.getItem().isBlock()) return false;
+
+        var pos = Game.raycast.previous;
+        var block = Block.get(stack.getItem().getBlockID());
+        var metadata = (byte)stack.metadata;
+        var info = getPlacementInfo();
+
+        // validate placement
+        if (!block.canPlace(world, pos.X, pos.Y, pos.Z, info)) {
+            setSwinging(false);
+            return false;
+        }
+
+        // check collisions (player + entities)
+        if (wouldCollideWithPlayer(block, pos, metadata) || wouldCollideWithEntities(block, pos, metadata)) {
+            setSwinging(false);
+            return false;
+        }
+
+        // validate stack in survival
+        if (gameMode.gameplay && (stack.quantity <= 0)) {
+            setSwinging(false);
+            return false;
+        }
+
+        // execute locally
+        block.place(world, pos.X, pos.Y, pos.Z, metadata, info);
+        if (gameMode.gameplay) {
+            inventory.removeStack(inventory.selected, 1);
+        }
+        if (block.mat != null) {
+            Game.snd.playBlockBreak(block.mat.smat);
+        }
+
+        // multiplayer client: send packet, server will handle placement
+        if (Net.mode.isMPC()) {
+            ClientConnection.instance.send(
+                new PlaceBlockPacket { position = pos, info = info },
+                DeliveryMethod.ReliableOrdered
+            );
+        }
+
+        setSwinging(true);
+        return true;
+    }
+
+    /** use item in air - food, bow, throwables */
+    private void tryUseItemInAir() {
+        useItem();
+    }
+
+    private Placement getPlacementInfo() {
+        return new Placement {
             face = Game.raycast.face,
-            facing = facing,
-            hfacing = hfacing,
+            facing = getFacing(),
+            hfacing = getHFacing(),
             hitPoint = Game.raycast.point
         };
+    }
 
-        // first check if player is clicking on an existing block with onUse behaviour
-        if (Game.raycast.hit && Game.raycast.type == Result.BLOCK) {
-            var targetPos = Game.raycast.block;
-            var blockId = world.getBlock(targetPos.X, targetPos.Y, targetPos.Z);
-            var block = Block.get(blockId);
-            if (block != null && block != Block.AIR) {
-                if (block.onUse(world, targetPos.X, targetPos.Y, targetPos.Z, this)) {
-                    // send packet
-                    if (Net.mode.isMPC()) {
-                        ClientConnection.instance.send(
-                            new PlaceBlockPacket {
-                                position = targetPos,
-                                info = info
-                            },
-                            DeliveryMethod.ReliableOrdered);
-                    }
+    private bool wouldCollideWithPlayer(Block block, Vector3I pos, byte metadata) {
+        world.getAABBsCollision(AABBList, pos.X, pos.Y, pos.Z);
+        foreach (var aabb in AABBList) {
+            if (AABB.isCollision(aabb, this.aabb)) return true;
+        }
+        return false;
+    }
 
-                    // if block has custom behaviour, stop here (don't place)
-                    return;
-                }
+    private bool wouldCollideWithEntities(Block block, Vector3I pos, byte metadata) {
+        if (!Block.collision[block.id]) return false;
+
+        block.getAABBs(world, pos.X, pos.Y, pos.Z, metadata, AABBList);
+        var entities = new List<Entity>();
+
+        foreach (var aabb in AABBList) {
+            entities.Clear();
+            world.getEntitiesInBox(entities, aabb.min.toBlockPos(), aabb.max.toBlockPos() + 1);
+            foreach (var entity in entities) {
+                if (entity.blocksPlacement && AABB.isCollision(aabb, entity.aabb)) return true;
             }
         }
 
-        if (Game.raycast.hit && Game.raycast.type == Result.BLOCK) {
-            var pos = Game.raycast.previous;
-            var stack = inventory.getSelected();
-
-            var metadata = (byte)stack.metadata;
-
-            // if item, fire the hook and handle replacement
-            var replacement = stack.getItem().useBlock(stack, world, this, pos.X, pos.Y, pos.Z, info);
-            if (replacement != null) {
-                inventory.setStack(inventory.selected, replacement);
-                setSwinging(true);
-
-
-                if (Net.mode.isMPC()) {
-                    ClientConnection.instance.send(
-                        new PlaceBlockPacket {
-                            position = pos,
-                            info = info
-                        },
-                        DeliveryMethod.ReliableOrdered);
-                }
-
-                return;
-            }
-
-            // if block, place it
-            if (stack.getItem().isBlock()) {
-                var block = Block.get(stack.getItem().getBlockID());
-
-                // check block-specific placement rules first
-                if (!block.canPlace(world, pos.X, pos.Y, pos.Z, info)) {
-                    setSwinging(false);
-                    return;
-                }
-
-                // check entity collisions with the proposed block placement
-                bool hasCollisions = false;
-
-                // don't intersect the player with already placed block
-                world.getAABBsCollision(AABBList, pos.X, pos.Y, pos.Z);
-                foreach (AABB aabb in AABBList) {
-                    if (AABB.isCollision(aabb, this.aabb)) {
-                        hasCollisions = true;
-                        break;
-                    }
-                }
-
-                // check entity collisions with the new block's bounding boxes
-                if (!hasCollisions && Block.collision[block.id]) {
-                    var entities = new List<Entity>();
-                    block.getAABBs(world, pos.X, pos.Y, pos.Z, metadata, AABBList);
-
-                    foreach (var aabb in AABBList) {
-                        entities.Clear();
-                        world.getEntitiesInBox(entities, aabb.min.toBlockPos(), aabb.max.toBlockPos() + 1);
-
-                        foreach (var entity in entities) {
-                            if (entity.blocksPlacement && AABB.isCollision(aabb, entity.aabb)) {
-                                hasCollisions = true;
-                                break;
-                            }
-                        }
-
-                        if (hasCollisions) break;
-                    }
-                }
-
-                if (!hasCollisions) {
-                    // in survival mode, check if player has blocks to place
-                    if (gameMode.gameplay) {
-                        if (stack == ItemStack.EMPTY || stack.quantity <= 0) {
-                            setSwinging(false);
-                            return;
-                        }
-                    }
-
-                    block.place(world, pos.X, pos.Y, pos.Z, metadata, info);
-
-                    // consume block from inventory in survival mode
-                    if (gameMode.gameplay) {
-                        inventory.removeStack(inventory.selected, 1);
-                    }
-
-                    // play sound
-                    if (block.mat != null) {
-                        Game.snd.playBlockBreak(block.mat.smat);
-                    }
-
-                    setSwinging(true);
-
-                    // send packet
-                    if (Net.mode.isMPC()) {
-                        ClientConnection.instance.send(
-                            new PlaceBlockPacket {
-                                position = pos,
-                                info = info
-                            },
-                            DeliveryMethod.ReliableOrdered);
-                    }
-                }
-                else {
-                    setSwinging(false);
-                }
-            }
-        }
-        else {
-            var stack = inventory.getSelected();
-            var result = stack.getItem().use(stack, world, this);
-            if (result != null!) {
-                inventory.setStack(inventory.selected, result);
-                setSwinging(true);
-                return;
-            }
-
-            // don't swing if we started charging a bow
-            if (!isChargingBow) {
-                setSwinging(false);
-            }
-        }
+        return false;
     }
 }

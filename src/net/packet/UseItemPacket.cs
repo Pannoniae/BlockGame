@@ -1,16 +1,14 @@
 namespace BlockGame.net.packet;
 
-/** use held item (eat food, throw, etc - no target position) */
+/** use held item in air (eat food, throw, shoot bow, etc - no target position) */
 public struct UseItemPacket : Packet {
-    public float chargeRatio; // 0-1, for bows and other chargeable items
-
     public byte channel => 0;
 
     public void write(PacketBuffer buffer) {
-        buffer.writeFloat(chargeRatio);
+        // no data to write
     }
 
     public void read(PacketBuffer buffer) {
-        chargeRatio = buffer.readFloat();
+        // no data to read
     }
 }

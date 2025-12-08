@@ -87,13 +87,6 @@ public class Player : Mob, CommandSource {
 
     protected bool fastMode = false;
 
-
-    // bow charging state
-    public bool isChargingBow;
-    public int bowChargeTime;
-    public double prevBowCharge;
-    public double bowCharge; // 0-1 charge progress
-
     // auto-use for hold-to-fire weapons
     public int autoUseTimer; // cooldown for auto-use
 
@@ -537,70 +530,6 @@ public class Player : Mob, CommandSource {
         }
     }
 
-    public void startBowCharge() {
-        isChargingBow = true;
-        bowChargeTime = 0;
-        bowCharge = 0;
-        prevBowCharge = 0;
-    }
-
-    public void stopBowCharge() {
-        isChargingBow = false;
-        bowChargeTime = 0;
-        bowCharge = 0;
-        prevBowCharge = 0;
-
-        // reset FOV modifier
-        if (!Net.mode.isDed()) {
-            Game.camera.fovModifier = 0f;
-        }
-    }
-
-    public void fireBow() {
-        if (!isChargingBow) return;
-
-        // calculate charge ratio
-        var chargeRatio = Math.Min((double)bowChargeTime / BowItem.MAX_CHARGE_TIME, 1.0);
-
-        // only fire if bow is charged enough (at least 10% charged)
-        if (chargeRatio < 0.1) {
-            stopBowCharge();
-            return;
-        }
-
-        // stop charging before firing (so BowItem.use() knows we're firing)
-        isChargingBow = false;
-        if (!Net.mode.isDed()) {
-            Game.camera.fovModifier = 0f;
-        }
-
-        // in multiplayer client, send packet to server
-        if (Net.mode.isMPC()) {
-            ClientConnection.instance.send(
-                new UseItemPacket {
-                    chargeRatio = (float)chargeRatio
-                },
-                DeliveryMethod.ReliableOrdered
-            );
-        }
-        else {
-            // single-player or server: fire directly via item.use()
-            var stack = inventory.getSelected();
-            bowCharge = chargeRatio; // store for BowItem.use() to read
-            var result = stack.getItem().use(stack, world, this);
-            if (result != null!) {
-                inventory.setStack(inventory.selected, result);
-            }
-        }
-
-        // play sound and animation
-        setSwinging(true);
-
-        // reset charge state
-        bowChargeTime = 0;
-        bowCharge = 0;
-        prevBowCharge = 0;
-    }
 
     /**
      * apply recoil kick from weapons
@@ -631,7 +560,7 @@ public class Player : Mob, CommandSource {
         // multiplayer: send packet to server
         if (Net.mode.isMPC()) {
             ClientConnection.instance.send(
-                new UseItemPacket { chargeRatio = 0 },
+                new UseItemPacket(),
                 DeliveryMethod.ReliableOrdered
             );
         }
