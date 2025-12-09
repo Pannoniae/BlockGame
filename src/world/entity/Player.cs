@@ -785,6 +785,9 @@ public class Player : Mob, CommandSource {
 
         // in multiplayer client, send packet to server
         if (Net.mode.isMPC()) {
+            // optimistically remove from client inventory
+            inventory.removeStack(inventory.selected, 1);
+
             Game.client.send(new DropItemPacket {
                 slotIndex = (byte)inventory.selected,
                 quantity = 1

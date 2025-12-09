@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Collections.Concurrent;
 using System.Net.Sockets;
 using BlockGame.main;
@@ -262,16 +263,17 @@ public class ClientConnection : INetEventListener {
 
     public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
         try {
-            var bytes = reader.GetRemainingBytes();
+            // get span directly from reader - no copy
+            var span = reader.RawData.AsSpan(reader.Position, reader.AvailableBytes);
+            int totalLen = span.Length;
 
             // track metrics
-            Game.metrics.bytesReceived += bytes.Length;
+            Game.metrics.bytesReceived += totalLen;
             Game.metrics.packetsReceived++;
 
-            // read packet ID
-            using var br = new BinaryReader(new MemoryStream(bytes));
-            var buf = new PacketBuffer(br);
-            int packetID = buf.readInt();
+            // read packet ID directly from span
+            int packetID = BinaryPrimitives.ReadInt32LittleEndian(span);
+            span = span[4..];
 
             // if this is a disconnect packet, set the flag immediately (before OnPeerDisconnected fires)
             if (packetID == 0x03) {
@@ -281,20 +283,10 @@ public class ClientConnection : INetEventListener {
             // create packet instance
             var type = PacketRegistry.getType(packetID);
             var packet = (Packet)Activator.CreateInstance(type)!;
+
+            // read from span
+            var buf = new PacketBuffer(span);
             packet.read(buf);
-            
-            long expected = bytes.Length;
-            long actual = br.BaseStream.Position;
-            if (actual != expected) {
-                if (actual < expected) {
-                    int unread = (int)(expected - actual);
-                    int read = (int)(actual - 4); // subtract packet ID
-                    Log.error($"Packet {type.Name} (0x{packetID:X2}) underread: {unread} bytes left unread (expected {bytes.Length - 4} bytes, read {read})");
-                } else {
-                    int overread = (int)(actual - expected);
-                    Log.error($"Packet {type.Name} (0x{packetID:X2}) overread: tried to read {overread} bytes past end");
-                }
-            }
 
             // track by packet type
             Game.metrics.packets.TryAdd(type, 0);

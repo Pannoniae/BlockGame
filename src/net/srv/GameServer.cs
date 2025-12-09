@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System.Buffers.Binary;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using BlockGame.main;
@@ -758,35 +759,25 @@ public class GameServer : INetEventListener {
                 return;
             }
 
-            var bytes = reader.GetRemainingBytes();
+            // get span directly from reader - no copy
+            var span = reader.RawData.AsSpan(reader.Position, reader.AvailableBytes);
+            int totalLen = span.Length;
 
             // track metrics
-            conn.metrics.bytesReceived += bytes.Length;
+            conn.metrics.bytesReceived += totalLen;
             conn.metrics.packetsReceived++;
 
-            // read packet ID
-            var br = new BinaryReader(new MemoryStream(bytes));
-            var buf = new PacketBuffer(br);
-            int packetID = buf.readInt();
+            // read packet ID directly from span
+            int packetID = BinaryPrimitives.ReadInt32LittleEndian(span);
+            span = span[4..];
 
             // create packet instance
             var type = PacketRegistry.getType(packetID);
             var packet = (Packet)Activator.CreateInstance(type)!;
-            packet.read(buf);
 
-            // verify packet was fully read
-            long expected = bytes.Length;
-            long actual = br.BaseStream.Position;
-            if (actual != expected) {
-                if (actual < expected) {
-                    int unread = (int)(expected - actual);
-                    int read = (int)(actual - 4); // subtract packet ID
-                    Log.error($"Packet {type.Name} (0x{packetID:X2}) underread: {unread} bytes left unread (expected {bytes.Length - 4} bytes, read {read})");
-                } else {
-                    int overread = (int)(actual - expected);
-                    Log.error($"Packet {type.Name} (0x{packetID:X2}) overread: tried to read {overread} bytes past end");
-                }
-            }
+            // read from span
+            var buf = new PacketBuffer(span);
+            packet.read(buf);
 
             // queue for game thread processing
             incomingPackets.Enqueue((packet, conn));
