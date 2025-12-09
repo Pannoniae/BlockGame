@@ -115,7 +115,7 @@ public class ServerPacketHandler : PacketHandler {
     }
 
     private void handleHug(HugPacket p) {
-        Log.info($"Hug from {p.username} (protocol={p.netVersion}, version={p.version})");
+        Log.info($"Hug from {p.username} (protocol={p.netVersion}, version={p.version} contentHash={p.contentHash:X8})");
 
         // check protocol version
         if (p.netVersion != Constants.netVersion) {
@@ -123,6 +123,16 @@ public class ServerPacketHandler : PacketHandler {
                 reason = $"Version mismatch (server: {Constants.netVersion}, client: {p.netVersion})"
             }, DeliveryMethod.ReliableOrdered);
             Log.info($"{p.username} tried to join with version {p.netVersion}, we are on {Constants.netVersion}");
+            // let client disconnect gracefully after receiving LoginFailedPacket
+            return;
+        }
+
+        // check content hash (blocks/items must match)
+        if (p.contentHash != Constants.contentHash) {
+            conn.send(new LoginFailedPacket {
+                reason = $"Content mismatch - server and client have different blocks/items (server: {Constants.contentHash:X8}, client: {p.contentHash:X8})"
+            }, DeliveryMethod.ReliableOrdered);
+            Log.warn($"{p.username} tried to join with mismatched content (client: {p.contentHash:X8}, server: {Constants.contentHash:X8})");
             // let client disconnect gracefully after receiving LoginFailedPacket
             return;
         }

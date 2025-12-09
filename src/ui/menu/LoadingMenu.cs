@@ -154,7 +154,9 @@ public class LoadingMenu : Menu, ProgressUpdater {
                 currentStage = "Ready!";
                 progressBar.setProgress(1.0f);
                 Game.instance.switchToScreen(Screen.GAME_SCREEN);
-                Game.instance.lockMouse();
+                if (Screen.GAME_SCREEN.currentMenu == Screen.GAME_SCREEN.INGAME_MENU) {
+                    Game.instance.lockMouse();
+                }
             }
         }
 
@@ -162,7 +164,9 @@ public class LoadingMenu : Menu, ProgressUpdater {
             // handle singleplayer world loading
             if (loadingCoroutine?.isCompleted == true) {
                 Game.instance.switchToScreen(Screen.GAME_SCREEN);
-                Game.instance.lockMouse();
+                if (Screen.GAME_SCREEN.currentMenu == Screen.GAME_SCREEN.INGAME_MENU) {
+                    Game.instance.lockMouse();
+                }
             }
         }
     }

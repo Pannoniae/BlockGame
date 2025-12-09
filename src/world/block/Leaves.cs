@@ -29,7 +29,7 @@ public class Leaves : Block {
         tier[id] = MaterialTier.WOOD;
     }
 
-    public override void getDrop(List<ItemStack> drops, World world, int y, int z, int i, byte metadata, bool canBreak) {
+    public override void getDrop(List<ItemStack> drops, World world, int x, int y, int z, byte metadata, bool canBreak) {
         // oak: 1 in 10 chance to drop apple
         if (id == LEAVES.id && Game.random.Next(10) == 0) {
             drops.Add(new ItemStack(Item.APPLE, 1, 0));

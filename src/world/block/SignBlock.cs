@@ -121,7 +121,7 @@ public class SignBlock : EntityBlock {
         }
     }
 
-    public override void getDrop(List<ItemStack> drops, World world, int y, int z, int i, byte metadata, bool canBreak) {
+    public override void getDrop(List<ItemStack> drops, World world, int x, int y, int z, byte metadata, bool canBreak) {
         if (canBreak) {
             drops.Add(new ItemStack(Item.SIGN_ITEM, 1));
         }

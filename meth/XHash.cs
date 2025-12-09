@@ -100,4 +100,33 @@ public static class XHash {
     public static int hashRange(int x, int y, int max, int seed) {
         return Math.Abs(hashSeeded(x, y, seed)) % max;
     }
+
+    /**
+     * Hash a string.
+     */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int hash(string str) {
+        if (str == null) return 0;
+
+        unchecked {
+            uint hash = 2166136261u;
+            foreach (char c in str) {
+                hash ^= c;
+                hash *= 16777619;
+            }
+            return (int)hash;
+        }
+    }
+
+    /**
+     * Combine two hash values.
+     */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int combine(int h1, int h2) {
+        unchecked {
+            uint h = (uint)h1;
+            h ^= (uint)h2 + 0x9e3779b9 + (h << 6) + (h >> 2);
+            return (int)h;
+        }
+    }
 }

@@ -4,11 +4,11 @@ namespace BlockGame.net.packet;
 public struct UseItemPacket : Packet {
     public byte channel => 0;
 
-    public void write(PacketBuffer buffer) {
+    public void write(PacketBuffer buf) {
         // no data to write
     }
 
-    public void read(PacketBuffer buffer) {
+    public void read(PacketBuffer buf) {
         // no data to read
     }
 }

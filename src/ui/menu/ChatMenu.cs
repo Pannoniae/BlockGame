@@ -68,15 +68,15 @@ public class ChatMenu : Menu {
         return int.TryParse(arg, out result);
     }
 
-    public override void onKeyChar(IKeyboard keyboard, char ch) {
-        if (!char.IsControl(ch)) {
+    public override void onKeyChar(IKeyboard keyboard, char c) {
+        if (!char.IsControl(c)) {
             
             // if the message is empty, only one thing to do
             if (message.Length == 0) {
                 cursorPos = 0;
             }
 
-            message = message.Insert(cursorPos, ch.ToString());
+            message = message.Insert(cursorPos, c.ToString());
             cursorPos++;
         }
     }

@@ -115,7 +115,7 @@ public class FireBlock(string name) : Block(name) {
         return blockBelow == HELLSTONE.id || blockBelow == HELLROCK.id || collision[blockBelow] || hasFlammableNeighbour(world, x, y, z);
     }
 
-    public override void getDrop(List<ItemStack> drops, World world, int y, int z, int i, byte metadata, bool canBreak) {
+    public override void getDrop(List<ItemStack> drops, World world, int x, int y, int z, byte metadata, bool canBreak) {
         // fire drops nothing
     }
 }

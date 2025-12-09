@@ -211,7 +211,8 @@ public class ClientConnection : INetEventListener {
         send(new HugPacket {
             netVersion = Constants.netVersion,
             username = username,
-            version = Constants.VERSION
+            version = Constants.VERSION,
+            contentHash = Constants.contentHash
         }, DeliveryMethod.ReliableOrdered);
     }
 
@@ -259,7 +260,7 @@ public class ClientConnection : INetEventListener {
         });
     }
 
-    public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channel, DeliveryMethod deliveryMethod) {
+    public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
         try {
             var bytes = reader.GetRemainingBytes();
 
@@ -281,6 +282,19 @@ public class ClientConnection : INetEventListener {
             var type = PacketRegistry.getType(packetID);
             var packet = (Packet)Activator.CreateInstance(type)!;
             packet.read(buf);
+            
+            long expected = bytes.Length;
+            long actual = br.BaseStream.Position;
+            if (actual != expected) {
+                if (actual < expected) {
+                    int unread = (int)(expected - actual);
+                    int read = (int)(actual - 4); // subtract packet ID
+                    Log.error($"Packet {type.Name} (0x{packetID:X2}) underread: {unread} bytes left unread (expected {bytes.Length - 4} bytes, read {read})");
+                } else {
+                    int overread = (int)(actual - expected);
+                    Log.error($"Packet {type.Name} (0x{packetID:X2}) overread: tried to read {overread} bytes past end");
+                }
+            }
 
             // track by packet type
             Game.metrics.packets.TryAdd(type, 0);

@@ -862,6 +862,9 @@ public partial class Game {
 
         Block.postLoad();
 
+        // compute content hash to detect client/server mismatches
+        Constants.computeContentHash();
+
         Command.register();
 
         resize(new Vector2D<int>(width, height));
@@ -1473,7 +1476,7 @@ public partial class Game {
 
     public static void mm() {
         mouseDisabled = !mouseDisabled;
-        
+
         if (mouseDisabled) {
             mouse.MouseMove -= instance.onMouseMove;
         }

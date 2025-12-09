@@ -7,6 +7,7 @@ public struct HugPacket : Packet {
     public int netVersion;
     public string username;
     public string version;
+    public int contentHash;
 
     public byte channel => 0;
 
@@ -14,11 +15,13 @@ public struct HugPacket : Packet {
         buf.writeInt(netVersion);
         buf.writeString(username);
         buf.writeString(version);
+        buf.writeInt(contentHash);
     }
 
     public void read(PacketBuffer buf) {
         netVersion = buf.readInt();
         username = buf.readString();
         version = buf.readString();
+        contentHash = buf.readInt();
     }
 }

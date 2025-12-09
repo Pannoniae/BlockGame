@@ -7,11 +7,11 @@ public struct FinishBlockBreakPacket : Packet {
 
     public byte channel => 0;
 
-    public void write(PacketBuffer buffer) {
-        buffer.writeVec3I(position);
+    public void write(PacketBuffer buf) {
+        buf.writeVec3I(position);
     }
 
-    public void read(PacketBuffer buffer) {
-        position = buffer.readVec3I();
+    public void read(PacketBuffer buf) {
+        position = buf.readVec3I();
     }
 }

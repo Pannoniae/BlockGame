@@ -10,30 +10,30 @@ public struct MultiBlockChangePacket : Packet {
 
     public byte channel => 0;
 
-    public void write(PacketBuffer buffer) {
+    public void write(PacketBuffer buf) {
         // write count
         int count = pos.Length;
-        buffer.writeByte((byte)count);
+        buf.writeByte((byte)count);
 
         // write positions
         for (int i = 0; i < count; i++) {
-            buffer.writeVec3I(pos[i]);
+            buf.writeVec3I(pos[i]);
         }
 
         // write block IDs
         for (int i = 0; i < count; i++) {
-            buffer.writeUShort(blockIDs[i]);
+            buf.writeUShort(blockIDs[i]);
         }
 
         // write metadata
         for (int i = 0; i < count; i++) {
-            buffer.writeByte(metadata[i]);
+            buf.writeByte(metadata[i]);
         }
     }
 
-    public void read(PacketBuffer buffer) {
+    public void read(PacketBuffer buf) {
         // read count
-        int count = buffer.readByte();
+        int count = buf.readByte();
 
         // allocate arrays
         pos = new Vector3I[count];
@@ -42,17 +42,17 @@ public struct MultiBlockChangePacket : Packet {
 
         // read positions
         for (int i = 0; i < count; i++) {
-            pos[i] = buffer.readVec3I();
+            pos[i] = buf.readVec3I();
         }
 
         // read block IDs
         for (int i = 0; i < count; i++) {
-            blockIDs[i] = buffer.readUShort();
+            blockIDs[i] = buf.readUShort();
         }
 
         // read metadata
         for (int i = 0; i < count; i++) {
-            metadata[i] = buffer.readByte();
+            metadata[i] = buf.readByte();
         }
     }
 }

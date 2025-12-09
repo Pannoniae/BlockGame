@@ -10,20 +10,20 @@ public struct PlaceBlockPacket : Packet {
 
     public byte channel => 0;
 
-    public void write(PacketBuffer buffer) {
-        buffer.writeVec3I(position);
-        buffer.writeByte((byte)info.face);
-        buffer.writeByte((byte)info.facing);
-        buffer.writeByte((byte)info.hfacing);
-        buffer.writeVec3D(info.hitPoint);
+    public void write(PacketBuffer buf) {
+        buf.writeVec3I(position);
+        buf.writeByte((byte)info.face);
+        buf.writeByte((byte)info.facing);
+        buf.writeByte((byte)info.hfacing);
+        buf.writeVec3D(info.hitPoint);
     }
 
-    public void read(PacketBuffer buffer) {
-        position = buffer.readVec3I();
-        var face = (RawDirection)buffer.readByte();
-        var facing = (RawDirection)buffer.readByte();
-        var hfacing = (RawDirectionH)buffer.readByte();
-        Vector3D hitPoint = buffer.readVec3D();
+    public void read(PacketBuffer buf) {
+        position = buf.readVec3I();
+        var face = (RawDirection)buf.readByte();
+        var facing = (RawDirection)buf.readByte();
+        var hfacing = (RawDirectionH)buf.readByte();
+        Vector3D hitPoint = buf.readVec3D();
         info = new Placement(face, facing, hfacing, hitPoint);
     }
 }

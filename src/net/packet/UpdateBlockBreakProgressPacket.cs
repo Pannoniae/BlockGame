@@ -12,13 +12,13 @@ public struct UpdateBlockBreakProgressPacket : Packet {
 
     public byte channel => 0;
 
-    public void write(PacketBuffer buffer) {
-        buffer.writeVec3I(position);
-        buffer.writeDouble(progress);
+    public void write(PacketBuffer buf) {
+        buf.writeVec3I(position);
+        buf.writeDouble(progress);
     }
 
-    public void read(PacketBuffer buffer) {
-        position = buffer.readVec3I();
-        progress = buffer.readDouble();
+    public void read(PacketBuffer buf) {
+        position = buf.readVec3I();
+        progress = buf.readDouble();
     }
 }

@@ -295,8 +295,8 @@ public class GameScreen : Screen {
         Game.firstFrame = false;
     }
 
-    public override void scroll(IMouse mouse, ScrollWheel scroll) {
-        base.scroll(mouse, scroll);
+    public override void scroll(IMouse mouse, ScrollWheel scrollWheel) {
+        base.scroll(mouse, scrollWheel);
     }
 
     public override void onKeyUp(IKeyboard keyboard, Key key, int scancode) {
@@ -669,9 +669,9 @@ public class GameScreen : Screen {
         }
     }
 
-    public override void resize(Vector2I size) {
-        base.resize(size);
-        Game.camera.setViewport(size.X, size.Y);
+    public override void resize(Vector2I newSize) {
+        base.resize(newSize);
+        Game.camera.setViewport(newSize.X, newSize.Y);
     }
 
     public override void draw() {

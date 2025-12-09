@@ -9,15 +9,15 @@ public struct BlockBreakProgressPacket : Packet {
 
     public byte channel => 0;
 
-    public void write(PacketBuffer buffer) {
-        buffer.writeInt(playerEntityID);
-        buffer.writeVec3I(position);
-        buffer.writeDouble(progress);
+    public void write(PacketBuffer buf) {
+        buf.writeInt(playerEntityID);
+        buf.writeVec3I(position);
+        buf.writeDouble(progress);
     }
 
-    public void read(PacketBuffer buffer) {
-        playerEntityID = buffer.readInt();
-        position = buffer.readVec3I();
-        progress = buffer.readDouble();
+    public void read(PacketBuffer buf) {
+        playerEntityID = buf.readInt();
+        position = buf.readVec3I();
+        progress = buf.readDouble();
     }
 }

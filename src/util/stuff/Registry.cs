@@ -99,6 +99,14 @@ public abstract class Registry<T> : Registry {
         return values[id];
     }
 
+    public T? getOrDefault(int id) {
+        if (id < 0 || id >= values.Count) {
+            return default;
+        }
+
+        return get(id);
+    }
+
     /**
      * Gets the entry for the given string ID.
      */
@@ -106,6 +114,15 @@ public abstract class Registry<T> : Registry {
         int id = getID(name);
         if (id == -1) {
             InputException.throwNew($"{typeof(T).Name} '{name}' is not registered!");
+        }
+
+        return get(id);
+    }
+
+    public T? getOrDefault(string name) {
+        int id = getID(name);
+        if (id == -1) {
+            return default;
         }
 
         return get(id);

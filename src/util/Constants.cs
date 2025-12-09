@@ -1,3 +1,6 @@
+using BlockGame.util.log;
+using BlockGame.util.stuff;
+
 namespace BlockGame.util;
 
 public static class Constants {
@@ -44,8 +47,41 @@ public static class Constants {
     public const double flyModeDelay = 0.4;
 
     // Networking
-    public const int netVersion = 7;
+    public const int netVersion = 8;
     public const string connectionKey = "BlockGame";
+
+    /**
+     * Content hash - computed at startup from all registered items/blocks.
+     * Prevents client/server desync when they have different registrations.
+     */
+    public static int contentHash = 0;
+
+    /**
+     * Compute content hash from all registered blocks/items.
+     * TODO recalc this if a mod is applied or something.
+     */
+    public static void computeContentHash() {
+        int hash = 0;
+
+        for (int i = 0; i < Registry.BLOCKS.count(); i++) {
+            var block = Registry.BLOCKS.getOrDefault(i);
+            if (block != null) {
+                hash = XHash.combine(hash, i);
+                hash = XHash.combine(hash, XHash.hash(block.name));
+            }
+        }
+
+        for (int i = 0; i < Registry.ITEMS.count(); i++) {
+            var item = Registry.ITEMS.getOrDefault(i);
+            if (item != null) {
+                hash = XHash.combine(hash, i);
+                hash = XHash.combine(hash, XHash.hash(item.name));
+            }
+        }
+
+        contentHash = hash;
+        Log.info($"Content hash: {hash:X8}");
+    }
 
     // Inventory
     // note changed these from 255/254 to -1/-2 because the whole system was fucked, it was sending TYPES (byte) instead of INT IDs (sequential and different for each inv opened)

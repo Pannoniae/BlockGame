@@ -10,15 +10,15 @@ public struct BlockChangePacket : Packet {
 
     public byte channel => 0;
 
-    public void write(PacketBuffer buffer) {
-        buffer.writeVec3I(position);
-        buffer.writeUShort(blockID);
-        buffer.writeByte(metadata);
+    public void write(PacketBuffer buf) {
+        buf.writeVec3I(position);
+        buf.writeUShort(blockID);
+        buf.writeByte(metadata);
     }
 
-    public void read(PacketBuffer buffer) {
-        position = buffer.readVec3I();
-        blockID = buffer.readUShort();
-        metadata = buffer.readByte();
+    public void read(PacketBuffer buf) {
+        position = buf.readVec3I();
+        blockID = buf.readUShort();
+        metadata = buf.readByte();
     }
 }

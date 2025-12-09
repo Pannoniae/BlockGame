@@ -48,7 +48,7 @@ public class Cactus(string name) : Block(name) {
         }
     }
 
-    public override void getDrop(List<ItemStack> drops, World world, int y, int z, int i, byte metadata, bool canBreak) {
+    public override void getDrop(List<ItemStack> drops, World world, int x, int y, int z, byte metadata, bool canBreak) {
         if (canBreak) {
             drops.Add(new ItemStack(getItem(), 1, 0));
         }

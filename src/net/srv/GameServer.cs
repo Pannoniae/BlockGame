@@ -144,6 +144,9 @@ public class GameServer : INetEventListener {
 
         Block.postLoad();
 
+        // compute content hash to detect client/server mismatches
+        Constants.computeContentHash();
+
         Command.register();
 
         initDiscord();
@@ -749,7 +752,7 @@ public class GameServer : INetEventListener {
         }
     }
 
-    public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channel, DeliveryMethod deliveryMethod) {
+    public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
         try {
             if (!peerToConnection.TryGetValue(peer, out var conn)) {
                 return;
@@ -770,6 +773,20 @@ public class GameServer : INetEventListener {
             var type = PacketRegistry.getType(packetID);
             var packet = (Packet)Activator.CreateInstance(type)!;
             packet.read(buf);
+
+            // verify packet was fully read
+            long expected = bytes.Length;
+            long actual = br.BaseStream.Position;
+            if (actual != expected) {
+                if (actual < expected) {
+                    int unread = (int)(expected - actual);
+                    int read = (int)(actual - 4); // subtract packet ID
+                    Log.error($"Packet {type.Name} (0x{packetID:X2}) underread: {unread} bytes left unread (expected {bytes.Length - 4} bytes, read {read})");
+                } else {
+                    int overread = (int)(actual - expected);
+                    Log.error($"Packet {type.Name} (0x{packetID:X2}) overread: tried to read {overread} bytes past end");
+                }
+            }
 
             // queue for game thread processing
             incomingPackets.Enqueue((packet, conn));
