@@ -57,7 +57,7 @@ public class Leaves : Block {
 
         // mahogany: 1 in 10 chance to drop apple
         if (id == MAHOGANY_LEAVES.id && Game.random.Next(10) == 0) {
-            drops.Add(new ItemStack(Item.ANANAS, 1, 0));
+            drops.Add(new ItemStack(Item.PINEAPPLE, 1, 0));
         }
 
         if (canBreak) {

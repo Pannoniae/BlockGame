@@ -270,6 +270,8 @@ public class Block {
     public static Block FARMLAND;
     public static Block FERN_GREEN;
     public static Block FERN_RED;
+    public static Block MUSHROOM_BROWN;
+    public static Block MUSHROOM_RED;
 
     public static Crop CROP_WHEAT;
     public static Crop CROP_CARROT;
@@ -1071,6 +1073,24 @@ public class Block {
         FERN_RED.waterTransparent();
         FERN_RED.itemLike();
         FERN_RED.setFlammable(60);
+
+        MUSHROOM_BROWN = register("brownMushroom", new Block("Brown Mushroom"));
+        MUSHROOM_BROWN.setTex(crossUVs(28, 2));
+        MUSHROOM_BROWN.setModel(BlockModel.makeGrass(MUSHROOM_BROWN));
+        MUSHROOM_BROWN.transparency();
+        MUSHROOM_BROWN.noCollision();
+        MUSHROOM_BROWN.waterTransparent();
+        MUSHROOM_BROWN.itemLike();
+        MUSHROOM_BROWN.setFlammable(60);
+
+        MUSHROOM_RED = register("redMushroom", new Block("Red Mushroom"));
+        MUSHROOM_RED.setTex(crossUVs(29, 2));
+        MUSHROOM_RED.setModel(BlockModel.makeGrass(MUSHROOM_RED));
+        MUSHROOM_RED.transparency();
+        MUSHROOM_RED.noCollision();
+        MUSHROOM_RED.waterTransparent();
+        MUSHROOM_RED.itemLike();
+        MUSHROOM_RED.setFlammable(60);
 
         ICE = register("ice", new Block("Ice"));
         ICE.setTex(uv("blocks.png", 16, 0));
