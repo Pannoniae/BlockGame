@@ -100,6 +100,8 @@ public class Item {
     public static Item CARROT;
     //public static Item SUGAR;
     public static Item APPLE_PIE;
+    //public static Item CHERRY;
+    public static Item ANANAS;
 
     public static Item BOW_WOOD;
     public static Item ARROW_WOOD;
@@ -388,6 +390,10 @@ public class Item {
         APPLE_PIE = register("applePie", new Food("Apple Pie", 40));
         APPLE_PIE.tex = uv("items.png", 13, 10);
         material[APPLE_PIE.id] = true;
+
+        ANANAS = register("ananas", new Food("Ananas", 10));
+        ANANAS.tex = uv("items.png", 15, 10);
+        material[ANANAS.id] = true;
 
         //mixed items
         BOTTLE = register("bottle", new Item("Empty Bottle"));

@@ -268,8 +268,13 @@ public class Block {
     public static Block MAPLE_GATE;*/
 
     public static Block FARMLAND;
+    public static Block FERN_GREEN;
+    public static Block FERN_RED;
+
     public static Crop CROP_WHEAT;
     public static Crop CROP_CARROT;
+
+
 
     // Compatibility wrappers for old static arrays
     public static XUList<Block> blocks => Registry.BLOCKS.values;
@@ -1049,6 +1054,23 @@ public class Block {
         log[FERN_LOG.id] = true;
         FERN_LOG.setFlammable(5);
 
+        FERN_GREEN = register("greenFern", new Block("Green Fern"));
+        FERN_GREEN.setTex(crossUVs(19, 6));
+        FERN_GREEN.setModel(BlockModel.makeGrass(FERN_GREEN));
+        FERN_GREEN.transparency();
+        FERN_GREEN.noCollision();
+        FERN_GREEN.waterTransparent();
+        FERN_GREEN.itemLike();
+        FERN_GREEN.setFlammable(60);
+
+        FERN_RED = register("redFern", new Block("Red Fern"));
+        FERN_RED.setTex(crossUVs(18, 6));
+        FERN_RED.setModel(BlockModel.makeGrass(FERN_RED));
+        FERN_RED.transparency();
+        FERN_RED.noCollision();
+        FERN_RED.waterTransparent();
+        FERN_RED.itemLike();
+        FERN_RED.setFlammable(60);
 
         ICE = register("ice", new Block("Ice"));
         ICE.setTex(uv("blocks.png", 16, 0));
