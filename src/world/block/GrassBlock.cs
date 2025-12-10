@@ -33,7 +33,7 @@ public class GrassBlock(string name) : Block(name) {
             if (targetBlock == DIRT.id || targetBlock == FARMLAND.id) {
                 if (ny < World.WORLDHEIGHT - 1 && world.getBlock(nx, ny + 1, nz) == AIR.id) {
                     // only spreads if air above (crops block spreading to seeded farmland)
-                    world.setBlock(nx, ny, nz, GRASS.id);
+                    world.setBlock(nx, ny, nz, id);
                 }
             }
         }

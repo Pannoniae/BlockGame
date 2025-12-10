@@ -24,7 +24,7 @@ namespace BlockGame.world.block;
 public class Block {
     private const int particleCount = 4;
 
-    public static List<ItemStack> drops = [];
+    public static readonly List<ItemStack> drops = [];
 
     /// <summary>
     /// Block ID
