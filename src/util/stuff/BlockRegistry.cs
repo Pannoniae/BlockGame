@@ -59,6 +59,7 @@ public class BlockRegistry : Registry<Block> {
      */
     public readonly XUList<bool> noItem;
     public readonly XUList<bool> isBlockEntity;
+    public readonly XUList<bool> circuit;
 
     public BlockRegistry() {
         fullBlock = track(true);
@@ -93,6 +94,7 @@ public class BlockRegistry : Registry<Block> {
 
         friction = track(0.8f);
         natural = track(false);
+        circuit = track(false);
     }
 
     public override int register(string type, Block value) {

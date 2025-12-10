@@ -100,6 +100,13 @@ public partial class BlockRenderer {
 
         public bool shouldFlipVertices;
 
+        /**
+         * Y-rotation of the block being rendered (0-3).
+         * Can support arbitrary in the future but not now.
+         * The rotation is always around the centre!
+         */
+        public byte rot;
+
         public readonly uint getBlock() {
             // this is unsafe but we know the cache is always 27 elements
             return blockCache[13];
@@ -158,6 +165,14 @@ public partial class BlockRenderer {
         }
     }
 
+    public void rot(int quarters) {
+        ctx.rot = (byte)(quarters & 3);
+    }
+
+    public void clearRot() {
+        ctx.rot = 0;
+    }
+
     // setup for world context
     // do we need this?
     public unsafe void setupWorld(bool smoothLighting = true, bool AO = true) {
@@ -182,6 +197,27 @@ public partial class BlockRenderer {
         smoothLighting = smoothLighting && Settings.instance.smoothLighting;
         AO = AO && Settings.instance.AO;
         isRenderingWorld = true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void rotateY90(ref float x, ref float z) {
+        if (ctx.rot == 0) return;
+        float dx = x - 0.5f;
+        float dz = z - 0.5f;
+        switch (ctx.rot) {
+            case 1:
+                x = -dz + 0.5f;
+                z = dx + 0.5f;
+                break;
+            case 2:
+                x = -dx + 0.5f;
+                z = -dz + 0.5f;
+                break;
+            case 3:
+                x = dz + 0.5f;
+                z = -dx + 0.5f;
+                break;
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -394,6 +430,145 @@ public partial class BlockRenderer {
         var tex = Vector128.Create(uMin, vMin, uMax, vMax);
         var factor = Block.atlasRatio * 32768f;
         return Vector128.Multiply(tex, factor);
+    }
+
+    /// <summary>
+    /// Single quad primitive. Positions in local block coords (0-1 range).
+    /// Winding order: p0→p1→p2→p3 should be counter-clockwise when viewed from front.
+    /// </summary>
+    public void quad(List<BlockVertexPacked> vertices, int bx, int by, int bz,
+        float x0, float y0, float z0,
+        float x1, float y1, float z1,
+        float x2, float y2, float z2,
+        float x3, float y3, float z3,
+        float u0, float v0, float u1, float v1,
+        RawDirection lightDir = RawDirection.NONE) {
+        rotateY90(ref x0, ref z0);
+        rotateY90(ref x1, ref z1);
+        rotateY90(ref x2, ref z2);
+        rotateY90(ref x3, ref z3);
+
+        applySimpleLighting(lightDir);
+        begin();
+        vertex(bx + x0, by + y0, bz + z0, u0, v0);
+        vertex(bx + x1, by + y1, bz + z1, u0, v1);
+        vertex(bx + x2, by + y2, bz + z2, u1, v1);
+        vertex(bx + x3, by + y3, bz + z3, u1, v0);
+        end(vertices);
+    }
+
+    /// <summary>
+    /// Double-sided quad (renders both front and back faces).
+    /// </summary>
+    public void quadDouble(List<BlockVertexPacked> vertices, int bx, int by, int bz,
+        float x0, float y0, float z0,
+        float x1, float y1, float z1,
+        float x2, float y2, float z2,
+        float x3, float y3, float z3,
+        float u0, float v0, float u1, float v1,
+        RawDirection lightDir = RawDirection.NONE) {
+        rotateY90(ref x0, ref z0);
+        rotateY90(ref x1, ref z1);
+        rotateY90(ref x2, ref z2);
+        rotateY90(ref x3, ref z3);
+
+        applySimpleLighting(lightDir);
+        begin();
+        vertex(bx + x0, by + y0, bz + z0, u0, v0);
+        vertex(bx + x1, by + y1, bz + z1, u0, v1);
+        vertex(bx + x2, by + y2, bz + z2, u1, v1);
+        vertex(bx + x3, by + y3, bz + z3, u1, v0);
+        endTwo(vertices);
+    }
+
+    /// <summary>
+    /// Box with texture stretched to fit each face.
+    /// </summary>
+    public void boxStretched(List<BlockVertexPacked> vertices, int bx, int by, int bz,
+        float x0, float y0, float z0, float x1, float y1, float z1,
+        float u0, float v0, float u1, float v1) {
+        // WEST (-X)
+        quad(vertices, bx, by, bz,
+            x0, y1, z1, x0, y0, z1, x0, y0, z0, x0, y1, z0,
+            u0, v0, u1, v1, RawDirection.WEST);
+
+        // EAST (+X)
+        quad(vertices, bx, by, bz,
+            x1, y1, z0, x1, y0, z0, x1, y0, z1, x1, y1, z1,
+            u0, v0, u1, v1, RawDirection.EAST);
+
+        // SOUTH (-Z)
+        quad(vertices, bx, by, bz,
+            x0, y1, z0, x0, y0, z0, x1, y0, z0, x1, y1, z0,
+            u0, v0, u1, v1, RawDirection.SOUTH);
+
+        // NORTH (+Z)
+        quad(vertices, bx, by, bz,
+            x1, y1, z1, x1, y0, z1, x0, y0, z1, x0, y1, z1,
+            u0, v0, u1, v1, RawDirection.NORTH);
+
+        // DOWN (-Y)
+        quad(vertices, bx, by, bz,
+            x1, y0, z1, x1, y0, z0, x0, y0, z0, x0, y0, z1,
+            u0, v0, u1, v1, RawDirection.DOWN);
+
+        // UP (+Y)
+        quad(vertices, bx, by, bz,
+            x0, y1, z1, x0, y1, z0, x1, y1, z0, x1, y1, z1,
+            u0, v0, u1, v1, RawDirection.UP);
+    }
+
+    /// <summary>
+    /// Box with UV region proportional to face dimensions.
+    /// u0,v0,u1,v1 defines the full texture tile; each face samples a subsection.
+    /// </summary>
+    public void boxProportional(List<BlockVertexPacked> vertices, int bx, int by, int bz,
+        float x0, float y0, float z0, float x1, float y1, float z1,
+        float u0, float v0, float u1, float v1) {
+        float du = u1 - u0;
+        float dv = v1 - v0;
+
+        // WEST (-X): spans Z and Y
+        quad(vertices, bx, by, bz,
+            x0, y1, z1, x0, y0, z1, x0, y0, z0, x0, y1, z0,
+            u0 + du * z0, v0 + dv * (1 - y1),
+            u0 + du * z1, v0 + dv * (1 - y0),
+            RawDirection.WEST);
+
+        // EAST (+X): spans Z and Y
+        quad(vertices, bx, by, bz,
+            x1, y1, z0, x1, y0, z0, x1, y0, z1, x1, y1, z1,
+            u0 + du * z0, v0 + dv * (1 - y1),
+            u0 + du * z1, v0 + dv * (1 - y0),
+            RawDirection.EAST);
+
+        // SOUTH (-Z): spans X and Y
+        quad(vertices, bx, by, bz,
+            x0, y1, z0, x0, y0, z0, x1, y0, z0, x1, y1, z0,
+            u0 + du * x0, v0 + dv * (1 - y1),
+            u0 + du * x1, v0 + dv * (1 - y0),
+            RawDirection.SOUTH);
+
+        // NORTH (+Z): spans X and Y
+        quad(vertices, bx, by, bz,
+            x1, y1, z1, x1, y0, z1, x0, y0, z1, x0, y1, z1,
+            u0 + du * x0, v0 + dv * (1 - y1),
+            u0 + du * x1, v0 + dv * (1 - y0),
+            RawDirection.NORTH);
+
+        // DOWN (-Y): spans X and Z
+        quad(vertices, bx, by, bz,
+            x1, y0, z1, x1, y0, z0, x0, y0, z0, x0, y0, z1,
+            u0 + du * x0, v0 + dv * z0,
+            u0 + du * x1, v0 + dv * z1,
+            RawDirection.DOWN);
+
+        // UP (+Y): spans X and Z
+        quad(vertices, bx, by, bz,
+            x0, y1, z1, x0, y1, z0, x1, y1, z0, x1, y1, z1,
+            u0 + du * x0, v0 + dv * z0,
+            u0 + du * x1, v0 + dv * z1,
+            RawDirection.UP);
     }
 
     /// <summary>
@@ -1181,7 +1356,7 @@ public partial class BlockRenderer {
         var uvdm = UVPair.texCoords(texm);
 
         // 2x2 planes, "hash" pattern
-        const float d = 0.25f;  // offset from edge
+        const float d = 0.25f; // offset from edge
 
         // north-south plane at x=0.25 (west side)
         applySimpleLighting(RawDirection.NONE);
