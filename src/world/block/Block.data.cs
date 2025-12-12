@@ -185,6 +185,7 @@ public partial class Block {
     public static Wire WIRE;
     public static Block IRON_CHAIN;
     public static Block BUTTON;
+    public static Block DETECTOR_BLOCK;
 
     public static void preLoad() {
         if (!Net.mode.isDed()) {
@@ -501,6 +502,12 @@ public partial class Block {
         BUTTON.partialBlock();
         BUTTON.material(Material.METAL);
         BUTTON.setHardness(0.5);
+
+        DETECTOR_BLOCK = register("detectorBlock", new Block("Detector Block"));
+        DETECTOR_BLOCK.setTex(grassUVs(17, 3,18, 3, 19, 3));
+        renderType[DETECTOR_BLOCK.id] = RenderType.CUBE_DYNTEXTURE;
+        DETECTOR_BLOCK.material(Material.STONE);
+
 
         // the blocks
         COAL_BLOCK = register("coalBlock", new Block("Block of Coal"));
