@@ -382,8 +382,8 @@ public class Recipe {
         LANTERN.shape(141_222_131, 3);
         LANTERN.ingredients(Item.IRON_INGOT, Block.GLASS.item, Block.TORCH.item, Item.DYE); // any dye
 
-        IRON_CHAIN = register(new ItemStack(Block.IRON_CHAIN.item, 6));
-        IRON_CHAIN.shape(010_000_010, 3);
+        IRON_CHAIN = register(new ItemStack(Block.IRON_CHAIN.item, 9));
+        IRON_CHAIN.shape(010_010_010, 3);
         IRON_CHAIN.ingredients(Item.IRON_INGOT);
 
         GLASS_FRAMED_C = register(new ItemStack(Block.GLASS_FRAMED_C.item, 4));
