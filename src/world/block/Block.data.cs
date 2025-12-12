@@ -183,6 +183,7 @@ public partial class Block {
     public static Block FERN_RED;
     public static Crop CROP_CARROT;
     public static Wire WIRE;
+    public static Block IRON_CHAIN;
 
     public static void preLoad() {
         if (!Net.mode.isDed()) {
@@ -484,6 +485,13 @@ public partial class Block {
         LANTERN.light(15);
         LANTERN.partialBlock();
         LANTERN.material(Material.METAL);
+
+        IRON_CHAIN = register("ironChain", new Chain("Iron Chain"));
+        IRON_CHAIN.setTex(uv("blocks.png", 16, 3));
+        IRON_CHAIN.transparency();
+        IRON_CHAIN.itemLike();
+        IRON_CHAIN.material(Material.METAL);
+        //IRON_CHAIN.setHardness(0.5);
 
         // the blocks
         COAL_BLOCK = register("coalBlock", new Block("Block of Coal"));
