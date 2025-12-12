@@ -1,4 +1,4 @@
-﻿using BlockGame.GL;
+using BlockGame.GL;
 using BlockGame.main;
 using BlockGame.util;
 using Molten.DoublePrecision;
@@ -184,6 +184,7 @@ public partial class Block {
     public static Crop CROP_CARROT;
     public static Wire WIRE;
     public static Block IRON_CHAIN;
+    public static Block BUTTON;
 
     public static void preLoad() {
         if (!Net.mode.isDed()) {
@@ -492,6 +493,14 @@ public partial class Block {
         IRON_CHAIN.itemLike();
         IRON_CHAIN.material(Material.METAL);
         IRON_CHAIN.setHardness(0.75);
+
+        BUTTON = register("button", new Button("Button"));
+        BUTTON.setTex(cubeUVs(15, 3));
+        renderType[BUTTON.id] = RenderType.CUSTOM;
+        //AABB[BUTTON.id] = new AABB(new Vector3D(6/16f, 0, 6/16f), new Vector3D(10/16f, 2/16f, 10/16f));
+        BUTTON.partialBlock();
+        BUTTON.material(Material.METAL);
+        BUTTON.setHardness(0.5);
 
         // the blocks
         COAL_BLOCK = register("coalBlock", new Block("Block of Coal"));
