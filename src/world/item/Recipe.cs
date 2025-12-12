@@ -78,6 +78,7 @@ public class Recipe {
     public static Recipe beige_dye;
     public static Recipe darkgreen_dye;
     public static Recipe LANTERN;
+    public static Recipe IRON_CHAIN;
 
     public static Recipe GOLD_BLOCK;
     public static Recipe IRON_BLOCK;
@@ -380,6 +381,10 @@ public class Recipe {
         LANTERN = register(new ItemStack(Block.LANTERN.item, 1));
         LANTERN.shape(141_222_131, 3);
         LANTERN.ingredients(Item.IRON_INGOT, Block.GLASS.item, Block.TORCH.item, Item.DYE); // any dye
+
+        IRON_CHAIN = register(new ItemStack(Block.IRON_CHAIN.item, 6));
+        IRON_CHAIN.shape(010_000_010, 3);
+        IRON_CHAIN.ingredients(Item.IRON_INGOT);
 
         GLASS_FRAMED_C = register(new ItemStack(Block.GLASS_FRAMED_C.item, 4));
         GLASS_FRAMED_C.shape(020_212_020, 3);

@@ -491,7 +491,7 @@ public partial class Block {
         IRON_CHAIN.transparency();
         IRON_CHAIN.itemLike();
         IRON_CHAIN.material(Material.METAL);
-        //IRON_CHAIN.setHardness(0.5);
+        IRON_CHAIN.setHardness(0.75);
 
         // the blocks
         COAL_BLOCK = register("coalBlock", new Block("Block of Coal"));
