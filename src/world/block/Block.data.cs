@@ -1106,7 +1106,8 @@ public partial class Block {
         CROP_CARROT.material(Material.ORGANIC);
 
         WIRE = register("wire", new Wire("Wire"));
-        WIRE.setTex(uv("blocks.png", 0, 19), uv("blocks.png", 1, 19), uv("blocks.png", 2, 19));
+        WIRE.setTex(uv("blocks.png", 0, 19), uv("blocks.png", 1, 19), uv("blocks.png", 2, 19),
+            uv("blocks.png", 0, 20), uv("blocks.png", 1, 20), uv("blocks.png", 2, 20));
         renderType[WIRE.id] = RenderType.CUSTOM;
         WIRE.transparency();
         WIRE.noCollision();

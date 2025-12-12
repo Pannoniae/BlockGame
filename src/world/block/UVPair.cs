@@ -18,6 +18,9 @@ public readonly record struct UVPair(float u, float v) {
     public readonly float u = u;
     public readonly float v = v;
 
+    public UVPair(float u) : this(u, u) {
+    }
+
     public static UVPair operator +(UVPair uv, float q) {
         return new UVPair(uv.u + q, uv.v + q);
     }
@@ -35,22 +38,22 @@ public readonly record struct UVPair(float u, float v) {
      */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2D<Half> texCoordsH(int x, int y) {
-        return new Vector2D<Half>((Half)(x * Block.atlasRatio), (Half)(y * Block.atlasRatio));
+        return new Vector2D<Half>((Half)(x * Block.atlasRatio.X), (Half)(y * Block.atlasRatio.Y));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2D<Half> texCoordsH(UVPair uv) {
-        return new Vector2D<Half>((Half)(uv.u * Block.atlasRatio), (Half)(uv.v * Block.atlasRatio));
+        return new Vector2D<Half>((Half)(uv.u * Block.atlasRatio.X), (Half)(uv.v * Block.atlasRatio.Y));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2 texCoords(float x, float y) {
-        return new Vector2(x * Block.atlasRatio, y * Block.atlasRatio);
+        return new Vector2(x * Block.atlasRatio.X, y * Block.atlasRatio.Y);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2 texCoords(UVPair uv) {
-        return new Vector2(uv.u * Block.atlasRatio, uv.v * Block.atlasRatio);
+        return new Vector2(uv.u * Block.atlasRatio.X, uv.v * Block.atlasRatio.Y);
     }
 
     public static Vector2 texCoords(BTexture2D tex, float x, float y) {

@@ -10,6 +10,7 @@ using BlockGame.util;
 using BlockGame.util.stuff;
 using BlockGame.world.entity;
 using BlockGame.world.item;
+using Molten;
 using Vector3D = Molten.DoublePrecision.Vector3D;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
@@ -72,19 +73,19 @@ public partial class Block {
     protected static readonly List<AABB> AABBList = [];
 
     // atlas dimensions - updated when texture pack is loaded
-    public static int atlasSize = 512;
+    public static Vector2I atlasSize = new Vector2I(512, 512);
     public const int textureSize = 16;
 
-    public static float atlasRatio = textureSize / (float)atlasSize;
-    public static float atlasRatioInv = 1 / atlasRatio;
+    public static Vector2 atlasRatio = new Vector2(textureSize) / new Vector2(atlasSize.X, atlasSize.Y);
+    public static Vector2 atlasRatioInv = new Vector2(atlasSize.X, atlasSize.Y) / new Vector2(textureSize);
 
     /// <summary>
     /// Update atlas size after loading texture pack. Recalculates atlasRatio.
     /// </summary>
-    public static void updateAtlasSize(int newAtlasSize) {
-        atlasSize = newAtlasSize;
-        atlasRatio = textureSize / (float)atlasSize;
-        atlasRatioInv = 1 / atlasRatio;
+    public static void updateAtlasSize(int width, int height) {
+        atlasSize = new Vector2I(width, height);
+        atlasRatio = new Vector2(textureSize) / new Vector2(atlasSize.X, atlasSize.Y);
+        atlasRatioInv = new Vector2(atlasSize.X, atlasSize.Y) / new Vector2(textureSize);
     }
 
     public static UVPair uv(string source, int x, int y) {

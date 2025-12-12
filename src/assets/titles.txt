@@ -192,3 +192,4 @@ Cosmic Reach, Cosmic Horrors
 Who said you have to collect your memory?
 deprecated since yesterday
 register(0x00, typeof(HugPacket));
+ashigaru sex chat

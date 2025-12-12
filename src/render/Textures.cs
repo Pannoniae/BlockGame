@@ -221,7 +221,7 @@ public class Textures {
         }
 
         // update Block.atlasSize
-        Block.updateAtlasSize(blockResult.width);
+        Block.updateAtlasSize(blockResult.width, blockResult.height);
 
         // dispose block sources
         foreach (var src in blockSources) {
