@@ -79,6 +79,7 @@ public class Recipe {
     public static Recipe darkgreen_dye;
     public static Recipe LANTERN;
     public static Recipe IRON_CHAIN;
+    public static Recipe L_DETECTOR;
 
     public static Recipe GOLD_BLOCK;
     public static Recipe IRON_BLOCK;
@@ -108,6 +109,7 @@ public class Recipe {
     private int shapePattern; // encoded pattern (e.g., 111_020_020)
     private Item[] ingredientList = [];
     private int[] quantitiesList = []; // required quantity for each ingredient (default 1)
+    private int[] metadataList = []; // required metadata for each ingredient (-1 = any)
     private bool isShapeless;
     private int gridSize; // 2 for 2x2, 3 for 3x3
 
@@ -380,11 +382,15 @@ public class Recipe {
 
         LANTERN = register(new ItemStack(Block.LANTERN.item, 1));
         LANTERN.shape(141_222_131, 3);
-        LANTERN.ingredients(Item.IRON_INGOT, Block.GLASS.item, Block.TORCH.item, Item.DYE); // any dye
+        LANTERN.ingredients(new ItemStack(Item.IRON_INGOT, 1), new ItemStack(Block.GLASS.item, 1), new ItemStack(Block.TORCH.item, 1), Item.DYE[5]); //orange dye
 
         IRON_CHAIN = register(new ItemStack(Block.IRON_CHAIN.item, 9));
         IRON_CHAIN.shape(010_010_010, 3);
         IRON_CHAIN.ingredients(Item.IRON_INGOT);
+
+        L_DETECTOR = register(new ItemStack(Block.L_DETECTOR.item, 1));
+        L_DETECTOR.shape(111_423_111, 3);
+        L_DETECTOR.ingredients(new ItemStack(Block.STONE.item, 1), new ItemStack(Block.GLASS.item, 1), Item.DYE[5], Item.DYE[4]); //orange and red dye
 
         GLASS_FRAMED_C = register(new ItemStack(Block.GLASS_FRAMED_C.item, 4));
         GLASS_FRAMED_C.shape(020_212_020, 3);
@@ -565,6 +571,23 @@ public class Recipe {
 
     public Recipe ingredients(params ReadOnlySpan<Item> ingredients) {
         ingredientList = ingredients.ToArray();
+        // default all quantities to 1
+        quantitiesList = new int[ingredientList.Length];
+        Array.Fill(quantitiesList, 1);
+        // default all metadata to -1 (any)
+        metadataList = new int[ingredientList.Length];
+        Array.Fill(metadataList, -1);
+        return this;
+    }
+
+    /** ingredients overload accepting ItemStack for metadata-specific items */
+    public Recipe ingredients(params ItemStack[] ingredients) {
+        ingredientList = new Item[ingredients.Length];
+        metadataList = new int[ingredients.Length];
+        for (int i = 0; i < ingredients.Length; i++) {
+            ingredientList[i] = ingredients[i].item;
+            metadataList[i] = ingredients[i].metadata;
+        }
         // default all quantities to 1
         quantitiesList = new int[ingredientList.Length];
         Array.Fill(quantitiesList, 1);

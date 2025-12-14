@@ -185,7 +185,8 @@ public partial class Block {
     public static Wire WIRE;
     public static Block IRON_CHAIN;
     public static Block BUTTON;
-    public static Block DETECTOR_BLOCK;
+    public static Block IC_DETECTOR;
+    public static Block L_DETECTOR;
 
     public static void preLoad() {
         if (!Net.mode.isDed()) {
@@ -502,11 +503,19 @@ public partial class Block {
         BUTTON.partialBlock();
         BUTTON.material(Material.METAL);
         BUTTON.setHardness(0.5);
+        BUTTON.noCollision();
 
-        DETECTOR_BLOCK = register("detectorBlock", new Block("Detector Block"));
-        DETECTOR_BLOCK.setTex(grassUVs(17, 3,18, 3, 19, 3));
-        renderType[DETECTOR_BLOCK.id] = RenderType.CUBE_DYNTEXTURE;
-        DETECTOR_BLOCK.material(Material.STONE);
+        /*IC_DETECTOR = register("ICDetector", new Block("IC Detector"));
+        IC_DETECTOR.setTex(grassUVs(17, 3,18, 3, 5, 0));
+        renderType[IC_DETECTOR.id] = RenderType.CUBE_DYNTEXTURE;
+        IC_DETECTOR.material(Material.STONE);
+        */
+
+        L_DETECTOR = register("LDetector", new Block("LDetector"));
+        L_DETECTOR.setTex(ldetectorUVs(5, 0,19, 3, 20, 3));
+        renderType[L_DETECTOR.id] = RenderType.CUBE_DYNTEXTURE;
+        L_DETECTOR.material(Material.STONE);
+        L_DETECTOR.light(10);
 
 
         // the blocks

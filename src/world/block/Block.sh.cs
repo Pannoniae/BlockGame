@@ -31,8 +31,7 @@ public partial class Block {
             uv("blocks.png", frontX, frontY),
             uv("blocks.png", litX, litY),
             uv("blocks.png", sideX, sideY),
-            uv("blocks.png", top_bottomX, top_bottomY)
-        ];
+            uv("blocks.png", top_bottomX, top_bottomY)];
     }
 
     public static UVPair[] CTUVs(int topX, int topY, int xx, int xy, int zx, int zy, int bottomX, int bottomY) {
@@ -49,6 +48,13 @@ public partial class Block {
         var bottom = uv("blocks.png", bottomX, bottomY);
         var top = uv("blocks.png", topX, topY);
         return [x, x, z, x, bottom, top];
+    }
+
+    public static UVPair[] ldetectorUVs(int topX, int topY, int xx, int xy, int zx, int zy) {
+        var x = uv("blocks.png", xx, xy);
+        var z = uv("blocks.png", zx, zy);
+        var top = uv("blocks.png", topX, topY);
+        return [x, z, top, top, top, top];
     }
 
     public static UVPair[] crossUVs(int x, int y) {

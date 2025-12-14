@@ -7,6 +7,9 @@ public class DyeItem : Item {
     public DyeItem(string name) : base(name) {
     }
 
+    /** access dye colours by index: DYE[0] = white, DYE[1] = red, etc */
+    public ItemStack this[int meta] => new ItemStack(this, 1, meta);
+
     public override string getName(ItemStack stack) {
         int meta = stack.metadata;
         return meta >= CandyBlock.colourNames.Length ? name : $"{CandyBlock.colourNames[meta]} Dye";

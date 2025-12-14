@@ -56,6 +56,8 @@ public class ItemStack : Persistent {
         return Item.get(id)!;
     }
 
+    public Item item => getItem();
+
     public bool same(ItemStack stack) {
         return stack.id == id && stack.metadata == metadata;
     }
