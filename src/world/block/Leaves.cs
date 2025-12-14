@@ -34,7 +34,6 @@ public class Leaves : Block {
         if (id == LEAVES.id && Game.random.Next(10) == 0) {
             drops.Add(new ItemStack(Item.APPLE, 1, 0));
         }
-
         // oak: 1 in 15 chance to drop sapling
         if (id == LEAVES.id && Game.random.Next(15) == 0) {
             drops.Add(new ItemStack(OAK_SAPLING.item, 1, 0));
@@ -44,7 +43,6 @@ public class Leaves : Block {
         if (id == MAPLE_LEAVES.id && Game.random.Next(15) == 0) {
             drops.Add(new ItemStack(MAPLE_SAPLING.item, 1, 0));
         }
-
         // maple leaves: 1 in 20 chance to drop maple syrup
         if (id == MAPLE_LEAVES.id && Game.random.Next(20) == 0) {
             drops.Add(new ItemStack(Item.MAPLE_SYRUP, 1, 0));
@@ -54,15 +52,23 @@ public class Leaves : Block {
         if (id == MAHOGANY_LEAVES.id && Game.random.Next(15) == 0) {
             drops.Add(new ItemStack(MAHOGANY_SAPLING.item, 1, 0));
         }
-
         // mahogany: 1 in 10 chance to drop apple
         if (id == MAHOGANY_LEAVES.id && Game.random.Next(10) == 0) {
             drops.Add(new ItemStack(Item.PINEAPPLE, 1, 0));
         }
 
+        // PINE: 1 in 15 chance to drop sapling
+        if (id == PINE_LEAVES.id && Game.random.Next(15) == 0) {
+            drops.Add(new ItemStack(PINE_SAPLING.item, 1, 0));
+        }
+
         // palm: 1 in 10 chance to drop banana
         if (id == PALM_LEAVES.id && Game.random.Next(10) == 0) {
             drops.Add(new ItemStack(Item.BANANA, 1, 0));
+        }
+        // palm: 1 in 15 chance to drop sapling
+        if (id == PALM_LEAVES.id && Game.random.Next(15) == 0) {
+            drops.Add(new ItemStack(PALM_SAPLING.item, 1, 0));
         }
 
         if (canBreak) {

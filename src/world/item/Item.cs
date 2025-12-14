@@ -98,6 +98,8 @@ public class Item {
     public static Item BREAD;
     public static Item CARROT_SEEDS;
     public static Item CARROT;
+    public static Item TEA_SEEDS;
+    public static Item TEA_LEAVES;
     //public static Item SUGAR;
     public static Item APPLE_PIE;
     //public static Item CHERRY;
@@ -349,6 +351,16 @@ public class Item {
         CARROT_SEEDS.tex = uv("items.png", 12, 10);
         material[CARROT_SEEDS.id] = true;
 
+        TEA_SEEDS = register("teaseeds", new SeedItem("Tea Seeds", Block.CROP_TEA, Block.FARMLAND));
+        TEA_SEEDS.tex = uv("items.png", 8, 11);
+        material[TEA_SEEDS.id] = true;
+
+        TEA_LEAVES = register("teaLeaves", new Item("Tea Leaves"));
+        TEA_LEAVES.tex = uv("items.png", 9, 11);
+        material[TEA_LEAVES.id] = true;
+        Block.CROP_TEA.product = TEA_LEAVES;
+        Block.CROP_TEA.seedItem = TEA_SEEDS;
+
         //Food items
         APPLE = register("apple", new Food("Apple", 5));
         APPLE.tex = uv("items.png", 0, 10);
@@ -475,6 +487,7 @@ public class Item {
         Registry.ITEMS.blackList[Block.BRICK_FURNACE_LIT.item.id] = true;
         Registry.ITEMS.blackList[Block.CROP_WHEAT.item.id] = true;
         Registry.ITEMS.blackList[Block.CROP_CARROT.item.id] = true;
+        Registry.ITEMS.blackList[Block.CROP_TEA.item.id] = true;
         Registry.ITEMS.blackList[Block.FARMLAND.item.id] = true;
 
         // fuel values

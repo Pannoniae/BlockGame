@@ -97,6 +97,7 @@ public partial class Block {
 
     public static Block PALM_LOG;
     public static Block PALM_LEAVES;
+    public static Block PALM_SAPLING;
 
     public static Block FERN_LOG;
 
@@ -182,6 +183,7 @@ public partial class Block {
     public static Block FERN_GREEN;
     public static Block FERN_RED;
     public static Crop CROP_CARROT;
+    public static Crop CROP_TEA;
     public static Wire WIRE;
     public static Block IRON_CHAIN;
     public static Block BUTTON;
@@ -828,6 +830,16 @@ public partial class Block {
         leaves[PALM_LEAVES.id] = true;
         PALM_LEAVES.setFlammable(60);
 
+        PALM_SAPLING = register("palmSapling", new Sapling("Palm Sapling", SaplingType.PALM));
+        PALM_SAPLING.setTex(crossUVs(17, 6));
+        PALM_SAPLING.setModel(BlockModel.makeGrass(PALM_SAPLING));
+        PALM_SAPLING.transparency();
+        PALM_SAPLING.noCollision();
+        PALM_SAPLING.waterTransparent();
+        PALM_SAPLING.itemLike();
+        PALM_SAPLING.material(Material.ORGANIC);
+        PALM_SAPLING.setFlammable(60);
+
         REDWOOD_LOG = register("redwoodLog", new Block("Redwood Log"));
         REDWOOD_LOG.setTex(grassUVs(20, 2, 19, 2, 21, 2));
         REDWOOD_LOG.setModel(BlockModel.makeCube(REDWOOD_LOG));
@@ -1119,6 +1131,16 @@ public partial class Block {
         CROP_CARROT.itemLike();
         CROP_CARROT.waterTransparent();
         CROP_CARROT.material(Material.ORGANIC);
+
+        CROP_TEA = (Crop)register("teaCrop", new Crop("Tea Leaves", 6));
+        CROP_TEA.setTex(uvRange("blocks.png", 20, 7, 6));
+        renderType[CROP_TEA.id] = RenderType.CROP;
+        CROP_TEA.transparency();
+        CROP_TEA.noCollision();
+        CROP_TEA.itemLike();
+        CROP_TEA.waterTransparent();
+        CROP_TEA.material(Material.ORGANIC);
+
 
         WIRE = register("wire", new Wire("Wire"));
         WIRE.setTex(uv("blocks.png", 0, 19), uv("blocks.png", 1, 19), uv("blocks.png", 2, 19),
