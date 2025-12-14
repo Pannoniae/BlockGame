@@ -79,7 +79,7 @@ public class Recipe {
     public static Recipe darkgreen_dye;
     public static Recipe LANTERN;
     public static Recipe IRON_CHAIN;
-    public static Recipe L_DETECTOR;
+    public static Recipe OBSERVER;
 
     public static Recipe GOLD_BLOCK;
     public static Recipe IRON_BLOCK;
@@ -388,9 +388,9 @@ public class Recipe {
         IRON_CHAIN.shape(010_010_010, 3);
         IRON_CHAIN.ingredients(Item.IRON_INGOT);
 
-        L_DETECTOR = register(new ItemStack(Block.L_DETECTOR.item, 1));
-        L_DETECTOR.shape(111_423_111, 3);
-        L_DETECTOR.ingredients(new ItemStack(Block.STONE.item, 1), new ItemStack(Block.GLASS.item, 1), Item.DYE[5], Item.DYE[4]); //orange and red dye
+        OBSERVER = register(new ItemStack(Block.OBSERVER.item, 1));
+        OBSERVER.shape(111_423_111, 3);
+        OBSERVER.ingredients(new ItemStack(Block.STONE.item, 1), new ItemStack(Block.GLASS.item, 1), Item.DYE[5], Item.DYE[4]); //orange and red dye
 
         GLASS_FRAMED_C = register(new ItemStack(Block.GLASS_FRAMED_C.item, 4));
         GLASS_FRAMED_C.shape(020_212_020, 3);

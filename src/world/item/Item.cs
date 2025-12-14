@@ -102,6 +102,7 @@ public class Item {
     public static Item APPLE_PIE;
     //public static Item CHERRY;
     public static Item PINEAPPLE;
+    public static Item BANANA;
 
     public static Item BOW_WOOD;
     public static Item ARROW_WOOD;
@@ -394,6 +395,10 @@ public class Item {
         PINEAPPLE = register("pineapple", new Food("Pineapple", 10));
         PINEAPPLE.tex = uv("items.png", 15, 10);
         material[PINEAPPLE.id] = true;
+
+        BANANA = register("banana", new Food("Banana", 15));
+        BANANA.tex = uv("items.png", 15, 11);
+        material[BANANA.id] = true;
 
         //mixed items
         BOTTLE = register("bottle", new Item("Empty Bottle"));

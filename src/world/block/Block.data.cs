@@ -186,7 +186,7 @@ public partial class Block {
     public static Block IRON_CHAIN;
     public static Block BUTTON;
     public static Block IC_DETECTOR;
-    public static Block L_DETECTOR;
+    public static Block OBSERVER;
 
     public static void preLoad() {
         if (!Net.mode.isDed()) {
@@ -499,7 +499,6 @@ public partial class Block {
         BUTTON = register("button", new Button("Button"));
         BUTTON.setTex(cubeUVs(15, 3));
         renderType[BUTTON.id] = RenderType.CUSTOM;
-        //AABB[BUTTON.id] = new AABB(new Vector3D(6/16f, 0, 6/16f), new Vector3D(10/16f, 2/16f, 10/16f));
         BUTTON.partialBlock();
         BUTTON.material(Material.METAL);
         BUTTON.setHardness(0.5);
@@ -511,11 +510,11 @@ public partial class Block {
         IC_DETECTOR.material(Material.STONE);
         */
 
-        L_DETECTOR = register("LDetector", new Block("LDetector"));
-        L_DETECTOR.setTex(ldetectorUVs(5, 0,19, 3, 20, 3));
-        renderType[L_DETECTOR.id] = RenderType.CUBE_DYNTEXTURE;
-        L_DETECTOR.material(Material.STONE);
-        L_DETECTOR.light(10);
+        OBSERVER = register("observer", new Block("Observer"));
+        OBSERVER.setTex(ldetectorUVs(5, 0,19, 3, 20, 3));
+        renderType[OBSERVER.id] = RenderType.CUBE_DYNTEXTURE;
+        OBSERVER.material(Material.STONE);
+        OBSERVER.light(10);
 
 
         // the blocks

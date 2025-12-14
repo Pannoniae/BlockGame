@@ -60,6 +60,11 @@ public class Leaves : Block {
             drops.Add(new ItemStack(Item.PINEAPPLE, 1, 0));
         }
 
+        // palm: 1 in 10 chance to drop banana
+        if (id == PALM_LEAVES.id && Game.random.Next(10) == 0) {
+            drops.Add(new ItemStack(Item.BANANA, 1, 0));
+        }
+
         if (canBreak) {
             drops.Add(new ItemStack(getItem(), 1, 0));
         }
