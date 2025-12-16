@@ -934,7 +934,7 @@ public partial class Block {
         MUSHROOM_GREEN.waterTransparent();
         MUSHROOM_GREEN.itemLike();
         MUSHROOM_GREEN.setFlammable(60);
-        MUSHROOM_GREEN.light(8);
+        MUSHROOM_GREEN.light(10);
 
         ICE = register("ice", new Block("Ice"));
         ICE.setTex(uv("blocks.png", 16, 0));
