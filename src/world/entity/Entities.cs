@@ -37,6 +37,7 @@ public class Entities {
     public static int ZOMBIE;
     public static int EYE;
     public static int MUMMY;
+    public static int DODO;
 
     /** spawn metadata for each entity type */
     public static XUList<SpawnType> spawnType => Registry.ENTITIES.spawnType;
@@ -58,6 +59,7 @@ public class Entities {
         ZOMBIE = register("zombie", w => new Zombie(w));
         EYE = register("eye", w => new DemonEye(w));
         MUMMY = register("mummy", w => new Mummy(w));
+        DODO = register("dodo", w => new Dodo(w));
 
         if (!Net.mode.isDed()) {
             EntityRenderers.reloadAll();
@@ -68,7 +70,8 @@ public class Entities {
         spawnType[PIG] = SpawnType.PASSIVE;
         spawnType[ZOMBIE] = SpawnType.HOSTILE;
         spawnType[EYE] = SpawnType.HOSTILE;
-        spawnType[MUMMY] = SpawnType.HOSTILE;
+        spawnType[MUMMY] = SpawnType.CAVE;
+        spawnType[DODO] = SpawnType.PASSIVE;
     }
 
     /**
