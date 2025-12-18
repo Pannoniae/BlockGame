@@ -105,6 +105,8 @@ public class Item {
     //public static Item CHERRY;
     public static Item PINEAPPLE;
     public static Item BANANA;
+    public static Item STRAWBERRY_SEEDS;
+    public static Item STRAWBERRY;
 
     public static Item BOW_WOOD;
     public static Item ARROW_WOOD;
@@ -392,6 +394,17 @@ public class Item {
         Block.CROP_CARROT.product = CARROT;
         Block.CROP_CARROT.seedItem = CARROT_SEEDS;
 
+        STRAWBERRY_SEEDS = register("strawberryseeds", new SeedItem("Strawberry Seeds", Block.CROP_STRAWBERRY, Block.FARMLAND));
+        STRAWBERRY_SEEDS.tex = uv("items.png", 13, 11);
+        material[STRAWBERRY_SEEDS.id] = true;
+
+        STRAWBERRY = register("strawberry", new Food("Strawberry", 10));
+        STRAWBERRY.tex = uv("items.png", 14, 11);
+        material[STRAWBERRY.id] = true;
+        Block.CROP_STRAWBERRY.product = STRAWBERRY;
+        Block.CROP_STRAWBERRY.seedItem = STRAWBERRY_SEEDS;
+
+
         BREAD = register("bread", new Food("Bread", 25));
         BREAD.tex = uv("items.png", 10, 10);
         material[BREAD.id] = true;
@@ -488,6 +501,7 @@ public class Item {
         Registry.ITEMS.blackList[Block.CROP_WHEAT.item.id] = true;
         Registry.ITEMS.blackList[Block.CROP_CARROT.item.id] = true;
         Registry.ITEMS.blackList[Block.CROP_TEA.item.id] = true;
+        Registry.ITEMS.blackList[Block.CROP_STRAWBERRY.item.id] = true;
         Registry.ITEMS.blackList[Block.FARMLAND.item.id] = true;
 
         // fuel values

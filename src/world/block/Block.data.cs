@@ -185,6 +185,8 @@ public partial class Block {
     public static Block FERN_RED;
     public static Crop CROP_CARROT;
     public static Crop CROP_TEA;
+    public static Crop CROP_STRAWBERRY;
+
     public static Wire WIRE;
     public static Block IRON_CHAIN;
     public static Block BUTTON;
@@ -1151,6 +1153,15 @@ public partial class Block {
         CROP_TEA.itemLike();
         CROP_TEA.waterTransparent();
         CROP_TEA.material(Material.ORGANIC);
+
+        CROP_STRAWBERRY = (Crop)register("strawberryCrop", new Crop("Strawberry", 6));
+        CROP_STRAWBERRY.setTex(uvRange("blocks.png", 20, 8, 6));
+        renderType[CROP_STRAWBERRY.id] = RenderType.CROP;
+        CROP_STRAWBERRY.transparency();
+        CROP_STRAWBERRY.noCollision();
+        CROP_STRAWBERRY.itemLike();
+        CROP_STRAWBERRY.waterTransparent();
+        CROP_STRAWBERRY.material(Material.ORGANIC);
 
 
         WIRE = register("wire", new Wire("Wire"));
