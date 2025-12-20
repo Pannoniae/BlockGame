@@ -18,7 +18,7 @@ public class Dodo : Mob {
     }
 
     public override void getDrop(List<ItemStack> drops) {
-        drops.Add(new ItemStack(Item.FEATHER, 100, 0));
+        drops.Add(new ItemStack(Item.FEATHER, 64, 0));
     }
 
 }
