@@ -98,6 +98,7 @@ public partial class Block {
     public static Block PALM_LOG;
     public static Block PALM_LEAVES;
     public static Block PALM_SAPLING;
+    public static Block BANANAFRUIT;
 
     public static Block FERN_LOG;
 
@@ -179,6 +180,7 @@ public partial class Block {
     public static Block MUSHROOM_BROWN;
     public static Block MUSHROOM_RED;
     public static Block MUSHROOM_GREEN;
+    public static Block BLACKBERRY_BUSH;
 
     public static Crop CROP_WHEAT;
     public static Block FERN_GREEN;
@@ -510,7 +512,7 @@ public partial class Block {
         BUTTON.noCollision();
 
         /*IC_DETECTOR = register("ICDetector", new Block("IC Detector"));
-        IC_DETECTOR.setTex(grassUVs(17, 3,18, 3, 5, 0));
+        IC_DETECTOR.setTex(grassUVs(17, 3, 18, 3, 5, 0));
         renderType[IC_DETECTOR.id] = RenderType.CUBE_DYNTEXTURE;
         IC_DETECTOR.material(Material.STONE);
         */
@@ -843,6 +845,13 @@ public partial class Block {
         PALM_SAPLING.material(Material.ORGANIC);
         PALM_SAPLING.setFlammable(60);
 
+        BANANAFRUIT = register("bananafruit", new Leaves("Banana"));
+        //BANANAFRUIT.setTex(grassUVs(16, 7, 17, 7, 18, 7));
+        //BANANAFRUIT.setModel(BlockModel.makeCube(BANANAFRUIT));
+        BANANAFRUIT.setTex(crossUVs(17, 7));
+        BANANAFRUIT.setModel(BlockModel.makeGrass(BANANAFRUIT));
+        BANANAFRUIT.transparency();
+
         REDWOOD_LOG = register("redwoodLog", new Block("Redwood Log"));
         REDWOOD_LOG.setTex(grassUVs(20, 2, 19, 2, 21, 2));
         REDWOOD_LOG.setModel(BlockModel.makeCube(REDWOOD_LOG));
@@ -937,6 +946,16 @@ public partial class Block {
         MUSHROOM_GREEN.itemLike();
         MUSHROOM_GREEN.setFlammable(60);
         MUSHROOM_GREEN.light(10);
+
+
+        BLACKBERRY_BUSH = register("blackberryBush", new Block("Blackberry Bush"));
+        BLACKBERRY_BUSH.setTex(crossUVs(19, 8));
+        BLACKBERRY_BUSH.setModel(BlockModel.makeGrass(BLACKBERRY_BUSH));
+        BLACKBERRY_BUSH.transparency();
+        BLACKBERRY_BUSH.noCollision();
+        BLACKBERRY_BUSH.waterTransparent();
+        BLACKBERRY_BUSH.itemLike();
+        BLACKBERRY_BUSH.setFlammable(60);
 
         ICE = register("ice", new Block("Ice"));
         ICE.setTex(uv("blocks.png", 16, 0));

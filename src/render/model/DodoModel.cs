@@ -41,22 +41,20 @@ public class DodoModel : EntityModel {
         var interpBodyRot = Vector3.Lerp(e.prevBodyRotation, e.bodyRotation, (float)interp);
 
         // calculate head rotation relative to body
-        var headRotX = interpRot.X - interpBodyRot.X;
-        nest.rotation = new Vector3(headRotX,0, 0);
-        upperBeak.rotation = new Vector3(headRotX, 0, 0);
-        lowerBeak.rotation = new Vector3(headRotX, 0, 0);
-
-        /*
-        nest.rotation = new Vector3(lr,0, 0);
-        upperBeak.rotation = new Vector3(lr, 0, 0);
-        lowerBeak.rotation = new Vector3(lr, 0, 0);
-        */
+        var headRotZ = interpRot.Z - interpBodyRot.Z;
+        nest.rotation = new Vector3(0, 0, headRotZ);
+        upperBeak.rotation = new Vector3(0, 0, headRotZ);
+        lowerBeak.rotation = new Vector3(0, 0, headRotZ);
 
         // set leg movement
         float cs = Meth.clamp(aspeed, 0, 1);
         float lr = MathF.Sin(apos * 10) * 20f * cs * Meth.phiF;
         rightLeg.rotation = new Vector3(lr, 0, 0);
         leftLeg.rotation = new Vector3(-lr, 0, 0);
+        rightfoot.rotation = new Vector3(lr, 0, 0);
+        leftfoot.rotation = new Vector3(-lr, 0, 0);
+
+
 
         // render dodo
         var ide = EntityRenderers.ide;
