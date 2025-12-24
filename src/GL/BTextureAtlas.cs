@@ -1,3 +1,4 @@
+using System.Numerics;
 using BlockGame.main;
 using BlockGame.render;
 using BlockGame.ui;
@@ -23,7 +24,7 @@ public class BTextureAtlas : BTexture2D {
     // tile positions for stitched atlases (null if loaded from single file)
     public Dictionary<(string source, int tx, int ty), Rectangle>? tilePositions;
 
-    public float atlasRatio => atlasSize / (float)width;
+    public Vector2 atlasRatio => new Vector2(atlasSize / (float)width, atlasSize / (float)height);
 
     public BTextureAtlas(string path, int atlasSize) : base(path) {
         this.atlasSize = atlasSize;
@@ -74,8 +75,8 @@ public class BTextureAtlas : BTexture2D {
         }
 
         var rect = tilePositions[(sourcePath, tx, ty)];
-        float u = rect.X * atlasSize / (float)width;
-        float v = rect.Y * atlasSize / (float)height;
+        float u = rect.X / (float)atlasSize;
+        float v = rect.Y / (float)atlasSize;
         return new UVPair(u, v);
     }
 

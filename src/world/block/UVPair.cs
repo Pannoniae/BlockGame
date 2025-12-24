@@ -68,7 +68,7 @@ public readonly record struct UVPair(float u, float v) {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2 texCoordsi(UVPair uv) {
         var tex = Game.textures.itemTexture;
-        return new Vector2(uv.u * tex.atlasRatio, uv.v * tex.atlasRatio);
+        return new Vector2(uv.u * tex.atlasRatio.X, uv.v * tex.atlasRatio.Y);
     }
 
     public static Vector2 texCoordsiI(UVPair uv) {
@@ -81,6 +81,6 @@ public readonly record struct UVPair(float u, float v) {
     }
 
     public static Vector2 texCoords(BTextureAtlas tex, UVPair uv) {
-        return new Vector2(uv.u * tex.atlasRatio, uv.v * tex.atlasRatio);
+        return new Vector2(uv.u * tex.atlasRatio.X, uv.v * tex.atlasRatio.Y);
     }
 }
