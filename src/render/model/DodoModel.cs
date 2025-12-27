@@ -49,10 +49,10 @@ public class DodoModel : EntityModel {
         // set leg movement
         float cs = Meth.clamp(aspeed, 0, 1);
         float lr = MathF.Sin(apos * 10) * 20f * cs * Meth.phiF;
-        rightLeg.rotation = new Vector3(lr, 0, 0);
-        leftLeg.rotation = new Vector3(-lr, 0, 0);
-        rightfoot.rotation = new Vector3(lr, 0, 0);
-        leftfoot.rotation = new Vector3(-lr, 0, 0);
+        rightLeg.rotation = new Vector3(0, 0, lr);
+        leftLeg.rotation = new Vector3(0, 0, -lr);
+        //rightfoot.position = new Vector3(0, 0, cs);
+        //leftfoot.position = new Vector3(0, 0, -cs);
 
 
 

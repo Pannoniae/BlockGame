@@ -96,6 +96,9 @@ public partial class Block {
     public static Block PINE_SAPLING;
 
     public static Block PALM_LOG;
+    public static Block PALM_PLANKS;
+    public static Block PALM_STAIRS;
+    public static Block PALM_SLAB;
     public static Block PALM_LEAVES;
     public static Block PALM_SAPLING;
     public static Block BANANAFRUIT;
@@ -181,6 +184,7 @@ public partial class Block {
     public static Block MUSHROOM_RED;
     public static Block MUSHROOM_GREEN;
     public static Block BLACKBERRY_BUSH;
+    public static Block BLACKBERRY_BUSH_SAPLING;
 
     public static Crop CROP_WHEAT;
     public static Block FERN_GREEN;
@@ -827,6 +831,23 @@ public partial class Block {
         log[PALM_LOG.id] = true;
         PALM_LOG.setFlammable(5);
 
+        PALM_PLANKS = register("palmPlanks", new Block("Palm Planks"));
+        PALM_PLANKS.setTex(uv("blocks.png", 18, 2));
+        renderType[PALM_PLANKS.id] = RenderType.CUBE;
+        PALM_PLANKS.material(Material.WOOD);
+        PALM_PLANKS.setFlammable(30);
+
+        PALM_STAIRS = register("palmStairs", new Stairs("Palm Stairs"));
+        PALM_STAIRS.setTex(cubeUVs(18, 2));
+        PALM_STAIRS.partialBlock();
+        PALM_STAIRS.material(Material.WOOD);
+        PALM_STAIRS.setFlammable(30);
+
+        PALM_SLAB = register("palmSlab", new Slabs("Palm Slab"));
+        PALM_SLAB.setTex(cubeUVs(8, 2));
+        PALM_SLAB.material(Material.WOOD);
+        PALM_SLAB.setFlammable(30);
+
         PALM_LEAVES = register("palmLeaves", new Leaves("Palm Leaves"));
         PALM_LEAVES.setTex(uv("blocks.png", 17, 2));
         registerLeafTexture("blocks.png", 17, 2);
@@ -846,8 +867,6 @@ public partial class Block {
         PALM_SAPLING.setFlammable(60);
 
         BANANAFRUIT = register("bananafruit", new Leaves("Banana"));
-        //BANANAFRUIT.setTex(grassUVs(16, 7, 17, 7, 18, 7));
-        //BANANAFRUIT.setModel(BlockModel.makeCube(BANANAFRUIT));
         BANANAFRUIT.setTex(crossUVs(17, 7));
         BANANAFRUIT.setModel(BlockModel.makeGrass(BANANAFRUIT));
         BANANAFRUIT.transparency();
@@ -947,8 +966,7 @@ public partial class Block {
         MUSHROOM_GREEN.setFlammable(60);
         MUSHROOM_GREEN.light(10);
 
-
-        BLACKBERRY_BUSH = register("blackberryBush", new Block("Blackberry Bush"));
+        BLACKBERRY_BUSH = register("blackberryBush", new Bush("Blackberry Bush"));
         BLACKBERRY_BUSH.setTex(crossUVs(19, 8));
         BLACKBERRY_BUSH.setModel(BlockModel.makeGrass(BLACKBERRY_BUSH));
         BLACKBERRY_BUSH.transparency();
@@ -956,6 +974,15 @@ public partial class Block {
         BLACKBERRY_BUSH.waterTransparent();
         BLACKBERRY_BUSH.itemLike();
         BLACKBERRY_BUSH.setFlammable(60);
+
+        BLACKBERRY_BUSH_SAPLING = register("blackberryBushSapling", new BushSapling("Blackberry Bush Sapling", BLACKBERRY_BUSH));
+        BLACKBERRY_BUSH_SAPLING.setTex(crossUVs(18, 8));
+        BLACKBERRY_BUSH_SAPLING.setModel(BlockModel.makeGrass(BLACKBERRY_BUSH_SAPLING));
+        BLACKBERRY_BUSH_SAPLING.transparency();
+        BLACKBERRY_BUSH_SAPLING.noCollision();
+        BLACKBERRY_BUSH_SAPLING.waterTransparent();
+        BLACKBERRY_BUSH_SAPLING.itemLike();
+
 
         ICE = register("ice", new Block("Ice"));
         ICE.setTex(uv("blocks.png", 16, 0));

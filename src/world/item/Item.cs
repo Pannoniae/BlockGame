@@ -102,11 +102,15 @@ public class Item {
     public static Item TEA_LEAVES;
     //public static Item SUGAR;
     public static Item APPLE_PIE;
+    public static Item TEAMUG;
+    public static Item PINE_NEEDLE_SYRUP;
     //public static Item CHERRY;
     public static Item PINEAPPLE;
     public static Item BANANA;
     public static Item STRAWBERRY_SEEDS;
     public static Item STRAWBERRY;
+    public static Item BLACKBERRY_SEEDS;
+    public static Item BLACKBERRY;
 
     public static Item BOW_WOOD;
     public static Item ARROW_WOOD;
@@ -404,7 +408,6 @@ public class Item {
         Block.CROP_STRAWBERRY.product = STRAWBERRY;
         Block.CROP_STRAWBERRY.seedItem = STRAWBERRY_SEEDS;
 
-
         BREAD = register("bread", new Food("Bread", 25));
         BREAD.tex = uv("items.png", 10, 10);
         material[BREAD.id] = true;
@@ -417,13 +420,31 @@ public class Item {
         APPLE_PIE.tex = uv("items.png", 13, 10);
         material[APPLE_PIE.id] = true;
 
+        TEAMUG = register("teamug", new Item("Tea Mug"));
+        TEAMUG.tex = uv("items.png", 3, 11);
+        material[TEAMUG.id] = true;
+
+        PINE_NEEDLE_SYRUP = register("pineNeedleSyrup", new Food("Pine Needle Syrup", 15));
+        PINE_NEEDLE_SYRUP.tex = uv("items.png", 4, 11);
+        material[PINE_NEEDLE_SYRUP.id] = true;
+
         PINEAPPLE = register("pineapple", new Food("Pineapple", 10));
         PINEAPPLE.tex = uv("items.png", 15, 10);
         material[PINEAPPLE.id] = true;
 
-        BANANA = register("banana", new Food("Banana", 15));
+        BANANA = register("banana", new Food("Banana", 10));
         BANANA.tex = uv("items.png", 15, 11);
         material[BANANA.id] = true;
+
+        BLACKBERRY_SEEDS = register("blackberryseeds", new SeedItem("Blackberry Seeds", Block.BLACKBERRY_BUSH_SAPLING, Block.GRASS));
+        BLACKBERRY_SEEDS.tex = uv("items.png", 10, 11);
+        material[BLACKBERRY_SEEDS.id] = true;
+
+        BLACKBERRY = register("blackberry", new Food("Blackberry", 10));
+        BLACKBERRY.tex = uv("items.png", 11, 11);
+        material[BLACKBERRY.id] = true;
+        ((Bush)Block.BLACKBERRY_BUSH).fruit = BLACKBERRY;
+        ((Bush)Block.BLACKBERRY_BUSH).seed = BLACKBERRY_SEEDS;
 
         //mixed items
         BOTTLE = register("bottle", new Item("Empty Bottle"));
@@ -503,6 +524,8 @@ public class Item {
         Registry.ITEMS.blackList[Block.CROP_TEA.item.id] = true;
         Registry.ITEMS.blackList[Block.CROP_STRAWBERRY.item.id] = true;
         Registry.ITEMS.blackList[Block.FARMLAND.item.id] = true;
+        Registry.ITEMS.blackList[Block.BLACKBERRY_BUSH_SAPLING.item.id] = true;
+
 
         // fuel values
         Registry.ITEMS.fuelValue[COAL.id] = 3600; // 60 seconds
@@ -645,15 +668,62 @@ public class Tool : Item {
                     break;
             }
 
-            var block = world.getBlock(x, y, z);
-            if (block == Block.DIRT.id || block == Block.GRASS.id || block == Block.SNOW_GRASS.id) {
+            var bid = world.getBlock(x, y, z);
+            if (bid == Block.DIRT.id || bid == Block.GRASS.id || bid == Block.SNOW_GRASS.id) {
                 world.setBlock(x, y, z, Block.FARMLAND.id);
                 // damage hoe
                 stack.damageItem(player, 1);
                 return stack;
             }
         }
+        // scythe right clicking: harvest banana fruit
+        if (type == ToolType.SCYTHE) {
+            switch (info.face) {
+                case RawDirection.UP:
+                    y -= 1;
+                    break;
+                case RawDirection.DOWN:
+                    y += 1;
+                    break;
+                case RawDirection.WEST:
+                    x += 1;
+                    break;
+                case RawDirection.EAST:
+                    x -= 1;
+                    break;
+                case RawDirection.NORTH:
+                    z -= 1;
+                    break;
+                case RawDirection.SOUTH:
+                    z += 1;
+                    break;
+            }
 
+            var bid = world.getBlock(x, y, z);
+            if (bid == Block.BANANAFRUIT.id) {
+                // check if already harvested (metadata bit 1)
+                var metadata = world.getBlockMetadata(x, y, z);
+                if ((metadata & 1) != 0) {
+                    // already harvested, cooldown active
+                    return stack;
+                }
+
+                // harvest: give bananas, mark as harvested, schedule regrowth
+                int bananaCount = Game.random.Next(1, 3);
+                player.inventory.addItem(new ItemStack(Item.BANANA, bananaCount, 0));
+
+                // set metadata bit to mark as harvested
+                world.setMetadata(x, y, z, (byte)(metadata | 1));
+
+                // schedule regrowth after full day-night cycle
+                world.scheduleBlockUpdate(new Molten.Vector3I(x, y, z), World.TICKS_PER_DAY);
+
+                // damage scythe
+                stack.damageItem(player, 1);
+                return stack;
+            }
+
+        }
         return null;
     }
 }

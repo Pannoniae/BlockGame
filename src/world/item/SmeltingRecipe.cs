@@ -16,6 +16,7 @@ public class SmeltingRecipe {
     public static SmeltingRecipe STEAK;
     public static SmeltingRecipe COOKED_PORKCHOP;
     public static SmeltingRecipe GLASS;
+    public static SmeltingRecipe TEAMUG;
 
 
     private static readonly List<SmeltingRecipe> recipes = [];
@@ -52,6 +53,7 @@ public class SmeltingRecipe {
 
         //cobblestone -> stone
         STONE = register(Block.COBBLESTONE.item, new ItemStack(Block.STONE.item, 1), 240);
+
     }
 
     private static SmeltingRecipe register(Item input, ItemStack output, int smeltTime) {

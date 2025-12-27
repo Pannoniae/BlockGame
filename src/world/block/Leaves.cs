@@ -52,9 +52,14 @@ public class Leaves : Block {
         if (id == MAHOGANY_LEAVES.id && Game.random.Next(15) == 0) {
             drops.Add(new ItemStack(MAHOGANY_SAPLING.item, 1, 0));
         }
-        // mahogany: 1 in 10 chance to drop apple
+        // mahogany: 1 in 10 chance to drop pineapple
         if (id == MAHOGANY_LEAVES.id && Game.random.Next(10) == 0) {
             drops.Add(new ItemStack(Item.PINEAPPLE, 1, 0));
+        }
+
+        // mahogany: 1 in 10 chance to drop tea seeds
+        if (id == MAHOGANY_LEAVES.id && Game.random.Next(10) == 0) {
+            drops.Add(new ItemStack(Item.TEA_SEEDS, 1, 0));
         }
 
         // PINE: 1 in 15 chance to drop sapling
@@ -62,13 +67,19 @@ public class Leaves : Block {
             drops.Add(new ItemStack(PINE_SAPLING.item, 1, 0));
         }
 
-        // palm: 1 in 10 chance to drop banana
-        if (id == PALM_LEAVES.id && Game.random.Next(10) == 0) {
-            drops.Add(new ItemStack(Item.BANANA, 1, 0));
-        }
-        // palm: 1 in 15 chance to drop sapling
+        // palm: 1 in 10 chance to drop sapling
         if (id == PALM_LEAVES.id && Game.random.Next(15) == 0) {
             drops.Add(new ItemStack(PALM_SAPLING.item, 1, 0));
+        }
+
+        // bananafruit: when broken with scythe, drop 1-2 bananas; without scythe, drop nothing
+        if (id == BANANAFRUIT.id) {
+            if (canBreak) {
+                // broken with scythe: drop 1-2 bananas
+                drops.Add(new ItemStack(Item.BANANA, Game.random.Next(1, 3), 0));
+            }
+            // broken without scythe: nothing
+            return;
         }
 
         if (canBreak) {
@@ -81,6 +92,14 @@ public class Leaves : Block {
         if (!isConnectedToLog(world, x, y, z)) {
             // decay: drop nothing, just disappear
             world.setBlock(x, y, z, AIR.id);
+        }
+    }
+
+    public override void scheduledUpdate(World world, int x, int y, int z) {
+        // bananafruit regrowth: reset harvested flag after cooldown
+        if (id == BANANAFRUIT.id) {
+            var metadata = world.getBlockMetadata(x, y, z);
+            world.setMetadata(x, y, z, (byte)(metadata & ~1));
         }
     }
 

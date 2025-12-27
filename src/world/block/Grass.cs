@@ -12,12 +12,15 @@ public class Grass(string name) : Block(name) {
     }
 
     public override void getDrop(List<ItemStack> drops, World world, int x, int y, int z, byte metadata, bool canBreak) {
-        // 12.5% total drop chance, split 50-50 between wheat and carrot seeds
+        // 12.5% total seeds drop chance: wheat 40%, carrot 40%, strawberry 20%
         if (canBreak && world.random.NextDouble() < 0.125) {
-            if (world.random.NextDouble() < 0.5) {
+            var rng = world.random.NextDouble();
+            if (rng < 0.4) {
                 drops.Add(new ItemStack(Item.WHEAT_SEEDS, 1, 0));
-            } else {
+            } else if (rng < 0.8) {
                 drops.Add(new ItemStack(Item.CARROT_SEEDS, 1, 0));
+            } else {
+                drops.Add(new ItemStack(Item.STRAWBERRY_SEEDS, 1, 0));
             }
         }
     }

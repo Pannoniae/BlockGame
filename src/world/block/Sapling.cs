@@ -151,6 +151,15 @@ public class Sapling : Block {
 
         return nearest;
     }
+
+    /*public override void getDrop(List<ItemStack> drops, World world, int x, int y, int z, byte metadata, bool canBreak) {
+        if (id == BUSH_SAPLING.id) {
+            return;
+        }
+        else {
+            base.getDrop(drops, world, x, y, z, metadata, canBreak);
+        }
+    }*/
 }
 
 /** Tree types for saplings */
@@ -160,5 +169,6 @@ public enum SaplingType {
     MAHOGANY,
     PINE,
     PALM,
-    REDWOOD
+    REDWOOD,
+    BUSH
 }
