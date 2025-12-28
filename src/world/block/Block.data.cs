@@ -126,6 +126,7 @@ public partial class Block {
     public static Block CANDY;
     public static Block CANDY_SLAB;
     public static Block CANDY_STAIRS;
+    public static Carpet CARPET;
 
     //public static Block HEAD;
 
@@ -1015,6 +1016,9 @@ public partial class Block {
         CANDY_STAIRS = register("candyStairs", new CandyStairs("Candy Stairs"));
         CANDY_STAIRS.material(Material.FOOD);
         CANDY_STAIRS.partialBlock();
+
+        CARPET = register("carpet", new Carpet("Carpet"));
+        CARPET.material(Material.ORGANIC);
 
         //HEAD = register("head", new Block("Head"));
         //HEAD.setTex(HeadUVs(0, 3, 1, 3, 2, 3, 3, 3, 4, 3, 5, 3));

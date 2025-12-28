@@ -62,6 +62,13 @@ public class CreativeInventoryContext : InventoryContext {
                     allItems.Add(new ItemStack(Block.CANDY_STAIRS.item, 1, metadata));
                 }
             }
+            // special handling for carpet - add all colour variants
+            else if (i == Block.CARPET.id) {
+                for (byte color = 0; color < 24; color++) {
+                    var metadata = Carpet.setColor(0, color);
+                    allItems.Add(new ItemStack(Block.CARPET.item, 1, metadata));
+                }
+            }
             /*else if (i == Block.CINNABAR_ORE.id) {
                 allItems.Add(new ItemStack(Block.CINNABAR_ORE.item, 1, 0));
                 allItems.Add(new ItemStack(Block.CINNABAR_ORE.item, 1, 1));

@@ -6,11 +6,11 @@ namespace BlockGame.world.item;
 
 using static DyeItem;
 
-// 1 dye + 1 candy = dyed candy
-public class CandyDyeRecipe : Recipe {
+// 1 dye + 1 carpet = dyed carpet
+public class CarpetDyeRecipe : Recipe {
     public override bool matches(CraftingGridInventory grid) {
         int dyeCount = 0;
-        int candyCount = 0;
+        int carpetCount = 0;
 
         foreach (var slot in grid.grid) {
             if (isEmpty(slot)) {
@@ -19,15 +19,15 @@ public class CandyDyeRecipe : Recipe {
 
             if (slot.id == Item.DYE.id) {
                 dyeCount++;
-            } else if (slot.id == Block.CANDY.getItem().id) {
-                candyCount++;
+            } else if (slot.id == Block.CARPET.getItem().id) {
+                carpetCount++;
             } else {
                 // invalid item
                 return false;
             }
         }
 
-        return dyeCount == 1 && candyCount == 1;
+        return dyeCount == 1 && carpetCount == 1;
     }
 
     public override bool matchesShape(CraftingGridInventory grid) {
@@ -36,31 +36,37 @@ public class CandyDyeRecipe : Recipe {
 
     public override ItemStack getResult(CraftingGridInventory grid) {
         int dyeMeta = -1;
-        int candyMeta = -1;
+        int carpetMeta = -1;
 
         foreach (var slot in grid.grid) {
             if (!isEmpty(slot)) {
                 if (slot.id == Item.DYE.id) {
                     dyeMeta = slot.metadata;
-                } else if (slot.id == Block.CANDY.getItem().id) {
-                    candyMeta = slot.metadata;
+                } else if (slot.id == Block.CARPET.getItem().id) {
+                    carpetMeta = slot.metadata;
                 }
             }
         }
 
-        if (dyeMeta == -1 || candyMeta == -1) {
+        if (dyeMeta == -1 || carpetMeta == -1) {
             return ItemStack.EMPTY;
         }
 
-        // for candy, metadata IS the color directly (no orientation like carpet)
-        int resultColor = mixColours(candyMeta, dyeMeta);
+        // extract carpet color and mix with dye color
+        byte carpetColor = Carpet.getColor((byte)carpetMeta);
+        int resultColor = mixColours(carpetColor, dyeMeta);
 
-        return new ItemStack(Block.CANDY.getItem(), 1, resultColor);
+        // create carpet with mixed color (default floor orientation)
+        byte resultMeta = 0;
+        resultMeta = Carpet.setColor(resultMeta, (byte)resultColor);
+        resultMeta = Carpet.setOrientation(resultMeta, Carpet.FLOOR);
+
+        return new ItemStack(Block.CARPET.getItem(), 1, resultMeta);
     }
 
     public override void consumeIngredients(CraftingGridInventory grid) {
         bool dyeConsumed = false;
-        bool candyConsumed = false;
+        bool carpetConsumed = false;
 
         for (int i = 0; i < grid.grid.Length; i++) {
             var slot = grid.grid[i];
@@ -75,15 +81,15 @@ public class CandyDyeRecipe : Recipe {
                     grid.grid[i] = ItemStack.EMPTY;
                 }
                 dyeConsumed = true;
-            } else if (!candyConsumed && slot.id == Block.CANDY.getItem().id) {
+            } else if (!carpetConsumed && slot.id == Block.CARPET.getItem().id) {
                 slot.quantity--;
                 if (slot.quantity <= 0) {
                     grid.grid[i] = ItemStack.EMPTY;
                 }
-                candyConsumed = true;
+                carpetConsumed = true;
             }
 
-            if (dyeConsumed && candyConsumed) {
+            if (dyeConsumed && carpetConsumed) {
                 break;
             }
         }
