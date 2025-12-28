@@ -103,7 +103,11 @@ public class Item {
     //public static Item SUGAR;
     public static Item APPLE_PIE;
     public static Item TEAMUG;
-    public static Item PINE_NEEDLE_SYRUP;
+    public static Item PINE_NEEDLE_TEA;
+    public static Item BLACK_TEA_LEAVES;
+    public static Item GREEN_TEA_LEAVES;
+    public static Item BLACK_TEA;
+    public static Item GREEN_TEA;
     //public static Item CHERRY;
     public static Item PINEAPPLE;
     public static Item BANANA;
@@ -111,6 +115,8 @@ public class Item {
     public static Item STRAWBERRY;
     public static Item BLACKBERRY_SEEDS;
     public static Item BLACKBERRY;
+    public static Item MUSHROOM_BROWN;
+    public static Item MUSHROOM_RED;
 
     public static Item BOW_WOOD;
     public static Item ARROW_WOOD;
@@ -342,6 +348,10 @@ public class Item {
         DYE = register("dye", new DyeItem("Dye"));
         material[DYE.id] = true;
 
+        TEAMUG = register("teamug", new Item("Tea Mug"));
+        TEAMUG.tex = uv("items.png", 3, 11);
+        material[TEAMUG.id] = true;
+
         //seeds and crops
         WHEAT_SEEDS = register("wheatseeds", new SeedItem("Wheat Seeds", Block.CROP_WHEAT, Block.FARMLAND));
         WHEAT_SEEDS.tex = uv("items.png", 8, 10);
@@ -357,6 +367,12 @@ public class Item {
         CARROT_SEEDS.tex = uv("items.png", 12, 10);
         material[CARROT_SEEDS.id] = true;
 
+        CARROT = register("carrot", new Food("Carrot", 10));
+        CARROT.tex = uv("items.png", 11, 10);
+        material[CARROT.id] = true;
+        Block.CROP_CARROT.product = CARROT;
+        Block.CROP_CARROT.seedItem = CARROT_SEEDS;
+
         TEA_SEEDS = register("teaseeds", new SeedItem("Tea Seeds", Block.CROP_TEA, Block.FARMLAND));
         TEA_SEEDS.tex = uv("items.png", 8, 11);
         material[TEA_SEEDS.id] = true;
@@ -366,6 +382,34 @@ public class Item {
         material[TEA_LEAVES.id] = true;
         Block.CROP_TEA.product = TEA_LEAVES;
         Block.CROP_TEA.seedItem = TEA_SEEDS;
+
+        GREEN_TEA_LEAVES = register("greenTeaLeaves", new Item("Green Tea Leaves"));
+        GREEN_TEA_LEAVES.tex = uv("items.png", 9, 12);
+        material[GREEN_TEA_LEAVES.id] = true;
+
+        BLACK_TEA_LEAVES = register("blackTeaLeaves", new Item("Black Tea Leaves"));
+        BLACK_TEA_LEAVES.tex = uv("items.png", 10, 12);
+        material[BLACK_TEA_LEAVES.id] = true;
+
+        STRAWBERRY_SEEDS = register("strawberryseeds", new SeedItem("Strawberry Seeds", Block.CROP_STRAWBERRY, Block.FARMLAND));
+        STRAWBERRY_SEEDS.tex = uv("items.png", 13, 11);
+        material[STRAWBERRY_SEEDS.id] = true;
+
+        STRAWBERRY = register("strawberry", new Food("Strawberry", 10));
+        STRAWBERRY.tex = uv("items.png", 14, 11);
+        material[STRAWBERRY.id] = true;
+        Block.CROP_STRAWBERRY.product = STRAWBERRY;
+        Block.CROP_STRAWBERRY.seedItem = STRAWBERRY_SEEDS;
+
+        BLACKBERRY_SEEDS = register("blackberryseeds", new SeedItem("Blackberry Seeds", Block.BLACKBERRY_BUSH_SAPLING, Block.GRASS));
+        BLACKBERRY_SEEDS.tex = uv("items.png", 10, 11);
+        material[BLACKBERRY_SEEDS.id] = true;
+
+        BLACKBERRY = register("blackberry", new Food("Blackberry", 10));
+        BLACKBERRY.tex = uv("items.png", 11, 11);
+        material[BLACKBERRY.id] = true;
+        ((Bush)Block.BLACKBERRY_BUSH).fruit = BLACKBERRY;
+        ((Bush)Block.BLACKBERRY_BUSH).seed = BLACKBERRY_SEEDS;
 
         //Food items
         APPLE = register("apple", new Food("Apple", 5));
@@ -392,22 +436,6 @@ public class Item {
         COOKED_PORKCHOP = register("cookedPorkchop", new Food("Cooked Porkchop", 20));
         COOKED_PORKCHOP.tex = uv("items.png", 7, 10);
 
-        CARROT = register("carrot", new Food("Carrot", 10));
-        CARROT.tex = uv("items.png", 11, 10);
-        material[CARROT.id] = true;
-        Block.CROP_CARROT.product = CARROT;
-        Block.CROP_CARROT.seedItem = CARROT_SEEDS;
-
-        STRAWBERRY_SEEDS = register("strawberryseeds", new SeedItem("Strawberry Seeds", Block.CROP_STRAWBERRY, Block.FARMLAND));
-        STRAWBERRY_SEEDS.tex = uv("items.png", 13, 11);
-        material[STRAWBERRY_SEEDS.id] = true;
-
-        STRAWBERRY = register("strawberry", new Food("Strawberry", 10));
-        STRAWBERRY.tex = uv("items.png", 14, 11);
-        material[STRAWBERRY.id] = true;
-        Block.CROP_STRAWBERRY.product = STRAWBERRY;
-        Block.CROP_STRAWBERRY.seedItem = STRAWBERRY_SEEDS;
-
         BREAD = register("bread", new Food("Bread", 25));
         BREAD.tex = uv("items.png", 10, 10);
         material[BREAD.id] = true;
@@ -420,13 +448,17 @@ public class Item {
         APPLE_PIE.tex = uv("items.png", 13, 10);
         material[APPLE_PIE.id] = true;
 
-        TEAMUG = register("teamug", new Item("Tea Mug"));
-        TEAMUG.tex = uv("items.png", 3, 11);
-        material[TEAMUG.id] = true;
+        BLACK_TEA = register("blackTea", new Food("Black Tea", 10));
+        BLACK_TEA.tex = uv("items.png", 5, 11);
+        material[BLACK_TEA.id] = true;
 
-        PINE_NEEDLE_SYRUP = register("pineNeedleSyrup", new Food("Pine Needle Syrup", 15));
-        PINE_NEEDLE_SYRUP.tex = uv("items.png", 4, 11);
-        material[PINE_NEEDLE_SYRUP.id] = true;
+        GREEN_TEA = register("greenTea", new Food("Green Tea", 10));
+        GREEN_TEA.tex = uv("items.png", 4, 12);
+        material[GREEN_TEA.id] = true;
+
+        PINE_NEEDLE_TEA = register("pineNeedleTea", new Food("Pine Needle Tea", 15));
+        PINE_NEEDLE_TEA.tex = uv("items.png", 4, 11);
+        material[PINE_NEEDLE_TEA.id] = true;
 
         PINEAPPLE = register("pineapple", new Food("Pineapple", 10));
         PINEAPPLE.tex = uv("items.png", 15, 10);
@@ -436,15 +468,14 @@ public class Item {
         BANANA.tex = uv("items.png", 15, 11);
         material[BANANA.id] = true;
 
-        BLACKBERRY_SEEDS = register("blackberryseeds", new SeedItem("Blackberry Seeds", Block.BLACKBERRY_BUSH_SAPLING, Block.GRASS));
-        BLACKBERRY_SEEDS.tex = uv("items.png", 10, 11);
-        material[BLACKBERRY_SEEDS.id] = true;
+        MUSHROOM_BROWN = register("brown_mushroom", new Food("Brown Mushroom", 5));
+        MUSHROOM_BROWN.tex = uv("items.png", 6, 11);
+        material[MUSHROOM_BROWN.id] = true;
 
-        BLACKBERRY = register("blackberry", new Food("Blackberry", 10));
-        BLACKBERRY.tex = uv("items.png", 11, 11);
-        material[BLACKBERRY.id] = true;
-        ((Bush)Block.BLACKBERRY_BUSH).fruit = BLACKBERRY;
-        ((Bush)Block.BLACKBERRY_BUSH).seed = BLACKBERRY_SEEDS;
+        MUSHROOM_RED = register("red_mushroom", new Food("Red Mushroom", 5));
+        MUSHROOM_RED.tex = uv("items.png", 7, 11);
+        material[MUSHROOM_RED.id] = true;
+
 
         //mixed items
         BOTTLE = register("bottle", new Item("Empty Bottle"));
@@ -525,6 +556,8 @@ public class Item {
         Registry.ITEMS.blackList[Block.CROP_STRAWBERRY.item.id] = true;
         Registry.ITEMS.blackList[Block.FARMLAND.item.id] = true;
         Registry.ITEMS.blackList[Block.BLACKBERRY_BUSH_SAPLING.item.id] = true;
+        Registry.ITEMS.blackList[Block.MUSHROOM_BROWN.item.id] = true;
+        Registry.ITEMS.blackList[Block.MUSHROOM_RED.item.id] = true;
 
 
         // fuel values

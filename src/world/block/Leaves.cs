@@ -72,11 +72,28 @@ public class Leaves : Block {
             drops.Add(new ItemStack(PALM_SAPLING.item, 1, 0));
         }
 
-        // bananafruit: when broken with scythe, drop 1-2 bananas; without scythe, drop nothing
+        // bananafruit: when broken with scythe, drops 1-2 bananas; without scythe, drop nothing
         if (id == BANANAFRUIT.id) {
             if (canBreak) {
                 // broken with scythe: drop 1-2 bananas
                 drops.Add(new ItemStack(Item.BANANA, Game.random.Next(1, 3), 0));
+            }
+            // broken without scythe: nothing
+            return;
+        }
+        // mushrooms: when broken with scythe, drops 1 mushroom; without scythe, drop nothing
+        if (id == MUSHROOM_BROWN.id) {
+            if (canBreak) {
+                // broken with scythe: drop 1 mushroom
+                drops.Add(new ItemStack(Item.MUSHROOM_BROWN, 1, 0));
+            }
+            // broken without scythe: nothing
+            return;
+        }
+        if (id == MUSHROOM_RED.id) {
+            if (canBreak) {
+                // broken with scythe: drops 1 mushroom
+                drops.Add(new ItemStack(Item.MUSHROOM_RED, 1, 0));
             }
             // broken without scythe: nothing
             return;

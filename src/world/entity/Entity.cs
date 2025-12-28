@@ -710,6 +710,14 @@ public partial class Entity(World world, string type) : Persistent {
         // by default, entities drop nothing
     }
 
+    /**
+     * called when player right-clicks this entity with an item.
+     * return true if interaction was handled, false otherwise.
+     */
+    public virtual bool interact(Player player, ItemStack stack) {
+        return false;
+    }
+
     public double getSwingProgress(double dt) {
         var value = double.Lerp(prevSwingProgress, swingProgress, dt);
         // if it just finished swinging, lerp to 1

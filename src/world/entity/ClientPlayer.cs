@@ -214,7 +214,7 @@ public class ClientPlayer : Player {
         if (state.time % 4 == 0) {
             block.shatter(world, pos.X, pos.Y, pos.Z, Game.raycast.face, Game.raycast.hitAABB);
         }
-        if (state.time % 12 == 0) {
+        if (state.time % 12 == 0 && block.mat != null) {
             Game.snd.playBlockKnock(block.mat.smat);
         }
 
@@ -513,10 +513,39 @@ public class ClientPlayer : Player {
 
     public virtual void placeBlock() {
         // chain of responsibility - first match wins
+        if (tryInteractWithEntity()) return;
         if (tryInteractWithBlock()) return;
         if (tryUseItemOnBlock()) return;
         if (tryPlaceBlockItem()) return;
         tryUseItemInAir();
+    }
+
+    /** entity.interact() - cows, sheep, etc */
+    private bool tryInteractWithEntity() {
+        if (!Game.raycast.hit || Game.raycast.type != Result.ENTITY) return false;
+
+        var entity = Game.raycast.entity;
+        if (entity == null) return false;
+
+        var stack = inventory.getSelected();
+        if (stack == ItemStack.EMPTY) return false;
+
+        // try entity interaction
+        if (!entity.interact(this, stack)) return false;
+
+        // entity handled it - swing animation
+        setSwinging(true);
+
+        // send to server (reuse PlaceBlockPacket for now)
+        if (Net.mode.isMPC()) {
+            var info = getPlacementInfo();
+            ClientConnection.instance.send(
+                new PlaceBlockPacket { position = new Vector3I(0, 0, 0), info = info },
+                DeliveryMethod.ReliableOrdered
+            );
+        }
+
+        return true;
     }
 
     /** block.onUse() - chests, furnaces, etc */

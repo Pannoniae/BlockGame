@@ -17,6 +17,8 @@ public class SmeltingRecipe {
     public static SmeltingRecipe COOKED_PORKCHOP;
     public static SmeltingRecipe GLASS;
     public static SmeltingRecipe TEAMUG;
+    public static SmeltingRecipe GREEN_TEA_LEAVES;
+    public static SmeltingRecipe BLACK_TEA_LEAVES;
 
 
     private static readonly List<SmeltingRecipe> recipes = [];
@@ -53,6 +55,13 @@ public class SmeltingRecipe {
 
         //cobblestone -> stone
         STONE = register(Block.COBBLESTONE.item, new ItemStack(Block.STONE.item, 1), 240);
+
+        // green tea leaves -> tea leaves (1 seconds = 60 ticks)
+        GREEN_TEA_LEAVES = register(Item.TEA_LEAVES, new ItemStack(Item.GREEN_TEA_LEAVES, 1), 60);
+
+        //black tea leaves -> green tea leaves (1 seconds = 60 ticks)
+        BLACK_TEA_LEAVES = register(Item.GREEN_TEA_LEAVES, new ItemStack(Item.BLACK_TEA_LEAVES, 1), 60);
+
 
     }
 

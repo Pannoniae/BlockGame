@@ -101,7 +101,9 @@ public class Recipe {
 
     public static Recipe BREAD;
     public static Recipe APPLE_PIE;
-    public static Recipe PINE_NEEDLE_SYRUP;
+    public static Recipe PINE_NEEDLE_TEA;
+    public static Recipe BLACK_TEA;
+    public static Recipe GREEN_TEA;
 
     public static Recipe LW_BOOTS;
     public static Recipe HELLSTONE;
@@ -544,9 +546,20 @@ public class Recipe {
         APPLE_PIE.shape(131_121_111, 3);
         APPLE_PIE.ingredients(Item.WHEAT, Item.APPLE, Item.MAPLE_SYRUP);
 
-        PINE_NEEDLE_SYRUP = register(new ItemStack(Item.PINE_NEEDLE_SYRUP, 1));
-        PINE_NEEDLE_SYRUP.shape(131_121_141, 3);
-        PINE_NEEDLE_SYRUP.ingredients(Block.PINE_LEAVES.item, Item.WATER_BUCKET, Item.MAPLE_SYRUP, Item.TEAMUG);
+        PINE_NEEDLE_TEA = register(new ItemStack(Item.PINE_NEEDLE_TEA, 1));
+        PINE_NEEDLE_TEA.shape(131_121_141, 3);
+        PINE_NEEDLE_TEA.ingredients(Block.PINE_LEAVES.item, Item.WATER_BUCKET, Item.MAPLE_SYRUP, Item.TEAMUG);
+        register(new ItemStack(Item.PINE_NEEDLE_TEA, 1))
+            .shape(000_000_212, 3)
+            .ingredients(Block.PINE_LEAVES.item, Item.WATER_BUCKET, Item.MAPLE_SYRUP, Item.TEAMUG);
+
+        BLACK_TEA = register(new ItemStack(Item.BLACK_TEA, 1));
+        BLACK_TEA.shape(000_121_131, 3);
+        BLACK_TEA.ingredients(Item.BLACK_TEA_LEAVES, Item.WATER_BUCKET, Item.TEAMUG);
+
+        GREEN_TEA = register(new ItemStack(Item.GREEN_TEA, 1));
+        GREEN_TEA.shape(000_121_131, 3);
+        GREEN_TEA.ingredients(Item.GREEN_TEA_LEAVES, Item.WATER_BUCKET, Item.TEAMUG);
 
         //accessories
         LW_BOOTS = register(new ItemStack(Item.LW_BOOTS, 1));
