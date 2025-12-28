@@ -11,7 +11,7 @@ public class BigEye : Hostile {
     protected override bool usePathfinding => false; // handles own flight movement
 
     private const double FLIGHT_SPEED = 1;
-    private const double HOVER_HEIGHT = 18.0; // preferred height above ground
+    private const double HOVER_HEIGHT = 8.0; // preferred height above ground
 
     private Vector3D? flyTarget;
     private int retargetCooldown;

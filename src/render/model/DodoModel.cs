@@ -51,10 +51,8 @@ public class DodoModel : EntityModel {
         float lr = MathF.Sin(apos * 10) * 20f * cs * Meth.phiF;
         rightLeg.rotation = new Vector3(0, 0, lr);
         leftLeg.rotation = new Vector3(0, 0, -lr);
-        //rightfoot.position = new Vector3(0, 0, cs);
-        //leftfoot.position = new Vector3(0, 0, -cs);
-
-
+        //rightfoot.position = new Vector3(0, 0, lr);
+        //leftfoot.position = new Vector3(0, 0, -lr);
 
         // render dodo
         var ide = EntityRenderers.ide;

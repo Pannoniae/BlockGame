@@ -122,6 +122,7 @@ public class CraftingGridInventory : Inventory {
         if (fullMatch != null) {
             matchStatus = CraftingMatchStatus.FULL_MATCH;
             result = fullMatch.getResult(this);
+            Console.WriteLine($"[CraftingGridInventory.updateResult] Matched recipe: {fullMatch.GetType().Name}, result: {result.getItem()?.name ?? "EMPTY"}");
             lastMatchedRecipe = fullMatch;  // for use in CraftingResultSlot.take()
             return;
         }

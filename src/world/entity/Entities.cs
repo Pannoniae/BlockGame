@@ -24,7 +24,6 @@ public static class SpawnTypeExt {
  * Added this so we can officially claim to be a factory game. :D
  */
 public class Entities {
-
     public static int PLAYER;
     public static int ITEM_ENTITY;
     public static int FALLING_BLOCK;
@@ -38,6 +37,7 @@ public class Entities {
     public static int EYE;
     public static int MUMMY;
     public static int DODO;
+    public static int BIGEYE;
 
     /** spawn metadata for each entity type */
     public static XUList<SpawnType> spawnType => Registry.ENTITIES.spawnType;
@@ -60,6 +60,7 @@ public class Entities {
         EYE = register("eye", w => new DemonEye(w));
         MUMMY = register("mummy", w => new Mummy(w));
         DODO = register("dodo", w => new Dodo(w));
+        BIGEYE = register("BigEye", w => new BigEye(w));
 
         if (!Net.mode.isDed()) {
             EntityRenderers.reloadAll();
@@ -72,6 +73,7 @@ public class Entities {
         spawnType[EYE] = SpawnType.HOSTILE;
         spawnType[MUMMY] = SpawnType.CAVE;
         spawnType[DODO] = SpawnType.PASSIVE;
+        spawnType[BIGEYE] = SpawnType.HOSTILE;
     }
 
     /**

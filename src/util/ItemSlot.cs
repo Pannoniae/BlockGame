@@ -199,13 +199,16 @@ public class CraftingResultSlot : ItemSlot {
 
         // use cached recipe from updateResult() to prevent double lookup
         var recipe = craftingGrid.lastMatchedRecipe;
+        Console.WriteLine($"[CraftingResultSlot.take] recipe={recipe?.GetType().Name}, result={result.getItem().name}");
         if (recipe != null && recipe.matches(craftingGrid)) {
+            Console.WriteLine($"[CraftingResultSlot.take] Recipe matches, calling consumeIngredients");
             // recipe still valid - consume ingredients
             recipe.consumeIngredients(craftingGrid);
             craftingGrid.updateResult(); // recalculate to see if we can craft again
             craftingGrid.notifyChanged();
         }
         else {
+            Console.WriteLine($"[CraftingResultSlot.take] Recipe NULL or doesn't match, clearing grid");
             // recipe no longer matches (grid changed or desync) - clear grid and don't give items
             craftingGrid.clearAll();
             craftingGrid.notifyChanged();

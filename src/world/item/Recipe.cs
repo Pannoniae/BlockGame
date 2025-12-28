@@ -128,9 +128,10 @@ public class Recipe {
         Registry.RECIPES.register("candyblock", new CandyBlockRecipe());
         Registry.RECIPES.register("candydying", new CandyDyeRecipe());
 
-        // carpet mixing (any 2 carpets -> 1 of average colour)
-        Registry.RECIPES.register("carpet", new CarpetRecipe());
-        Registry.RECIPES.register("carpetdying", new CarpetDyeRecipe());
+        // carpet recipes (order matters - check 16 carpets before 2 carpets!)
+        Registry.RECIPES.register("candycarpet", new CandyCarpetRecipe());  // 1 candy ↔ 16 carpets
+        Registry.RECIPES.register("carpet", new CarpetRecipe());  // 2 carpets -> 1 mixed
+        Registry.RECIPES.register("carpetdying", new CarpetDyeRecipe());  // carpet + dye
 
         //dyes crafted from flowers
         yellow_dye = register(new ItemStack(Item.DYE, 6, 6));

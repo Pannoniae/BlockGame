@@ -39,6 +39,7 @@ public class Textures {
     public readonly BTexture2D zombie;
     public readonly BTexture2D eye;
     public readonly BTexture2D mummy;
+    public readonly BTexture2D bigeye;
 
     // texture pack management
     private readonly List<TexturePack> availablePacks = [];
@@ -90,6 +91,7 @@ public class Textures {
         zombie = get("textures/entity/zombie.png");
         eye = get("textures/entity/eye.png");
         mummy = get("textures/entity/mummy.png");
+        bigeye = get("textures/entity/bigeye.png");
 
         reloadAll();
     }
