@@ -71,9 +71,9 @@ public class Recipe {
 
     public static Recipe BOTTLE;
 
-    //public static Recipe BOW_WOOD;
-    //public static Recipe ARROW_WOOD;
-    //public static Recipe STRING;
+    public static Recipe BOW_WOOD;
+    public static Recipe ARROW_WOOD;
+    //public static Recipe IRON_STRING;
     public static Recipe yellow_dye;
     public static Recipe orange_dye;
     public static Recipe sky_blue_dye;
@@ -441,17 +441,17 @@ public class Recipe {
         TEAMUG.shape(000_101_111, 3);
         TEAMUG.ingredients(Item.CLAY);
 
-        //BOW_WOOD = register(new ItemStack(Item.BOW_WOOD, 1));
-        //BOW_WOOD.shape(012_102_012, 3);
-        //BOW_WOOD.ingredients(Item.STICK, Item.STRING);
+        BOW_WOOD = register(new ItemStack(Item.BOW_WOOD, 1));
+        BOW_WOOD.shape(012_102_012, 3);
+        BOW_WOOD.ingredients(Item.STICK, Item.STRING);
 
-        //ARROW_WOOD = register(new ItemStack(Item.ARROW_WOOD, 1));
-        //ARROW_WOOD.shape(010_020_030, 3);
-        //ARROW_WOOD.ingredients(Item.FLINT, Item.STICK, Item.FEATHER);
+        ARROW_WOOD = register(new ItemStack(Item.ARROW_WOOD, 1));
+        ARROW_WOOD.shape(010_020_030, 3);
+        ARROW_WOOD.ingredients(Item.FLINT, Item.STICK, Item.FEATHER);
 
-        //STRING = register(new ItemStack(Item.STRING, 9));
-        //STRING.noShape();
-        //STRING.ingredients(Item.IRON_INGOT);
+        //IRON_STRING = register(new ItemStack(Item.STRING, 9));
+        //IRON_STRING.noShape();
+        //IRON_STRING.ingredients(Item.IRON_INGOT);
 
 
         // tools

@@ -833,19 +833,19 @@ public partial class Block {
         PALM_LOG.setFlammable(5);
 
         PALM_PLANKS = register("palmPlanks", new Block("Palm Planks"));
-        PALM_PLANKS.setTex(uv("blocks.png", 18, 2));
+        PALM_PLANKS.setTex(uv("blocks.png", 13, 2));
         renderType[PALM_PLANKS.id] = RenderType.CUBE;
         PALM_PLANKS.material(Material.WOOD);
         PALM_PLANKS.setFlammable(30);
 
         PALM_STAIRS = register("palmStairs", new Stairs("Palm Stairs"));
-        PALM_STAIRS.setTex(cubeUVs(18, 2));
+        PALM_STAIRS.setTex(cubeUVs(13, 2));
         PALM_STAIRS.partialBlock();
         PALM_STAIRS.material(Material.WOOD);
         PALM_STAIRS.setFlammable(30);
 
         PALM_SLAB = register("palmSlab", new Slabs("Palm Slab"));
-        PALM_SLAB.setTex(cubeUVs(8, 2));
+        PALM_SLAB.setTex(cubeUVs(13, 2));
         PALM_SLAB.material(Material.WOOD);
         PALM_SLAB.setFlammable(30);
 
