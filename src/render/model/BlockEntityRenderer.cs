@@ -40,5 +40,6 @@ public static class BlockEntityRenderers {
     /** hot reload all block entity models by recreating them */
     public static void reloadAll() {
         register(BlockEntity.SIGN, new SignRenderer());
+        register(BlockEntity.FENCE, new FenceRenderer());
     }
 }

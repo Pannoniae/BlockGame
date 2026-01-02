@@ -169,13 +169,14 @@ public partial class Block {
     public static Block FIRE;
     public static Block NG;
     public static Block SIGN;
+    public static Block FENCE;
 
-    /*public static Block OAK_FENCE;
+    public static Block OAK_FENCE;
     public static Block MAHOGANY_FENCE;
     public static Block PINE_FENCE;
     public static Block MAPLE_FENCE;
 
-    public static Block OAK_GATE;
+    /*public static Block OAK_GATE;
     public static Block MAHOGANY_GATE;
     public static Block PINE_GATE;
     public static Block MAPLE_GATE;*/
@@ -1127,7 +1128,10 @@ public partial class Block {
         SIGN = register("sign", new SignBlock("Sign"));
         SIGN.setTex(uv("blocks.png", 2, 10), uv("blocks.png", 1, 5));
 
-        /*OAK_FENCE = register("oakFence", new Fence("Oak Fence"));
+        FENCE = register("fence", new Fence("Fence"));
+        FENCE.setTex(uv("blocks.png", 11, 3));
+
+        OAK_FENCE = register("oakFence", new Fence("Oak Fence"));
         OAK_FENCE.setTex(uv("blocks.png", 11, 3));
         OAK_FENCE.material(Material.WOOD);
         OAK_FENCE.setFlammable(30);
@@ -1147,7 +1151,7 @@ public partial class Block {
         PINE_FENCE.material(Material.WOOD);
         PINE_FENCE.setFlammable(30);
 
-        OAK_GATE = register("oakGate", new Gate("Oak Gate"));
+        /*OAK_GATE = register("oakGate", new Gate("Oak Gate"));
         OAK_GATE.setTex(uv("blocks.png", 15, 3));
         OAK_GATE.material(Material.WOOD);
         OAK_GATE.setFlammable(30);

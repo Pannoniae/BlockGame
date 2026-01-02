@@ -533,5 +533,6 @@ public enum RenderType : byte {
     CUBE_DYNTEXTURE,
     GRASS,
     CROP,
-    WIRE
+    WIRE,
+    NONE
 }

@@ -88,6 +88,7 @@ public class Item {
     public static Item PINE_DOOR;
     public static Item GLASS_DOOR;
     public static Item SIGN_ITEM;
+    public static Item FENCE_ITEM;
     public static Item BUCKET;
     public static Item WATER_BUCKET;
     public static Item LAVA_BUCKET;
@@ -201,6 +202,9 @@ public class Item {
 
         SIGN_ITEM = register("signItem", new SignItem("Sign", Block.SIGN));
         SIGN_ITEM.tex = uv("items.png", 1, 7);
+
+        FENCE_ITEM = register("fenceItem", new FenceItem("Fence", Block.FENCE));
+        FENCE_ITEM.tex = uv("items.png", 3, 8);
 
         OAK_DOOR = register("oakdoorItem", new DoorItem("Oak Door", Block.OAK_DOOR));
         OAK_DOOR.tex = uv("items.png", 4, 8);

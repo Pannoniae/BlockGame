@@ -308,7 +308,7 @@ public class Recipe {
             .shape(110_110_110, 3)
             .ingredients(Block.GLASS.item);
 
-        /*OAK_FENCE = register(new ItemStack(Block.OAK_FENCE.item, 4));
+        OAK_FENCE = register(new ItemStack(Block.OAK_FENCE.item, 4));
         OAK_FENCE.shape(110_220_110, 3);
         OAK_FENCE.ingredients(Block.OAK_PLANKS.item, Item.STICK);
             register(new ItemStack(Block.MAHOGANY_FENCE.item,4))
@@ -321,7 +321,7 @@ public class Recipe {
             .shape(110_220_110, 3)
             .ingredients(Block.PINE_PLANKS.item, Item.STICK);
 
-        OAK_GATE = register(new ItemStack(Block.OAK_GATE.item, 2));
+        /*OAK_GATE = register(new ItemStack(Block.OAK_GATE.item, 2));
         OAK_GATE.shape(111_222_111, 3);
         OAK_GATE.ingredients(Block.OAK_PLANKS.item, Item.STICK);
             register(new ItemStack(Block.MAHOGANY_GATE.item,2))

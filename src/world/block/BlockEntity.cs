@@ -12,6 +12,7 @@ public abstract class BlockEntity : Persistent {
     public static int FURNACE;
     public static int CHEST;
     public static int SIGN;
+    public static int FENCE;
 
     public Vector3I pos;
 
@@ -51,8 +52,11 @@ public abstract class BlockEntity : Persistent {
         CHEST = register("chest", () => new ChestBlockEntity());
         SIGN = register("sign", () => new SignBlockEntity());
 
-        // sign has a custom renderer
+        FENCE = register("fence", () => new FenceBlockEntity());
+
+        // sign and fence have custom renderers
         Registry.BLOCK_ENTITIES.hasRenderer[SIGN] = true;
+        Registry.BLOCK_ENTITIES.hasRenderer[FENCE] = true;
 
         if (!Net.mode.isDed()) {
             BlockEntityRenderers.reloadAll();

@@ -40,6 +40,7 @@ public class Textures {
     public readonly BTexture2D eye;
     public readonly BTexture2D mummy;
     public readonly BTexture2D bigeye;
+    public readonly BTexture2D fence;
 
     // texture pack management
     private readonly List<TexturePack> availablePacks = [];
@@ -92,6 +93,7 @@ public class Textures {
         eye = get("textures/entity/eye.png");
         mummy = get("textures/entity/mummy.png");
         bigeye = get("textures/entity/bigeye.png");
+        fence = get("textures/entity/fence.png");
 
         reloadAll();
     }
