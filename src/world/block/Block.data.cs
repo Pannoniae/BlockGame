@@ -169,12 +169,10 @@ public partial class Block {
     public static Block FIRE;
     public static Block NG;
     public static Block SIGN;
-    public static Block FENCE;
-
-    public static Block OAK_FENCE;
-    public static Block MAHOGANY_FENCE;
-    public static Block PINE_FENCE;
-    public static Block MAPLE_FENCE;
+    public static Fence OAK_FENCE;
+    public static Fence MAHOGANY_FENCE;
+    public static Fence PINE_FENCE;
+    public static Fence MAPLE_FENCE;
 
     /*public static Block OAK_GATE;
     public static Block MAHOGANY_GATE;
@@ -1127,26 +1125,25 @@ public partial class Block {
 
         SIGN = register("sign", new SignBlock("Sign"));
         SIGN.setTex(uv("blocks.png", 2, 10), uv("blocks.png", 1, 5));
+        SIGN.material(Material.WOOD);
+        SIGN.setFlammable(30);
 
-        FENCE = register("fence", new Fence("Fence"));
-        FENCE.setTex(uv("blocks.png", 11, 3));
-
-        OAK_FENCE = register("oakFence", new Fence("Oak Fence"));
+        OAK_FENCE = register("oakFence", new Fence("Oak Fence", 0));
         OAK_FENCE.setTex(uv("blocks.png", 11, 3));
         OAK_FENCE.material(Material.WOOD);
         OAK_FENCE.setFlammable(30);
 
-        MAHOGANY_FENCE = register("mahoganyFence", new Fence("Mahogany Fence"));
+        MAHOGANY_FENCE = register("mahoganyFence", new Fence("Mahogany Fence", 1));
         MAHOGANY_FENCE.setTex(uv("blocks.png", 12, 3));
         MAHOGANY_FENCE.material(Material.WOOD);
         MAHOGANY_FENCE.setFlammable(30);
 
-        MAPLE_FENCE = register("mapleFence", new Fence("Maple Fence"));
+        MAPLE_FENCE = register("mapleFence", new Fence("Maple Fence", 2));
         MAPLE_FENCE.setTex(uv("blocks.png", 13, 3));
         MAPLE_FENCE.material(Material.WOOD);
         MAPLE_FENCE.setFlammable(30);
 
-        PINE_FENCE = register("pineFence", new Fence("Pine Fence"));
+        PINE_FENCE = register("pineFence", new Fence("Pine Fence", 3));
         PINE_FENCE.setTex(uv("blocks.png", 14, 3));
         PINE_FENCE.material(Material.WOOD);
         PINE_FENCE.setFlammable(30);
@@ -1169,7 +1166,8 @@ public partial class Block {
         PINE_GATE = register("pineGate", new Gate("Pine Gate"));
         PINE_GATE.setTex(uv("blocks.png", 18, 3));
         PINE_GATE.material(Material.WOOD);
-        PINE_GATE.setFlammable(30);*/
+        PINE_GATE.setFlammable(30);
+        */
 
         FARMLAND = register("farmland", new Farmland("Farmland"));
         var farmlandUVs = grassUVs(26, 5, 2, 0, 2, 0);

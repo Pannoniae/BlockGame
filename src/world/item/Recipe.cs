@@ -39,11 +39,12 @@ public class Recipe {
     public static Recipe MAPLE_FENCE;
     public static Recipe PINE_FENCE;
 
+    /*
     public static Recipe OAK_GATE;
     public static Recipe MAHOGANY_GATE;
     public static Recipe MAPLE_GATE;
     public static Recipe PINE_GATE;
-
+    */
 
     public static Recipe STICK;
     public static Recipe CRAFTING_TABLE;
@@ -311,15 +312,16 @@ public class Recipe {
         OAK_FENCE = register(new ItemStack(Block.OAK_FENCE.item, 4));
         OAK_FENCE.shape(110_220_110, 3);
         OAK_FENCE.ingredients(Block.OAK_PLANKS.item, Item.STICK);
-            register(new ItemStack(Block.MAHOGANY_FENCE.item,4))
+        register(new ItemStack(Block.MAHOGANY_FENCE.item, 4))
             .shape(110_220_110, 3)
             .ingredients(Block.MAHOGANY_PLANKS.item, Item.STICK);
-            register(new ItemStack(Block.MAPLE_FENCE.item,4))
+        register(new ItemStack(Block.MAPLE_FENCE.item,4))
             .shape(110_220_110, 3)
             .ingredients(Block.MAPLE_PLANKS.item, Item.STICK);
-            register(new ItemStack(Block.PINE_FENCE.item,4))
+        register(new ItemStack(Block.PINE_FENCE.item,4))
             .shape(110_220_110, 3)
             .ingredients(Block.PINE_PLANKS.item, Item.STICK);
+
 
         /*OAK_GATE = register(new ItemStack(Block.OAK_GATE.item, 2));
         OAK_GATE.shape(111_222_111, 3);

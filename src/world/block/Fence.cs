@@ -5,8 +5,12 @@ using BlockGame.world.item;
 namespace BlockGame.world.block;
 
 public class Fence : EntityBlock {
+    public int fenceType;
+    public Item fenceItem; // set during item registration
 
-    public Fence(string name) : base(name) { }
+    public Fence(string name, int fenceType = 0) : base(name) {
+        this.fenceType = fenceType;
+    }
 
     protected override void onRegister(int id) {
         base.onRegister(id);
@@ -57,6 +61,6 @@ public class Fence : EntityBlock {
     public override byte maxValidMetadata() => 3;
 
     public override ItemStack getActualItem(byte metadata) {
-        return new ItemStack(Item.FENCE_ITEM, 1);
+        return new ItemStack(fenceItem, 1);
     }
 }

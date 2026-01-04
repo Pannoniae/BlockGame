@@ -88,7 +88,10 @@ public class Item {
     public static Item PINE_DOOR;
     public static Item GLASS_DOOR;
     public static Item SIGN_ITEM;
-    public static Item FENCE_ITEM;
+    public static Item OAK_FENCE_ITEM;
+    public static Item MAHOGANY_FENCE_ITEM;
+    public static Item MAPLE_FENCE_ITEM;
+    public static Item PINE_FENCE_ITEM;
     public static Item BUCKET;
     public static Item WATER_BUCKET;
     public static Item LAVA_BUCKET;
@@ -203,8 +206,21 @@ public class Item {
         SIGN_ITEM = register("signItem", new SignItem("Sign", Block.SIGN));
         SIGN_ITEM.tex = uv("items.png", 1, 7);
 
-        FENCE_ITEM = register("fenceItem", new FenceItem("Fence", Block.FENCE));
-        FENCE_ITEM.tex = uv("items.png", 3, 8);
+        OAK_FENCE_ITEM = register("oakFenceItem", new FenceItem("Oak Fence", Block.OAK_FENCE));
+        OAK_FENCE_ITEM.tex = uv("items.png", 3, 8);
+        Block.OAK_FENCE.fenceItem = OAK_FENCE_ITEM;
+
+        MAHOGANY_FENCE_ITEM = register("mahoganyFenceItem", new FenceItem("Mahogany Fence", Block.MAHOGANY_FENCE));
+        MAHOGANY_FENCE_ITEM.tex = uv("items.png", 9, 8);
+        Block.MAHOGANY_FENCE.fenceItem = MAHOGANY_FENCE_ITEM;
+
+        MAPLE_FENCE_ITEM = register("mapleFenceItem", new FenceItem("Maple Fence", Block.MAPLE_FENCE));
+        MAPLE_FENCE_ITEM.tex = uv("items.png", 10, 8);
+        Block.MAPLE_FENCE.fenceItem = MAPLE_FENCE_ITEM;
+
+        PINE_FENCE_ITEM = register("pineFenceItem", new FenceItem("Pine Fence", Block.PINE_FENCE));
+        PINE_FENCE_ITEM.tex = uv("items.png", 11, 8);
+        Block.PINE_FENCE.fenceItem = PINE_FENCE_ITEM;
 
         OAK_DOOR = register("oakdoorItem", new DoorItem("Oak Door", Block.OAK_DOOR));
         OAK_DOOR.tex = uv("items.png", 4, 8);
@@ -562,7 +578,10 @@ public class Item {
         Registry.ITEMS.blackList[Block.BLACKBERRY_BUSH_SAPLING.item.id] = true;
         Registry.ITEMS.blackList[Block.MUSHROOM_BROWN.item.id] = true;
         Registry.ITEMS.blackList[Block.MUSHROOM_RED.item.id] = true;
-
+        Registry.ITEMS.blackList[Block.OAK_FENCE.item.id] = true;
+        Registry.ITEMS.blackList[Block.MAHOGANY_FENCE.item.id] = true;
+        Registry.ITEMS.blackList[Block.MAPLE_FENCE.item.id] = true;
+        Registry.ITEMS.blackList[Block.PINE_FENCE.item.id] = true;
 
         // fuel values
         Registry.ITEMS.fuelValue[COAL.id] = 3600; // 60 seconds
