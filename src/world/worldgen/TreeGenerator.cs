@@ -13,6 +13,7 @@ public class TreeGenerator {
     private static ProceduralTree oak;
     private static ProceduralTree maple;
     private static ProceduralTree mahogany;
+    private static ProceduralTree palm;
 
     private const float PI = MathF.PI;
 
@@ -196,22 +197,80 @@ public class TreeGenerator {
     }
 
     /** place a palm tree with fan-shaped foliage at top */
-    public static void placePalmTree(World world, XRandom random, int x, int y, int z, int height = 6) {
+    public static void placePalmTree(World world, XRandom random, int x, int y, int z, int height = 4) {
         // trunk
         for (int i = 0; i < height; i++) {
-            world.setBlockSilent(x, y + i, z, Block.OAK_LOG.id);
+            world.setBlockSilent(x, y + i, z, Block.PALM_LOG.id);
         }
 
-        // fan-shaped foliage at top (diagonal pattern)
-        int topY = y + height;
-        for (int xoff = -2; xoff <= 2; xoff++) {
-            for (int zoff = -2; zoff <= 2; zoff++) {
-                if (Math.Abs(xoff) == Math.Abs(zoff)) {
-                    world.setBlockSilent(x + xoff, topY, z + zoff, Block.LEAVES.id);
+        int h = y + height;
+        for (int i = 0; i < height + 1; i++) {
+            world.setBlockSilent(x, h + i, z, Block.PALM_LEAVES.id);
+        }
+
+        // level 1
+        world.setBlockSilent(x, h, z + 1, Block.BANANAFRUIT.id);
+
+        // level 2
+        for (int xoff = -1; xoff <= 1; xoff++) {
+            for (int zoff = -1; zoff <= 1; zoff++) {
+                if (Math.Abs(xoff) != Math.Abs(zoff)) {
+                    world.setBlockSilent(x + xoff, h + 1, z + zoff, Block.PALM_LEAVES.id);
                 }
             }
         }
+        world.setBlockSilent(x, h + 1, z - 2, Block.BANANAFRUIT.id);
+
+        // level 3
+        world.setBlockSilent(x - 2, h + 2, z, Block.PALM_LEAVES.id);
+        world.setBlockSilent(x - 1, h + 2, z, Block.PALM_LOG.id);
+        world.setBlockSilent(x, h + 2, z + 1, Block.PALM_LEAVES.id);
+        world.setBlockSilent(x, h + 2, z - 1, Block.PALM_LOG.id);
+        world.setBlockSilent(x, h + 2, z - 2, Block.PALM_LEAVES.id);
+        for (int zoff = -1; zoff <= 0; zoff++) {
+            world.setBlockSilent(x + 1, h + 2, z + zoff, Block.PALM_LEAVES.id);
+        }
+
+        //level 4
+        for (int zoff = -3; zoff <= -2; zoff++) {
+            world.setBlockSilent(x, h + 3, z + zoff, Block.PALM_LEAVES.id);
+        }
+        for (int zoff = 1; zoff <= 2; zoff++) {
+            world.setBlockSilent(x, h + 3, z + zoff, Block.PALM_LEAVES.id);
+        }
+        for (int zoff = -1; zoff <= 0; zoff++) {
+            world.setBlockSilent(x + 2, h + 3, z + zoff, Block.PALM_LEAVES.id);
+        }
+        for (int xoff = -3; xoff <= -2; xoff++) {
+            world.setBlockSilent(x + xoff, h + 3, z, Block.PALM_LEAVES.id);
+        }
+        world.setBlockSilent(x + 1, h + 3, z, Block.PALM_LOG.id);
+        world.setBlockSilent(x + 3, h + 3, z, Block.BANANAFRUIT.id);
+
+        // level 5
+        for (int xoff = 2; xoff <= 3; xoff++) {
+            world.setBlockSilent(x + xoff, h + 4, z, Block.PALM_LEAVES.id);
+        }
+        world.setBlockSilent(x, h + 4, z - 3, Block.PALM_LEAVES.id);
+        world.setBlockSilent(x, h + 4, z + 2, Block.PALM_LEAVES.id);
+        world.setBlockSilent(x - 3, h + 4, z, Block.PALM_LEAVES.id);
     }
+
+
+
+    /*int h2 = y + height;
+        for (int cy = h2 - 2; cy < h2 + 2; cy++) {
+            int rad = (cy > topY - 1) ? 1 : 2;
+
+            for (int xoff = -2; xoff <= 2; xoff++) {
+                for (int zoff = -2; zoff <= 2; zoff++) {
+                if (Math.Abs(xoff) == Math.Abs(zoff)) {
+                    world.setBlockSilent(x + xoff, topY, z + zoff, Block.PALM_LEAVES.id);
+                }
+            }
+        }
+    }*/
+
 
     /** place small mahogany tree - 4-6 blocks, simple round crown */
     public static void placeSmallMahogany(World world, XRandom random, int x, int y, int z) {

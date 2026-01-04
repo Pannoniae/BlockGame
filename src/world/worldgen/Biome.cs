@@ -30,10 +30,10 @@ public static class Biomes {
         // above water - use temp/humidity
         //  release-deadline-driven design lol
         return (temp, hum) switch {
-            ( < -0.5f, > 0.5f) => BiomeType.Taiga,
-            ( > 0.5f, > 0.5f) => BiomeType.Jungle,
-            ( > -0.5f, > 0.5f) => BiomeType.Forest,
-            ( > 0.5f, _) => BiomeType.Desert,
+            (< -0.5f, > 0.5f) => BiomeType.Taiga,
+            (> 0.5f, > 0.5f) => BiomeType.Jungle,
+            (> -0.5f, > 0.5f) => BiomeType.Forest,
+            (> 0.5f, _) => BiomeType.Desert,
             _ => BiomeType.Plains // temperate
         };
     }
@@ -64,23 +64,16 @@ public static class Biomes {
             BiomeType.Taiga => 0.8f,
             BiomeType.Jungle => 1.4f,
             BiomeType.Forest => 1.0f,
+            BiomeType.Desert => 1.0f,
+            BiomeType.Beach => 1.0f,
             BiomeType.Plains => 0.0f,
             _ => 0f
         };
-    }
-
-    /** can place grass decoration */
-    public static bool canPlaceGrass(BiomeType biome) {
-        return biome is BiomeType.Plains or BiomeType.Forest or BiomeType.Taiga;
     }
 
     /** can place cactus */
     public static bool canPlaceCactus(BiomeType biome) {
         return biome is BiomeType.Desert;
     }
-
-    /** can place ice on water surface */
-    public static bool canPlaceIce(BiomeType biome, float temp) {
-        return biome is BiomeType.Ocean or BiomeType.Taiga or BiomeType.Beach && temp < -0.3f;
-    }
 }
+

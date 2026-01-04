@@ -112,6 +112,9 @@ public class Sapling : Block {
             case SaplingType.PINE:
                 TreeGenerator.placePineTree(world, random, x, y, z);
                 break;
+            case SaplingType.PALM:
+                TreeGenerator.placePalmTree(world, random, x, y, z);
+                break;
         }
     }
 

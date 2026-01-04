@@ -355,7 +355,22 @@ public class NewSurfaceGenerator : SurfaceGenerator {
                 }
 
                 break;
+            case BiomeType.Desert:
+                // place palm tree randomly
+                if (random.NextSingle() < 0.1f) {
+                    WorldgenUtil.placePalmTree(world, random, coord, cb);
+                }
+
+                break;
         }
+        /*
+        if (cb == BiomeType.Desert) {
+            // place palm tree randomly near water
+            if (random.NextSingle() < 0.1f) {
+                WorldgenUtil.placePalmTree(world, random, coord, cb);
+            }
+        }
+        */
 
 
         // place undergrowth in jungles - much denser and more varied

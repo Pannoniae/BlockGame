@@ -75,8 +75,8 @@ public class Leaves : Block {
         // bananafruit: when broken with scythe, drops 1-2 bananas; without scythe, drop nothing
         if (id == BANANAFRUIT.id) {
             if (canBreak) {
-                // broken with scythe: drop 1-2 bananas
-                drops.Add(new ItemStack(Item.BANANA, Game.random.Next(1, 3), 0));
+                // broken with scythe: drop 1 banana
+                drops.Add(new ItemStack(Item.BANANA, 1, 0));
             }
             // broken without scythe: nothing
             return;

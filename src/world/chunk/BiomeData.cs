@@ -91,6 +91,14 @@ public class BiomeData {
         return value;
     }
 
+    public BiomeType getBiome(int x, int y, int z) {
+        float temp = getTemp(x, y, z);
+        float hum = getHum(x, y, z);
+        int height = chunk!.heightMap.get(x, z);
+
+        return Biomes.getType(temp, hum, height);
+    }
+
     public static float fe(float x) {
         const float a1 = 0.254829592f;
         const float a2 = -0.284496736f;
