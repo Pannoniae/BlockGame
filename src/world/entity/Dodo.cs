@@ -1,4 +1,5 @@
-﻿using BlockGame.util;
+﻿using BlockGame.main;
+using BlockGame.util;
 using BlockGame.world.item;
 using Molten.DoublePrecision;
 
@@ -12,13 +13,15 @@ public class Dodo : Mob {
 
     public override AABB calcAABB(Vector3D pos) {
         return new AABB(
-            pos.X-0.3, pos.Y, pos.Z - 0.3,
-            pos.X + 0.3, pos.Y + 2, pos.Z + 0.3
+            pos.X - 1.3f, pos.Y, pos.Z - 0.7f,
+            pos.X + 1.3f, pos.Y + 2.2f, pos.Z + 0.7f
         );
     }
 
     public override void getDrop(List<ItemStack> drops) {
-        drops.Add(new ItemStack(Item.FEATHER, 64, 0));
+        drops.Add(new ItemStack(Item.FEATHER, 64,0));
+        drops.Add(new ItemStack(Item.EGG, 1, 0));
     }
-
 }
+
+

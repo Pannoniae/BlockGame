@@ -125,6 +125,7 @@ public class Item {
     public static Item BOW_WOOD;
     public static Item ARROW_WOOD;
     public static Item FEATHER;
+    public static Item EGG;
     public static Item IRON_STRING;
     public static Item STRING;
     public static Item SNOWBALL;
@@ -522,6 +523,11 @@ public class Item {
 
         FEATHER = register("feather", new Item("Feather"));
         FEATHER.tex = uv("items.png", 0, 3);
+        material[FEATHER.id] = true;
+
+        EGG = register("egg", new Item("Egg"));
+        EGG.tex = uv("items.png", 6, 12);
+        material[EGG.id] = true;
 
         IRON_STRING = register("string", new Item("Iron String"));
         IRON_STRING.tex = uv("items.png", 1, 3);

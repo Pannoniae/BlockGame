@@ -197,7 +197,7 @@ public class TreeGenerator {
     }
 
     /** place a palm tree with fan-shaped foliage at top */
-    public static void placePalmTree(World world, XRandom random, int x, int y, int z, int height = 4) {
+    public static void placePalmTree(World world, XRandom random, int x, int y, int z, int height = 5) {
         // trunk
         for (int i = 0; i < height; i++) {
             world.setBlockSilent(x, y + i, z, Block.PALM_LOG.id);
