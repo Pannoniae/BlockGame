@@ -12,16 +12,16 @@ public class SurvivalInventoryMenu : InventoryMenu {
     public const int rows = 5;
     public const int cols = 10;
 
-    public const int invOffsetY = 20;
-    public const int textOffsetX = 4;
+    public const int invOffsetY = 13;
+    public const int textOffsetX = 6;
     public const int textOffsetY = 3;
     public const int invOffsetX = 5;
 
     // player model rendering constants
     private const int playerModelX = 47;
-    private const int playerModelY = 12;
+    private const int playerModelY = 15;
     private const int playerModelW = 60;
-    private const int playerModelH = 69;
+    private const int playerModelH = 64;
 
     private readonly SurvivalInventoryContext survivalCtx;
 

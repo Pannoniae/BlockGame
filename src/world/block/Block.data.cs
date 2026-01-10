@@ -1019,10 +1019,10 @@ public partial class Block {
         CARPET = register("carpet", new Carpet("Carpet"));
         CARPET.material(Material.ORGANIC);
 
-        //HEAD = register("head", new Block("Head"));
-        //HEAD.setTex(HeadUVs(0, 3, 1, 3, 2, 3, 3, 3, 4, 3, 5, 3));
-        //HEAD.setModel(BlockModel.makeHalfCube(HEAD));
-        //HEAD.partialBlock();
+        /*HEAD = register("head", new Block("Head"));
+        HEAD.setTex(HeadUVs(0, 3, 1, 3, 2, 3, 3, 3, 4, 3, 5, 3));
+        HEAD.setModel(BlockModel.makeHalfCube(HEAD));
+        HEAD.partialBlock();*/
 
         WATER = register("water", new Liquid("Water", 15, 8, false));
         WATER.setTex(uv("blocks.png", 0, 13), uv("blocks.png", 1, 14));
@@ -1047,12 +1047,12 @@ public partial class Block {
         CRAFTING_TABLE.setFlammable(30);
 
         MAHOGANY_CHEST = register("mahoganyChest", new Chest("Chest"));
-        MAHOGANY_CHEST.setTex(chestUVs(2, 4, 0, 4, 1, 4, 3, 4));
+        MAHOGANY_CHEST.setTex(HeadUVs(0, 4,0, 4, 1, 4, 4, 4, 3, 4, 2, 4));
         MAHOGANY_CHEST.material(Material.WOOD);
         MAHOGANY_CHEST.setFlammable(30);
 
         OAK_CHEST = register("oakChest", new Chest("Oak Chest"));
-        OAK_CHEST.setTex(chestUVs(2, 9, 0, 9, 1, 9, 3, 9));
+        OAK_CHEST.setTex(HeadUVs(0, 9, 0, 9, 1, 9, 4, 9, 3, 9, 2 , 9));
         OAK_CHEST.material(Material.WOOD);
         OAK_CHEST.setFlammable(30);
 
@@ -1081,20 +1081,20 @@ public partial class Block {
         GLASS_DOOR.material(Material.GLASS);
 
         BRICK_FURNACE = register("brickFurnace", new Furnace("Brick Furnace", false));
-        BRICK_FURNACE.setTex(furnaceUVs(4, 4, 5, 4, 6, 4, 7, 4));
+        BRICK_FURNACE.setTex(furnaceUVs(5, 4, 6, 4, 7, 4, 8, 4));
         BRICK_FURNACE.material(Material.STONE);
 
         BRICK_FURNACE_LIT = register("brickFurnaceLit", new Furnace("Brick Furnace", true));
-        BRICK_FURNACE_LIT.setTex(furnaceUVs(4, 4, 5, 4, 6, 4, 7, 4));
+        BRICK_FURNACE_LIT.setTex(furnaceUVs(5, 4, 5, 6, 7, 4, 8, 4));
         BRICK_FURNACE_LIT.material(Material.STONE);
         BRICK_FURNACE_LIT.light(8);
 
         FURNACE = register("furnace", new Furnace("Furnace", false));
-        FURNACE.setTex(furnaceUVs(8, 4, 9, 4, 10, 4, 11, 4));
+        FURNACE.setTex(furnaceUVs(9, 4, 10, 4, 11, 4, 12, 4));
         FURNACE.material(Material.STONE);
 
         FURNACE_LIT = register("furnaceLit", new Furnace("Furnace", true));
-        FURNACE_LIT.setTex(furnaceUVs(8, 4, 9, 4, 10, 4, 11, 4));
+        FURNACE_LIT.setTex(furnaceUVs(9, 4, 10, 4, 11, 4, 12, 4));
         FURNACE_LIT.material(Material.STONE);
         FURNACE_LIT.light(8);
 

@@ -91,13 +91,15 @@ public class Stairs : Block {
         var uv1 = UVPair.texCoords(max);
         float u0 = uv0.X, v0 = uv0.Y, u1 = uv1.X, v1 = uv1.Y;
 
+        bool rotateTop = facing < 2; // E/W facing needs rotated top UVs
+
         if (flipped) {
             // upside down: top half full, bottom half partial
-            br.renderCube(lx, ly, lz, vertices, 0, 0.5f, 0, 1, 1, 1, u0, v0, u1, v1);
+            renderStepCube(br, lx, ly, lz, vertices, 0, 0.5f, 0, 1, 1, 1, u0, v0, u1, v1, rotateTop);
             renderStairTop(br, lx, ly, lz, vertices, facing, cornerType, cornerDir, u0, v0, u1, v1, true);
         } else {
             // normal: bottom half full, top half partial
-            br.renderCube(lx, ly, lz, vertices, 0, 0, 0, 1, 0.5f, 1, u0, v0, u1, v1);
+            renderStepCube(br, lx, ly, lz, vertices, 0, 0, 0, 1, 0.5f, 1, u0, v0, u1, v1, rotateTop);
             renderStairTop(br, lx, ly, lz, vertices, facing, cornerType, cornerDir, u0, v0, u1, v1, false);
         }
     }
@@ -107,26 +109,111 @@ public class Stairs : Block {
 
         float yLo = flipped ? 0f : 0.5f;
         float yHi = flipped ? 0.5f : 1f;
+        bool rotateTop = facing < 2; // E/W facing needs rotated top UVs
+        // corners: match neighbor's orientation (cornerDir 0/1 = E/W neighbor = rotate)
+        bool rotateCorner = cornerDir < 2;
 
         switch (cornerType) {
             case 0: {
                 // normal stair - half slab on high side
                 var (x1, z1, x2, z2) = getHalfBounds(facing);
-                br.renderCube(x, y, z, vertices, x1, yLo, z1, x2, yHi, z2, u0, v0, u1, v1);
+                renderStepCube(br, x, y, z, vertices, x1, yLo, z1, x2, yHi, z2, u0, v0, u1, v1, rotateTop);
                 break;
             }
             case 1: {
-                // inner corner - quarter block
+                // inner corner - quarter block, match neighbor's texture
                 var (x1, z1, x2, z2) = getQuarterBounds(facing, cornerDir);
-                br.renderCube(x, y, z, vertices, x1, yLo, z1, x2, yHi, z2, u0, v0, u1, v1);
+                renderStepCube(br, x, y, z, vertices, x1, yLo, z1, x2, yHi, z2, u0, v0, u1, v1, rotateCorner);
                 break;
             }
             default:
                 // outer corner - three quarters (render as two pieces)
                 var (bounds1, bounds2) = getThreeQuarterBounds(facing, cornerDir);
-                br.renderCube(x, y, z, vertices, bounds1.x1, yLo, bounds1.z1, bounds1.x2, yHi, bounds1.z2, u0, v0, u1, v1);
-                br.renderCube(x, y, z, vertices, bounds2.x1, yLo, bounds2.z1, bounds2.x2, yHi, bounds2.z2, u0, v0, u1, v1);
+                // main half follows own facing, extra quarter follows neighbor
+                renderStepCube(br, x, y, z, vertices, bounds1.x1, yLo, bounds1.z1, bounds1.x2, yHi, bounds1.z2, u0, v0, u1, v1, rotateTop);
+                renderStepCube(br, x, y, z, vertices, bounds2.x1, yLo, bounds2.z1, bounds2.x2, yHi, bounds2.z2, u0, v0, u1, v1, rotateCorner);
                 break;
+        }
+    }
+
+    // renders a partial cube, optionally rotating UP/DOWN face UVs for N/S stairs
+    static void renderStepCube(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices,
+        float x0, float y0, float z0, float x1, float y1, float z1,
+        float u0, float v0, float u1, float v1, bool rotateTop) {
+
+        if (!rotateTop) {
+            br.renderCube(x, y, z, vertices, x0, y0, z0, x1, y1, z1, u0, v0, u1, v1);
+            return;
+        }
+
+        // N/S stairs: render with rotated top/bottom UVs
+        var ue = u1 - u0;
+        var ve = v1 - v0;
+
+        // WEST face - U along Z, V along Y
+        if (x0 == 0f || !Block.fullBlock[br.getBlockCached(-1, 0, 0).getID()]) {
+            br.applyFaceLighting(RawDirection.WEST);
+            br.begin();
+            br.vertex(x + x0, y + y1, z + z1, u0 + ue * z0, v0 + ve * (1f - y1));
+            br.vertex(x + x0, y + y0, z + z1, u0 + ue * z0, v0 + ve * (1f - y0));
+            br.vertex(x + x0, y + y0, z + z0, u0 + ue * z1, v0 + ve * (1f - y0));
+            br.vertex(x + x0, y + y1, z + z0, u0 + ue * z1, v0 + ve * (1f - y1));
+            br.end(vertices);
+        }
+
+        // EAST face - U along Z, V along Y
+        if (x1 == 1f || !Block.fullBlock[br.getBlockCached(1, 0, 0).getID()]) {
+            br.applyFaceLighting(RawDirection.EAST);
+            br.begin();
+            br.vertex(x + x1, y + y1, z + z0, u0 + ue * z0, v0 + ve * (1f - y1));
+            br.vertex(x + x1, y + y0, z + z0, u0 + ue * z0, v0 + ve * (1f - y0));
+            br.vertex(x + x1, y + y0, z + z1, u0 + ue * z1, v0 + ve * (1f - y0));
+            br.vertex(x + x1, y + y1, z + z1, u0 + ue * z1, v0 + ve * (1f - y1));
+            br.end(vertices);
+        }
+
+        // SOUTH face - U along X, V along Y
+        if (z0 == 0f || !Block.fullBlock[br.getBlockCached(0, 0, -1).getID()]) {
+            br.applyFaceLighting(RawDirection.SOUTH);
+            br.begin();
+            br.vertex(x + x0, y + y1, z + z0, u0 + ue * x0, v0 + ve * (1f - y1));
+            br.vertex(x + x0, y + y0, z + z0, u0 + ue * x0, v0 + ve * (1f - y0));
+            br.vertex(x + x1, y + y0, z + z0, u0 + ue * x1, v0 + ve * (1f - y0));
+            br.vertex(x + x1, y + y1, z + z0, u0 + ue * x1, v0 + ve * (1f - y1));
+            br.end(vertices);
+        }
+
+        // NORTH face - U along X, V along Y
+        if (z1 == 1f || !Block.fullBlock[br.getBlockCached(0, 0, 1).getID()]) {
+            br.applyFaceLighting(RawDirection.NORTH);
+            br.begin();
+            br.vertex(x + x1, y + y1, z + z1, u0 + ue * x0, v0 + ve * (1f - y1));
+            br.vertex(x + x1, y + y0, z + z1, u0 + ue * x0, v0 + ve * (1f - y0));
+            br.vertex(x + x0, y + y0, z + z1, u0 + ue * x1, v0 + ve * (1f - y0));
+            br.vertex(x + x0, y + y1, z + z1, u0 + ue * x1, v0 + ve * (1f - y1));
+            br.end(vertices);
+        }
+
+        // DOWN face - rotated: U along Z, V along X
+        if (y0 == 0f || !Block.fullBlock[br.getBlockCached(0, -1, 0).getID()]) {
+            br.applyFaceLighting(RawDirection.DOWN);
+            br.begin();
+            br.vertex(x + x1, y + y0, z + z1, u0 + ue * z0, v0 + ve * (1f - x0));
+            br.vertex(x + x1, y + y0, z + z0, u0 + ue * z1, v0 + ve * (1f - x0));
+            br.vertex(x + x0, y + y0, z + z0, u0 + ue * z1, v0 + ve * (1f - x1));
+            br.vertex(x + x0, y + y0, z + z1, u0 + ue * z0, v0 + ve * (1f - x1));
+            br.end(vertices);
+        }
+
+        // UP face - rotated: U along Z, V along X
+        if (y1 == 1f || !Block.fullBlock[br.getBlockCached(0, 1, 0).getID()]) {
+            br.applyFaceLighting(RawDirection.UP);
+            br.begin();
+            br.vertex(x + x0, y + y1, z + z1, u0 + ue * z0, v0 + ve * (1f - x1));
+            br.vertex(x + x0, y + y1, z + z0, u0 + ue * z1, v0 + ve * (1f - x1));
+            br.vertex(x + x1, y + y1, z + z0, u0 + ue * z1, v0 + ve * (1f - x0));
+            br.vertex(x + x1, y + y1, z + z1, u0 + ue * z0, v0 + ve * (1f - x0));
+            br.end(vertices);
         }
     }
 

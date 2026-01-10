@@ -9,17 +9,17 @@ public class SurvivalInventoryContext : InventoryContext {
     private readonly CraftingGridInventory craftingGrid;
 
     public const int hotbarX = 47;
-    public const int hotbarY = 166;
-    public const int mainY = 144;
+    public const int hotbarY = 167;
+    public const int mainY = 145;
     public const int accX = 5;
-    public const int accY = 84;
+    public const int accY = 85;
     public const int armourX = 15;
-    public const int armourY = 12;
+    public const int armourY = 13;
     public const int armourGap = 4;
     public const int craftingGridX = 148;
-    public const int craftingGridY = 26;
+    public const int craftingGridY = 27;
     public const int craftingResultX = 217;
-    public const int craftingResultY = 36;
+    public const int craftingResultY = 37;
 
     public SurvivalInventoryContext(PlayerInventory playerInv) {
         this.playerInv = playerInv;

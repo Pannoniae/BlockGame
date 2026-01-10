@@ -72,7 +72,7 @@ public class Leaves : Block {
             drops.Add(new ItemStack(PALM_SAPLING.item, 1, 0));
         }
 
-        // bananafruit: when broken with scythe, drops 1-2 bananas; without scythe, drop nothing
+        // bananafruit: when broken with scythe, drops 1-2 bananas; without scythe, drops nothing
         if (id == BANANAFRUIT.id) {
             if (canBreak) {
                 // broken with scythe: drop 1 banana

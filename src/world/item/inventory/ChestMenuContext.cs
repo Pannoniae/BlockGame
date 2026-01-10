@@ -7,10 +7,10 @@ public class ChestMenuContext : InventoryContext {
     public readonly Inventory chestInv;
 
     public const int hotbarX = 5;
-    public const int hotbarY = 183;
-    public const int mainY = 161;
+    public const int hotbarY = 179;
+    public const int mainY = 157;
     public const int chestX = 5;
-    public const int chestY = 19;
+    public const int chestY = 13;
 
     public ChestMenuContext(PlayerInventory playerInv, Inventory chestInv) {
         this.playerInv = playerInv;

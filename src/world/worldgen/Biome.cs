@@ -64,7 +64,7 @@ public static class Biomes {
             BiomeType.Taiga => 0.8f,
             BiomeType.Jungle => 1.4f,
             BiomeType.Forest => 1.0f,
-            BiomeType.Desert => 1.0f,
+            BiomeType.Desert => 0.8f,
             BiomeType.Beach => 1.0f,
             BiomeType.Plains => 0.0f,
             _ => 0f

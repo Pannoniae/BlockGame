@@ -15,9 +15,9 @@ public class CreativeInventoryMenu : InventoryMenu {
     public const int cols = 10;
     public const int ITEMS_PER_PAGE = rows * cols;
 
-    public const int invOffsetY = 20;
+    public const int invOffsetY = 13;
     public const int textOffsetX = 6;
-    public const int textOffsetY = 8;
+    public const int textOffsetY = 4;
     public const int invOffsetX = 5;
 
     public const int PADDING = 2;

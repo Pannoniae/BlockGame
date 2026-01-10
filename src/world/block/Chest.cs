@@ -36,13 +36,16 @@ public class Chest : EntityBlock {
     public override byte maxValidMetadata() => 3;
 
     /**
-     * uvs: [side, side, front, side, bottom, top]
-     * face matching metadata direction gets front, others get side
+     * uvs: [side, side, front, back, bottom, top]
+     * face matching metadata direction gets front, opposite gets back, others get side
      */
     public override UVPair getTexture(int faceIdx, int metadata) {
         if (faceIdx >= 4) return uvs[faceIdx]; // top/bottom
 
-        return faceIdx == (metadata & 0b11) ? uvs[2] : uvs[0];
+        int facing = metadata & 0b11;
+        if (faceIdx == facing) return uvs[2]; // front
+        if (faceIdx == (facing ^ 1)) return uvs[3]; // back
+        return uvs[0]; // side
     }
 
     public override void onBreak(World world, int x, int y, int z, byte metadata) {

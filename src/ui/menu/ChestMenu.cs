@@ -8,8 +8,8 @@ namespace BlockGame.ui.menu;
 
 public class ChestMenu : InventoryMenu {
 
-    public const int textOffsetX = 5;
-    public const int textOffsetY = 6;
+    public const int textOffsetX = 6;
+    public const int textOffsetY = 4;
 
     private readonly ChestMenuContext chestCtx;
 
