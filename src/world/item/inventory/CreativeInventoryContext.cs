@@ -146,15 +146,15 @@ public class CreativeInventoryContext : InventoryContext {
                 var x = i % 10; // cols is hardcoded as 10 for now
                 var y = i / 10;
                 int slotX = 5 + x * ItemSlot.SLOTSIZE; // invOffsetX
-                int slotY = 20 + y * ItemSlot.SLOTSIZE; // invOffsetY
+                int slotY = 13 + y * ItemSlot.SLOTSIZE; // invOffsetY
 
                 slots[i] = new CreativeSlot(allItems[itemIndex], slotX, slotY);
             } else {
                 // empty slot for pages that don't fill completely
                 var x = i % 10;
                 var y = i / 10;
-                int slotX = 5 + x * ItemSlot.SLOTSIZE;
-                int slotY = 20 + y * ItemSlot.SLOTSIZE;
+                int slotX = 5 + x * ItemSlot.SLOTSIZE; // invOffsetX
+                int slotY = 13 + y * ItemSlot.SLOTSIZE; // invOffsetY
 
                 slots[i] = new CreativeSlot(ItemStack.EMPTY, slotX, slotY);
             }
