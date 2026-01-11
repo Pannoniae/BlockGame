@@ -51,6 +51,9 @@ public class Recipe {
     public static Recipe TORCH;
     public static Recipe OAK_CHEST;
     public static Recipe MAHOGANY_CHEST;
+    public static Recipe MAPLE_CHEST;
+    public static Recipe PINE_CHEST;
+    public static Recipe REDWOOD_CHEST;
     public static Recipe GOLD_CANDY;
     public static Recipe BRICK_FURNACE;
     public static Recipe FURNACE;
@@ -366,6 +369,18 @@ public class Recipe {
         MAHOGANY_CHEST = register(new ItemStack(Block.MAHOGANY_CHEST.item, 1));
         MAHOGANY_CHEST.shape(111_101_111, 3);
         MAHOGANY_CHEST.ingredients(Block.MAHOGANY_PLANKS.item);
+
+        MAPLE_CHEST = register(new ItemStack(Block.MAPLE_CHEST.item, 1));
+        MAPLE_CHEST.shape(111_101_111, 3);
+        MAPLE_CHEST.ingredients(Block.MAPLE_PLANKS.item);
+
+        PINE_CHEST = register(new ItemStack(Block.PINE_CHEST.item, 1));
+        PINE_CHEST.shape(111_101_111, 3);
+        PINE_CHEST.ingredients(Block.PINE_PLANKS.item);
+
+        REDWOOD_CHEST = register(new ItemStack(Block.REDWOOD_CHEST.item, 1));
+        REDWOOD_CHEST.shape(111_101_111, 3);
+        REDWOOD_CHEST.ingredients(Block.REDWOOD_PLANKS.item);
 
         BRICK_FURNACE = register(new ItemStack(Block.BRICK_FURNACE.item, 1));
         BRICK_FURNACE.shape(111_121_232, 3);

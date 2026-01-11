@@ -117,6 +117,11 @@ public partial class Block {
     public static Block CACTUS;
 
     public static Block OAK_CHEST;
+    public static Block MAHOGANY_CHEST;
+    public static Block REDWOOD_CHEST;
+    public static Block PINE_CHEST;
+    public static Block MAPLE_CHEST;
+
     public static Door OAK_DOOR;
     public static Door MAHOGANY_DOOR;
     public static Door MAPLE_DOOR;
@@ -160,7 +165,6 @@ public partial class Block {
 
     public static Block TORCH;
     public static Block CRAFTING_TABLE;
-    public static Block MAHOGANY_CHEST;
     public static Block BRICK_FURNACE;
     public static Block BRICK_FURNACE_LIT;
     public static Block FURNACE;
@@ -1046,15 +1050,30 @@ public partial class Block {
         CRAFTING_TABLE.material(Material.WOOD);
         CRAFTING_TABLE.setFlammable(30);
 
-        MAHOGANY_CHEST = register("mahoganyChest", new Chest("Chest"));
-        MAHOGANY_CHEST.setTex(HeadUVs(0, 4,0, 4, 1, 4, 4, 4, 3, 4, 2, 4));
-        MAHOGANY_CHEST.material(Material.WOOD);
-        MAHOGANY_CHEST.setFlammable(30);
-
         OAK_CHEST = register("oakChest", new Chest("Oak Chest"));
         OAK_CHEST.setTex(HeadUVs(0, 9, 0, 9, 1, 9, 4, 9, 3, 9, 2 , 9));
         OAK_CHEST.material(Material.WOOD);
         OAK_CHEST.setFlammable(30);
+
+        REDWOOD_CHEST = register("redwoodChest", new Chest("Redwood Chest"));
+        REDWOOD_CHEST.setTex(HeadUVs(0, 4,0, 4, 1, 4, 4, 4, 3, 4, 2, 4));
+        REDWOOD_CHEST.material(Material.WOOD);
+        REDWOOD_CHEST.setFlammable(30);
+
+        MAPLE_CHEST = register("mapleChest", new Chest("Maple Chest"));
+        MAPLE_CHEST.setTex(HeadUVs(5, 9,5, 9, 6, 9, 9, 9, 8, 9, 7, 9));
+        MAPLE_CHEST.material(Material.WOOD);
+        MAPLE_CHEST.setFlammable(30);
+
+        PINE_CHEST = register("pineChest", new Chest("Pine Chest"));
+        PINE_CHEST.setTex(HeadUVs(10, 9,10, 9, 11, 9, 14, 9, 13, 9, 12, 9));
+        PINE_CHEST.material(Material.WOOD);
+        PINE_CHEST.setFlammable(30);
+
+        MAHOGANY_CHEST = register("mahoganyChest", new Chest("Mahogany Chest"));
+        MAHOGANY_CHEST.setTex(HeadUVs(15, 9,15, 9, 16, 9, 19, 9, 18, 9, 17, 9));
+        MAHOGANY_CHEST.material(Material.WOOD);
+        MAHOGANY_CHEST.setFlammable(30);
 
         OAK_DOOR = register("door", new Door("Oak Door"));
         OAK_DOOR.setTex(uv("blocks.png", 0, 10), uv("blocks.png", 0, 11));
