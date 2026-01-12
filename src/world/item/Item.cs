@@ -92,6 +92,7 @@ public class Item {
     public static Item MAHOGANY_FENCE_ITEM;
     public static Item MAPLE_FENCE_ITEM;
     public static Item PINE_FENCE_ITEM;
+    public static Item REDWOOD_FENCE_ITEM;
     public static Item BUCKET;
     public static Item WATER_BUCKET;
     public static Item LAVA_BUCKET;
@@ -222,6 +223,10 @@ public class Item {
         PINE_FENCE_ITEM = register("pineFenceItem", new FenceItem("Pine Fence", Block.PINE_FENCE));
         PINE_FENCE_ITEM.tex = uv("items.png", 11, 8);
         Block.PINE_FENCE.fenceItem = PINE_FENCE_ITEM;
+
+        REDWOOD_FENCE_ITEM = register("redwoodFenceItem", new FenceItem("Redwood Fence", Block.REDWOOD_FENCE));
+        REDWOOD_FENCE_ITEM.tex = uv("items.png", 12, 8);
+        Block.REDWOOD_FENCE.fenceItem = REDWOOD_FENCE_ITEM;
 
         OAK_DOOR = register("oakdoorItem", new DoorItem("Oak Door", Block.OAK_DOOR));
         OAK_DOOR.tex = uv("items.png", 4, 8);
@@ -588,6 +593,7 @@ public class Item {
         Registry.ITEMS.blackList[Block.MAHOGANY_FENCE.item.id] = true;
         Registry.ITEMS.blackList[Block.MAPLE_FENCE.item.id] = true;
         Registry.ITEMS.blackList[Block.PINE_FENCE.item.id] = true;
+        Registry.ITEMS.blackList[Block.REDWOOD_FENCE.item.id] = true;
 
         // fuel values
         Registry.ITEMS.fuelValue[COAL.id] = 3600; // 60 seconds
