@@ -5,6 +5,7 @@ using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.log;
 using BlockGame.world.block;
+using BlockGame.world.entity;
 using Silk.NET.OpenGL.Legacy;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -41,6 +42,8 @@ public class Textures {
     public readonly BTexture2D mummy;
     public readonly BTexture2D bigeye;
     public readonly BTexture2D fence;
+    public readonly BTexture2D dodo;
+    public readonly BTexture2D boa;
 
     // texture pack management
     private readonly List<TexturePack> availablePacks = [];
@@ -94,6 +97,8 @@ public class Textures {
         mummy = get("textures/entity/mummy.png");
         bigeye = get("textures/entity/bigeye.png");
         fence = get("textures/entity/fence.png");
+        dodo = get("textures/entity/dodo.png");
+        boa = get("textures/entity/boa.png");
 
         reloadAll();
     }

@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using BlockGame.main;
 using BlockGame.world;
 using BlockGame.world.entity;
 
@@ -20,6 +21,7 @@ public class CowModel : AnimalModel {
 
     public override void render(MatrixStack mat, Entity e, float apos, float aspeed, float scale, double interp) {
         base.render(mat, e, apos, aspeed, scale, interp);
+
 
         var interpRot = Vector3.Lerp(e.prevRotation, e.rotation, (float)interp);
         var interpBodyRot = Vector3.Lerp(e.prevBodyRotation, e.bodyRotation, (float)interp);

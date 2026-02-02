@@ -56,5 +56,6 @@ public static class EntityRenderers {
         register(Entities.MUMMY, new MobRenderer<Mummy>(new MummyModel()));
         register(Entities.DODO, new MobRenderer<Dodo>(new DodoModel()));
         register(Entities.BIGEYE, new MobRenderer<BigEye>(new BigEyeModel()));
+        register(Entities.BOA, new MobRenderer<Boa>(new BoaModel()));
     }
 }

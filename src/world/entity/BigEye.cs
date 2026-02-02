@@ -30,8 +30,8 @@ public class BigEye : Hostile {
 
     public override AABB calcAABB(Vector3D pos) {
         return new AABB(
-            pos.X - 0.25, pos.Y - 0.25, pos.Z - 0.25,
-            pos.X + 0.25, pos.Y + 0.25, pos.Z + 0.25
+            pos.X - 0.5, pos.Y - 0.5, pos.Z - 0.5,
+            pos.X + 0.5, pos.Y + 0.5, pos.Z + 0.5
         );
     }
 
@@ -118,7 +118,7 @@ public class BigEye : Hostile {
         // scan downwards to find ground level
         for (int y = (int)position.Y; y > 0; y--) {
             if (world.getBlock(x, y, z) != 0) {
-                return y + 1;
+                return y + 1.5; // return slightly above ground
             }
         }
 

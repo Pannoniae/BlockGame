@@ -34,7 +34,7 @@ public class DodoModel : EntityModel {
 
     public override void render(MatrixStack mat, Entity e, float apos, float aspeed, float scale, double interp) {
         // set dodo texture
-        Game.graphics.tex(0, Game.textures.get(e.tex));
+        Game.graphics.tex(0, Game.textures.dodo);
 
         // calculate interpolated rotations
         var interpRot = Vector3.Lerp(e.prevRotation, e.rotation, (float)interp);

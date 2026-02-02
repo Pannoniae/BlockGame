@@ -47,7 +47,7 @@ public partial class Entity(World world, string type) : Persistent {
 
     public World world = world;
 
-    /** does this entity block block placement? */
+    /** does this entity blocks block placement? */
     public virtual bool blocksPlacement => true;
 
     /** is entity deleted?

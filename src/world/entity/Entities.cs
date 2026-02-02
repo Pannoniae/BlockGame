@@ -11,7 +11,8 @@ public enum SpawnType {
     NONE,      // doesn't spawn naturally
     PASSIVE,   // animals
     HOSTILE,    // monsters
-    CAVE       // hostile but only spawns in caves
+    CAVE,       // hostile but only spawns in caves
+    JUNGLE     // spawns only in jungle biomes
 }
 
 public static class SpawnTypeExt {
@@ -38,6 +39,7 @@ public class Entities {
     public static int MUMMY;
     public static int DODO;
     public static int BIGEYE;
+    public static int BOA;
 
     /** spawn metadata for each entity type */
     public static XUList<SpawnType> spawnType => Registry.ENTITIES.spawnType;
@@ -61,6 +63,7 @@ public class Entities {
         MUMMY = register("mummy", w => new Mummy(w));
         DODO = register("dodo", w => new Dodo(w));
         BIGEYE = register("BigEye", w => new BigEye(w));
+        BOA = register("boa", w => new Boa(w));
 
         if (!Net.mode.isDed()) {
             EntityRenderers.reloadAll();
@@ -74,6 +77,7 @@ public class Entities {
         spawnType[MUMMY] = SpawnType.CAVE;
         spawnType[DODO] = SpawnType.PASSIVE;
         spawnType[BIGEYE] = SpawnType.HOSTILE;
+        spawnType[BOA] = SpawnType.JUNGLE;
     }
 
     /**

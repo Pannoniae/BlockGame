@@ -969,7 +969,7 @@ public partial class Block {
         MUSHROOM_GREEN.waterTransparent();
         MUSHROOM_GREEN.itemLike();
         MUSHROOM_RED.material(Material.FOOD);
-        MUSHROOM_GREEN.light(10);
+        MUSHROOM_GREEN.light(5);
 
         BLACKBERRY_BUSH = register("blackberryBush", new Bush("Blackberry Bush"));
         BLACKBERRY_BUSH.setTex(crossUVs(19, 8));

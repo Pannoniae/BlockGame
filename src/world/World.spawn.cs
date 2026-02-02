@@ -3,6 +3,7 @@ using BlockGame.util.log;
 using BlockGame.world.block;
 using BlockGame.world.entity;
 using Molten.DoublePrecision;
+using BlockGame.world.worldgen;
 
 namespace BlockGame.world;
 
@@ -77,7 +78,8 @@ public partial class World {
             if (skylight <= 8) {
                 return false;
             }
-        } else if (type == SpawnType.HOSTILE) {
+        }
+        else if (type == SpawnType.HOSTILE) {
             // hostiles need darkness (block light < 4) AND nighttime
             var blocklight = chunk.getBlockLight(x & 15, y, z & 15);
             if (blocklight >= 4) {
@@ -98,6 +100,13 @@ public partial class World {
 
             var skylight = chunk.getSkyLight(x & 15, y, z & 15);
             if (skylight > 0) {
+                return false;
+            }
+        }
+        else if (type == SpawnType.CAVE) {
+            // jungle mobs need to be in jungle biome
+            var biome = getBiomeAtPlayer();
+            if (biome != BiomeType.Jungle) {
                 return false;
             }
         }
