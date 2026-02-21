@@ -35,7 +35,5 @@ public class BoaModel : EntityModel {
         level3.xfrender(ide, mat, scale);
         head.xfrender(ide, mat, scale);
         tong.xfrender(ide, mat, scale);
-        /*neck.xfrender(ide, mat, scale);
-        head.xfrender(ide, mat, scale);*/
     }
 }
