@@ -487,15 +487,8 @@ public class Textures {
     }
 
     public void reloadAll() {
-        Game.graphics.invalidateTextures();
-        // reload all cached textures
-        foreach (var tex in textures.Values) {
-            tex.reload();
-        }
-
-        // reload atlases
-        blockTexture.reload();
-        itemTexture.reload();
+        // re-stitch atlases (handles both stitched and file-based, also reloads cached textures)
+        reloadAtlases();
 
         if (Game.renderer != null) {
             Game.renderer.reloadTextures();

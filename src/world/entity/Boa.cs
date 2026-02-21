@@ -17,13 +17,13 @@ public class Boa : Hostile {
 
     public Boa(World world) : base(world, "boa") {
         tex = "textures/entity/boa.png";
-        hp = 50;
+        hp = 10;
     }
 
     public override AABB calcAABB(Vector3D pos) {
         return new AABB(
-            pos.X - 0.5, pos.Y, pos.Z - 0.5,
-            pos.X + 0.5, pos.Y + 1, pos.Z + 0.5
+            pos.X - 0.25, pos.Y, pos.Z - 0.25,
+            pos.X + 0.25, pos.Y + 1, pos.Z + 0.25
         );
     }
     public override void AI(double dt) {
