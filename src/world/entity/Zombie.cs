@@ -5,7 +5,7 @@ using Molten.DoublePrecision;
 namespace BlockGame.world.entity;
 
 public class Zombie : Hostile {
-    protected override double detectRadius => 16.0;
+    protected override double detectRadius => 24.0;
 
     public override bool burnInSunlight => true;
 

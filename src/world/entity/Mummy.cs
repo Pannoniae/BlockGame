@@ -6,7 +6,7 @@ namespace BlockGame.world.entity;
 
 public class Mummy : Mob {
     private const double DETECT_RADIUS = 16.0;
-    private const double ATTACK_RANGE = 3.0;
+    private const double ATTACK_RANGE = 2.0;
     private const float ATTACK_DAMAGE = 6.0f;
     private const int ATTACK_COOLDOWN = 60;
 

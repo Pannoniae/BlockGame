@@ -71,7 +71,8 @@ public class Mob(World world, string type) : Entity(world, type) {
     public const int sunlightThreshold = 13;
     public virtual double eyeHeight => 1.6;
 
-    public virtual double reach => 3;
+    public virtual double reach => 2;
+    public virtual double speedMul => 1.0;
 
     /**
      * Find nearest player (excluding creative mode players) within radius
@@ -181,7 +182,7 @@ public class Mob(World world, string type) : Entity(world, type) {
         }
 
         // if target died, clear target
-        if (target != null && target.active && !target.dead) {
+        if (target != null && (!target.active || target.dead)) {
             if (path != null) {
                 Pathfinding.ret(path);
             }
@@ -218,15 +219,13 @@ public class Mob(World world, string type) : Entity(world, type) {
                 return;
             }
 
-            // recompute path periodically or if no path
-            if ((path == null || path.isFinished())) {
-                if (path != null) {
-                    Pathfinding.ret(path);
-                }
-
-                if (Game.random.NextDouble() < 0.02 * Game.fixeddt) {
-                    path = Pathfinding.find(this, target);
-                }
+            // compute path immediately if none, recompute ~1s after finishing
+            if (path == null) {
+                path = Pathfinding.find(this, target);
+            }
+            else if (path.isFinished() && Game.random.NextDouble() < 1.0 / Game.tps) {
+                Pathfinding.ret(path);
+                path = Pathfinding.find(this, target);
             }
 
             followPath(dt);
@@ -272,7 +271,7 @@ public class Mob(World world, string type) : Entity(world, type) {
                 var ty = (int)position.Y;
 
                 wanderTarget = new Vector3D(tx, ty, tz);
-                path = Pathfinding.find(this, tx, ty, tz);
+                path = Pathfinding.find(this, tx, ty, tz, avoidWater: hostile);
             }
 
             // follow a path
@@ -313,7 +312,7 @@ public class Mob(World world, string type) : Entity(world, type) {
         if (dir.Length() > 0.01) {
             dir = Vector3D.Normalize(dir);
 
-            var moveSpeed = inLiquid ? LIQUID_MOVE_SPEED * 0.6 : GROUND_MOVE_SPEED * 0.6;
+            var moveSpeed = (inLiquid ? LIQUID_MOVE_SPEED * 0.6 : GROUND_MOVE_SPEED * 0.6) * speedMul;
             velocity.X += dir.X * moveSpeed;
             velocity.Z += dir.Z * moveSpeed;
 

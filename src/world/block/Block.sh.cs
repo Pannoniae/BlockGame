@@ -123,6 +123,15 @@ public partial class Block {
         return (uint)(tint | (tint << 8) | (tint << 16) | (255 << 24));
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static uint packColourBTinted(byte direction, byte ao, byte tr, byte tg, byte tb) {
+        Span<float> aoArray = [1.0f, 0.75f, 0.5f, 0.25f];
+        Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
+        direction &= 0b111;
+        float shade = a[direction] * aoArray[ao];
+        return (uint)((byte)(shade * tr) | ((byte)(shade * tg) << 8) | ((byte)(shade * tb) << 16) | (255 << 24));
+    }
+
     public static AABB fullBlockAABB() {
         return new AABB(new Vector3D(0, 0, 0), new Vector3D(1, 1, 1));
     }

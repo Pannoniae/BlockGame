@@ -41,18 +41,18 @@ public static class Pathfinding {
         return node;
     }
 
-    public static Path find(Entity e, int x, int y, int z, int max = MAX_PATH_LENGTH) {
+    public static Path find(Entity e, int x, int y, int z, int max = MAX_PATH_LENGTH, bool avoidWater = false) {
         var start = e.position.toBlockPos();
         var goal = new Vector3I(x, y, z);
 
-        return aStar(e, start, goal, max);
+        return aStar(e, start, goal, max, avoidWater);
     }
 
-    public static Path find(Entity e, Entity target, int max = MAX_PATH_LENGTH) {
+    public static Path find(Entity e, Entity target, int max = MAX_PATH_LENGTH, bool avoidWater = false) {
         var start = e.position.toBlockPos();
         var goal = target.position.toBlockPos();
 
-        return aStar(e, start, goal, max);
+        return aStar(e, start, goal, max, avoidWater);
     }
 
     /**
@@ -72,7 +72,7 @@ public static class Pathfinding {
         pathPool.Add(path);
     }
 
-    private static Path aStar(Entity e, Vector3I start, Vector3I goal, int maxLength) {
+    private static Path aStar(Entity e, Vector3I start, Vector3I goal, int maxLength, bool avoidWater) {
         openSet.Clear();
         closedSet.Clear();
         openSetLookup.Clear();
@@ -103,7 +103,7 @@ public static class Pathfinding {
             closedSet.Add(current);
 
             // check neighbours
-            foreach (var neighbour in getNeighbours(e, current)) {
+            foreach (var neighbour in getNeighbours(e, current, avoidWater)) {
                 if (closedSet.Contains(neighbour)) {
                     continue;
                 }
@@ -167,11 +167,8 @@ public static class Pathfinding {
         LAVA      // lava (avoid)
     }
 
-    private static XUList<PathNode> getNeighbours(Entity e, PathNode node) {
+    private static XUList<PathNode> getNeighbours(Entity e, PathNode node, bool avoidWater) {
         neighbourBuffer.Clear();
-
-        // hostile mobs shouldn't pathfind to water
-        bool isHostile = e is Mob mob && mob.hostile;
 
         // 8 horizontal directions + up/down
         ReadOnlySpan<Vector3I> directions = [
@@ -191,13 +188,13 @@ public static class Pathfinding {
             var fit = fits(e, nx, ny, nz);
 
             // check if entity fits at this position
-            if (fit == Type.AIR || (fit == Type.WATER && !isHostile)) {
+            if (fit == Type.AIR || (fit == Type.WATER && !avoidWater)) {
                 neighbourBuffer.Add(get(nx, ny, nz));
             }
             // try stepping up one block
             else if (fit == Type.BLOCKED) {
                 var stepFit = fits(e, nx, ny + 1, nz);
-                if (stepFit == Type.AIR || (stepFit == Type.WATER && !isHostile)) {
+                if (stepFit == Type.AIR || (stepFit == Type.WATER && !avoidWater)) {
                     neighbourBuffer.Add(get(nx, ny + 1, nz));
                 }
             }
@@ -205,12 +202,12 @@ public static class Pathfinding {
 
         // can fall down?
         var downFit = fits(e, node.x, node.y - 1, node.z);
-        if (downFit == Type.AIR || (downFit == Type.WATER && !isHostile)) {
+        if (downFit == Type.AIR || (downFit == Type.WATER && !avoidWater)) {
             neighbourBuffer.Add(get(node.x, node.y - 1, node.z));
         }
 
         // can swim up through water?
-        if (current == Type.WATER && !isHostile) {
+        if (current == Type.WATER && !avoidWater) {
             var upFit = fits(e, node.x, node.y + 1, node.z);
             if (upFit is Type.AIR or Type.WATER) {
                 neighbourBuffer.Add(get(node.x, node.y + 1, node.z));

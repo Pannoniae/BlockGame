@@ -16,7 +16,7 @@ public enum SpawnType {
 }
 
 public static class SpawnTypeExt {
-    public static bool isHostile(this SpawnType type) => type is SpawnType.HOSTILE or SpawnType.CAVE;
+    public static bool isHostile(this SpawnType type) => type is SpawnType.HOSTILE or SpawnType.CAVE or SpawnType.JUNGLE;
 }
 
 /**

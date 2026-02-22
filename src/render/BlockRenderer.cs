@@ -1500,6 +1500,9 @@ public partial class BlockRenderer {
 
             model: ;
 
+            // ripe bananafruit gets a golden yellow tint
+            bool bananaTint = blockID == Block.BANANAFRUIT.id && (neighbourRef.getMetadata() & 1) == 0;
+
             // if you get the faces BEFORE checking it's a model, it will crash on custom blocks
             ref Face facesRef = ref MemoryMarshal.GetArrayDataReference(bl.model.faces);
 
@@ -1652,7 +1655,7 @@ public partial class BlockRenderer {
                     vertex.z = (ushort)vec[2];
                     vertex.u = (ushort)tex[0];
                     vertex.v = (ushort)tex[1];
-                    vertex.cu = Block.packColourB((byte)dir, ao.First);
+                    vertex.cu = bananaTint ? Block.packColourBTinted((byte)dir, ao.First, 255, 230, 80) : Block.packColourB((byte)dir, ao.First);
                     vertex.light = light.First;
 
                     vertex = ref tempVertices[(1 + shift) & 3];
@@ -1661,7 +1664,7 @@ public partial class BlockRenderer {
                     vertex.z = (ushort)vec[5];
                     vertex.u = (ushort)tex[0];
                     vertex.v = (ushort)tex[3];
-                    vertex.cu = Block.packColourB((byte)dir, ao.Second);
+                    vertex.cu = bananaTint ? Block.packColourBTinted((byte)dir, ao.Second, 255, 230, 80) : Block.packColourB((byte)dir, ao.Second);
                     vertex.light = light.Second;
 
 
@@ -1671,7 +1674,7 @@ public partial class BlockRenderer {
                     vertex.z = (ushort)vec2[0];
                     vertex.u = (ushort)tex[2];
                     vertex.v = (ushort)tex[3];
-                    vertex.cu = Block.packColourB((byte)dir, ao.Third);
+                    vertex.cu = bananaTint ? Block.packColourBTinted((byte)dir, ao.Third, 255, 230, 80) : Block.packColourB((byte)dir, ao.Third);
                     vertex.light = light.Third;
 
                     vertex = ref tempVertices[(3 + shift) & 3];
@@ -1680,7 +1683,7 @@ public partial class BlockRenderer {
                     vertex.z = (ushort)vec2[3];
                     vertex.u = (ushort)tex[2];
                     vertex.v = (ushort)tex[1];
-                    vertex.cu = Block.packColourB((byte)dir, ao.Fourth);
+                    vertex.cu = bananaTint ? Block.packColourBTinted((byte)dir, ao.Fourth, 255, 230, 80) : Block.packColourB((byte)dir, ao.Fourth);
                     vertex.light = light.Fourth;
                     vertices.AddRange(tempVertices);
                     //cv += 4;

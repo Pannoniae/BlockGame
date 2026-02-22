@@ -103,10 +103,9 @@ public partial class World {
                 return false;
             }
         }
-        else if (type == SpawnType.CAVE) {
-            // jungle mobs need to be in jungle biome
-            var biome = getBiomeAtPlayer();
-            if (biome != BiomeType.Jungle) {
+        else if (type == SpawnType.JUNGLE) {
+            // jungle mobs spawn at any light level, but only when player is in jungle
+            if (getBiomeAtPlayer() != BiomeType.Jungle) {
                 return false;
             }
         }
@@ -269,9 +268,11 @@ public partial class World {
             // decide passive vs hostile (75% hostile, 25% passive)
             var type = random.Next(4) == 0 ? SpawnType.PASSIVE : SpawnType.HOSTILE;
 
-            // if hostile, 1/3 for cave
-            if (type == SpawnType.HOSTILE && random.Next(3) == 0) {
-                type = SpawnType.CAVE;
+            // if hostile, 1/3 for cave, 1/3 for jungle
+            if (type == SpawnType.HOSTILE) {
+                var r = random.Next(3);
+                if (r == 0) type = SpawnType.CAVE;
+                else if (r == 1) type = SpawnType.JUNGLE;
             }
 
             // check caps
