@@ -87,6 +87,7 @@ public partial class Block {
     public static Block MAHOGANY_SLAB;
     public static Block MAHOGANY_LEAVES;
     public static Block MAHOGANY_SAPLING;
+    public static Block LIANA;
 
     public static Block PINE_LOG;
     public static Block PINE_PLANKS;
@@ -778,6 +779,15 @@ public partial class Block {
         MAHOGANY_SAPLING.itemLike();
         MAHOGANY_SAPLING.material(Material.ORGANIC);
         MAHOGANY_SAPLING.setFlammable(60);
+
+        LIANA = register("liana", new Ladder("Liana"));
+        LIANA.setTex(uv("blocks.png", 30, 2));
+        LIANA.transparency();
+        LIANA.partialBlock();
+        LIANA.noCollision();
+        LIANA.itemLike();
+        LIANA.material(Material.ORGANIC);
+        LIANA.setHardness(0.1);
 
         CACTUS = register("cactus", new Cactus("Cactus"));
         CACTUS.setTex(grassUVs(1, 3, 0, 3, 1, 3));
