@@ -154,9 +154,7 @@ public partial class Block {
 
     public static Block GOLD_BLOCK;
     public static Block IRON_BLOCK;
-
     public static Block COPPER_BLOCK;
-
     //public static Block TITANIUM_BLOCK;
     //public static Block SILVER_BLOCK;
     //public static Block TIN_BLOCK;
@@ -171,6 +169,7 @@ public partial class Block {
     public static Block FURNACE;
     public static Block FURNACE_LIT;
     public static Block LADDER;
+    public static Block MESH;
     public static Block FIRE;
     public static Block NG;
     public static Block SIGN;
@@ -539,14 +538,14 @@ public partial class Block {
         COAL_BLOCK.setTex(cubeUVs(6, 8));
         renderType[COAL_BLOCK.id] = RenderType.CUBE;
         COAL_BLOCK.material(Material.METAL);
-        COAL_BLOCK.setHardness(3.0);
+        COAL_BLOCK.setHardness(2.5);
         COAL_BLOCK.setTier(MaterialTier.STONE);
 
         COPPER_BLOCK = register("copperBlock", new Block("Block of Copper"));
         COPPER_BLOCK.setTex(cubeUVs(7, 8));
         renderType[COPPER_BLOCK.id] = RenderType.CUBE;
         COPPER_BLOCK.material(Material.METAL);
-        COPPER_BLOCK.setHardness(3.5);
+        COPPER_BLOCK.setHardness(3);
         COPPER_BLOCK.setTier(MaterialTier.IRON);
 
         IRON_BLOCK = register("ironBlock", new Block("Block of Iron"));
@@ -567,14 +566,14 @@ public partial class Block {
         DIAMOND_BLOCK.setTex(cubeUVs(8, 8));
         renderType[DIAMOND_BLOCK.id] = RenderType.CUBE;
         DIAMOND_BLOCK.material(Material.METAL);
-        DIAMOND_BLOCK.setHardness(4.0);
+        DIAMOND_BLOCK.setHardness(5.0);
         DIAMOND_BLOCK.setTier(MaterialTier.GOLD);
 
         CINNABAR_BLOCK = register("cinnabarBlock", new Block("Block of Cinnabar"));
         CINNABAR_BLOCK.setTex(cubeUVs(9, 8));
         renderType[CINNABAR_BLOCK.id] = RenderType.CUBE;
         CINNABAR_BLOCK.material(Material.METAL);
-        CINNABAR_BLOCK.setHardness(4.0);
+        CINNABAR_BLOCK.setHardness(5.0);
         CINNABAR_BLOCK.setTier(MaterialTier.GOLD);
 
 
@@ -1138,6 +1137,14 @@ public partial class Block {
         LADDER.material(Material.WOOD);
         LADDER.setHardness(0.5);
         LADDER.setFlammable(30);
+
+        MESH = register("mesh", new MeshBlock("Mesh"));
+        MESH.setTex(uv("blocks.png", 11, 3));
+        MESH.transparency();
+        // render as item!
+        MESH.itemLike();
+        MESH.material(Material.METAL);
+        MESH.setHardness(1.5);
 
         FIRE = register("fire", new FireBlock("Fire"));
         FIRE.setTex(uv("blocks.png", 3, 14));

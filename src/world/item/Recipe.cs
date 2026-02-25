@@ -69,6 +69,7 @@ public class Recipe {
     public static Recipe LIGHTER;
     public static Recipe BUCKET;
     public static Recipe LADDER;
+    public static Recipe MESH;
     public static Recipe SIGN;
     public static Recipe OAK_DOOR;
     public static Recipe MAHOGANY_DOOR;
@@ -197,10 +198,15 @@ public class Recipe {
             .ingredients(Block.PALM_PLANKS.item);
 
 
-        // ladder (3 sticks in H shape)
+        // ladder (6 sticks in H shape)
         LADDER = register(new ItemStack(Block.LADDER.item, 1));
-        LADDER.shape(101_111__101, 3);
+        LADDER.shape(101_111_101, 3);
         LADDER.ingredients(Item.STICK);
+
+        // mesh (6 copper ingots in H shape)
+        MESH = register(new ItemStack(Block.MESH.item, 3));
+        MESH.shape(101_111_101, 3);
+        MESH.ingredients(Item.COPPER_INGOT);
 
         // sign (6 planks and 1 stick) - any plank type works
         SIGN = register(new ItemStack(Item.SIGN_ITEM, 1));
