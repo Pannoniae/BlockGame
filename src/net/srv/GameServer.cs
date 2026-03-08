@@ -251,9 +251,11 @@ public class GameServer : INetEventListener {
         updateCounter++;
         // log TPS every 2 minutes
         if (sw.ElapsedMilliseconds - lastLogTime >= 120000) {
-            Log.info($"TPS: {updateCounter} (expected 60)");
+            double elapsed = (sw.ElapsedMilliseconds - lastLogTime) / 1000.0;
+            double tps = updateCounter / elapsed;
+            Log.info($"TPS: {tps:F1} (expected 60)");
             updateCounter = 0;
-            lastLogTime += 1000;
+            lastLogTime = sw.ElapsedMilliseconds;
         }
 
         netManager.PollEvents();
@@ -700,7 +702,7 @@ public class GameServer : INetEventListener {
 
         // TODO: validate connection key properly
         // For now, just accept all connections
-        request.Accept();
+        request.AcceptIfKey(Constants.connectionKey);
     }
 
 

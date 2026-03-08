@@ -10,7 +10,7 @@ public class Dodo : Mob {
     private int lastEggLaid = -World.TICKS_PER_DAY; // lay egg immediately when spawned
 
     public Dodo(World world) : base(world, "dodo") {
-        tex = "textures/entity/dodo.png";
+        tex = "textures/entity/cow.png";
         hp = 10;
     }
 

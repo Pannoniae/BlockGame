@@ -154,9 +154,15 @@ public ref struct PacketBuffer {
 
     public string readString() {
         int len = readInt();
+        if ((uint)len > 65535) {
+            throw new InvalidDataException($"string length out of bounds: {len}");
+        }
         if (reader != null) {
             var bytes = reader.ReadBytes(len);
             return System.Text.Encoding.UTF8.GetString(bytes);
+        }
+        if (len > span.Length - pos) {
+            throw new InvalidDataException($"string length {len} exceeds remaining data ({span.Length - pos})");
         }
         var str = System.Text.Encoding.UTF8.GetString(span.Slice(pos, len));
         pos += len;
@@ -171,8 +177,14 @@ public ref struct PacketBuffer {
 
     public byte[] readBytes() {
         int len = readInt();
+        if ((uint)len > 1048576) {
+            throw new InvalidDataException($"byte array length out of bounds: {len}");
+        }
         if (reader != null) {
             return reader.ReadBytes(len);
+        }
+        if (len > span.Length - pos) {
+            throw new InvalidDataException($"byte array length {len} exceeds remaining data ({span.Length - pos})");
         }
         var bytes = span.Slice(pos, len).ToArray();
         pos += len;
@@ -183,6 +195,9 @@ public ref struct PacketBuffer {
     public byte[] readBytes(int len) {
         if (reader != null) {
             return reader.ReadBytes(len);
+        }
+        if ((uint)len > (uint)(span.Length - pos)) {
+            throw new InvalidDataException($"byte read length {len} exceeds remaining data ({span.Length - pos})");
         }
         var bytes = span.Slice(pos, len).ToArray();
         pos += len;
