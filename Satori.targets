@@ -1,0 +1,59 @@
+<Project>
+  <PropertyGroup>
+    <SatoriVersion Condition="'$(SatoriVersion)' == ''">20260212.1</SatoriVersion>
+    <SatoriBaseUrl>https://github.com/hez2010/Satori/releases/download/$(SatoriVersion)</SatoriBaseUrl>
+
+    <!-- map RID to archive name: win-x64 → windows_x64, linux-musl-x64 → linux_musl_x64, etc. -->
+    <_SatoriRid>$(RuntimeIdentifier.Replace('win-', 'windows-').Replace('-', '_'))</_SatoriRid>
+    <SatoriArchiveName>$(_SatoriRid).zip</SatoriArchiveName>
+
+    <SatoriCacheDir>$(IntermediateOutputPath)Satori\$(SatoriVersion)\</SatoriCacheDir>
+    <SatoriArchivePath>$(SatoriCacheDir)$(SatoriArchiveName)</SatoriArchivePath>
+    <SatoriExtractDir>$(SatoriCacheDir)extracted\</SatoriExtractDir>
+  </PropertyGroup>
+
+  <Target Name="FetchSatori" AfterTargets="ResolveRuntimePackAssets" Condition="'$(RuntimeIdentifier)' != ''">
+    <DownloadFile
+        SourceUrl="$(SatoriBaseUrl)/$(SatoriArchiveName)"
+        DestinationFolder="$(SatoriCacheDir)"
+        Retries="3"
+        Condition="!Exists('$(SatoriArchivePath)')" />
+  </Target>
+
+  <Target Name="ExtractSatori" AfterTargets="FetchSatori" DependsOnTargets="FetchSatori" Condition="'$(RuntimeIdentifier)' != ''">
+    <Unzip
+        SourceFiles="$(SatoriArchivePath)"
+        DestinationFolder="$(SatoriExtractDir)"
+        OverwriteReadOnlyFiles="true"
+        Condition="!Exists('$(SatoriExtractDir)coreclr.dll') And !Exists('$(SatoriExtractDir)libcoreclr.so')" />
+  </Target>
+
+  <Target Name="ReplaceSatoriAssets" AfterTargets="ExtractSatori" DependsOnTargets="ExtractSatori" Condition="'$(RuntimeIdentifier)' != ''">
+    <ItemGroup>
+      <!-- remove stock runtime DLLs -->
+      <RuntimePackAsset Remove="@(RuntimePackAsset)"
+                        Condition="'%(RuntimePackAsset.Filename)' == 'coreclr'
+                                Or '%(RuntimePackAsset.Filename)' == 'libcoreclr'
+                                Or '%(RuntimePackAsset.Filename)' == 'clrjit'
+                                Or '%(RuntimePackAsset.Filename)' == 'libclrjit'
+                                Or '%(RuntimePackAsset.Filename)' == 'System.Private.CoreLib'" />
+
+      <!-- add Satori replacements -->
+      <_SatoriFiles Include="$(SatoriExtractDir)*.*" />
+      <_SatoriNative Include="@(_SatoriFiles)" Condition="'%(Extension)' != '.dll' Or '%(Filename)' == 'coreclr' Or '%(Filename)' == 'clrjit' Or '%(Filename)' == 'libcoreclr' Or '%(Filename)' == 'libclrjit'">
+        <AssetType>native</AssetType>
+      </_SatoriNative>
+      <_SatoriManaged Include="@(_SatoriFiles)" Condition="'%(Filename)' == 'System.Private.CoreLib'">
+        <AssetType>runtime</AssetType>
+      </_SatoriManaged>
+
+      <RuntimePackAsset Include="@(_SatoriNative);@(_SatoriManaged)">
+        <DestinationSubPath>%(Filename)%(Extension)</DestinationSubPath>
+        <RuntimeIdentifier>$(RuntimeIdentifier)</RuntimeIdentifier>
+        <CopyLocal>true</CopyLocal>
+        <NuGetPackageId>SatoriGC</NuGetPackageId>
+        <NuGetPackageVersion>0.0.0-satori</NuGetPackageVersion>
+      </RuntimePackAsset>
+    </ItemGroup>
+  </Target>
+</Project>

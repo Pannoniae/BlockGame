@@ -24,6 +24,8 @@ public partial class ClientMain {
         #endif
 
         Log.info("Launching client...");
+        var gcName = GC.GetConfigurationVariables().ContainsKey("SatoriGC") ? "Satori" : "stock";
+        Log.info("GC", $"Using {gcName} GC.");
 
         // check for sudo/root - game doesn't work under elevated privileges
         if (isSudo()) {

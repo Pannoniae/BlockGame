@@ -34,6 +34,7 @@
     </ItemGroup>
 
     <Import Project="..\..\NetBeauty.targets" />
+    <Import Project="..\..\Satori.targets" />
 
     <PropertyGroup>
         <PublishDir>..\..\publish</PublishDir>
