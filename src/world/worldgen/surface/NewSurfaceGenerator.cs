@@ -232,52 +232,77 @@ public class NewSurfaceGenerator : SurfaceGenerator {
             }
         }
 
-        // place flower patches
-        var flowerPatchCount = random.Next(0, 3);
-        for (int p = 0; p < flowerPatchCount; p++) {
-            // pick flower type for this patch
-            var r = random.NextSingle();
-            ushort flowerType = r switch {
-                < 0.25f => Block.YELLOW_FLOWER.id,
-                < 0.5f => Block.MARIGOLD.id,
-                < 0.75f => Block.BLUE_TULIP.id,
-                _ => Block.THISTLE.id
-            };
-
-            // patch centre
-            var cx = random.Next(0, Chunk.CHUNKSIZE);
-            var cz = random.Next(0, Chunk.CHUNKSIZE);
-
-            // place 4-8 flowers in patch
-            // NVM FUCK THIS IT WONT SPAWN
-            var patchSize = random.Next(32, 96);
-            for (int i = 0; i < patchSize; i++) {
-                var x = cx + random.Next(-3, 4);
-                var z = cz + random.Next(-3, 4);
-
-                /*if (x < 0 || x >= Chunk.CHUNKSIZE || z < 0 || z >= Chunk.CHUNKSIZE) {
-                    continue;
-                }*/
-
-                var y = random.Next(0, World.WORLDHEIGHT - 1);
-
-                x += chunk.worldX;
-                z += chunk.worldZ;
-
-                if (world.getBlock(x, y, z) == Block.GRASS.id && y < World.WORLDHEIGHT - 1) {
-                    if (world.getBlock(x, y + 1, z) == Block.AIR.id) {
-                        world.setBlock(x, y + 1, z, flowerType);
-                    }
-                }
-            }
-        }
-
         // check biome at chunk centre
         var centerHeight = chunk.heightMap.get(8, 8);
         var temp = chunk.biomeData.getTemp(8, centerHeight, 8);
         var hum = chunk.biomeData.getHum(8, centerHeight, 8);
         var cb = Biomes.getType(temp, hum, centerHeight);
-        //Console.WriteLine($"Chunk {coord}: temp={temp:F3}, hum={hum:F3}, biome={Biomes.getType(temp, hum, centerHeight)}");
+
+        // place flower patches (plains and forest only)
+        if (cb == BiomeType.Plains || cb == BiomeType.Forest) {
+            var flowerPatchCount = random.Next(0, 3);
+            for (int p = 0; p < flowerPatchCount; p++) {
+                // pick flower type for this patch
+                var r = random.NextSingle();
+                ushort flowerType = r switch {
+                    < 0.25f => Block.YELLOW_FLOWER.id,
+                    < 0.5f => Block.MARIGOLD.id,
+                    < 0.75f => Block.BLUE_TULIP.id,
+                    _ => Block.THISTLE.id
+                };
+
+                // patch centre
+                var cx = random.Next(0, Chunk.CHUNKSIZE);
+                var cz = random.Next(0, Chunk.CHUNKSIZE);
+
+                // place 4-8 flowers in patch
+                // NVM FUCK THIS IT WONT SPAWN
+                var patchSize = random.Next(32, 96);
+                for (int i = 0; i < patchSize; i++) {
+                    var x = cx + random.Next(-3, 4);
+                    var z = cz + random.Next(-3, 4);
+
+                    /*if (x < 0 || x >= Chunk.CHUNKSIZE || z < 0 || z >= Chunk.CHUNKSIZE) {
+                        continue;
+                    }*/
+
+                    var y = random.Next(0, World.WORLDHEIGHT - 1);
+
+                    x += chunk.worldX;
+                    z += chunk.worldZ;
+
+                    if (world.getBlock(x, y, z) == Block.GRASS.id && y < World.WORLDHEIGHT - 1) {
+                        if (world.getBlock(x, y + 1, z) == Block.AIR.id) {
+                            world.setBlock(x, y + 1, z, flowerType);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // place brown mushroom patches in taiga
+        if (cb == BiomeType.Taiga) {
+            var patchCount = random.Next(0, 3);
+            for (int p = 0; p < patchCount; p++) {
+                var cx = random.Next(0, Chunk.CHUNKSIZE);
+                var cz = random.Next(0, Chunk.CHUNKSIZE);
+                var patchSize = random.Next(4, 9);
+                for (int i = 0; i < patchSize; i++) {
+                    var x = cx + random.Next(-2, 3);
+                    var z = cz + random.Next(-2, 3);
+                    var y = random.Next(0, World.WORLDHEIGHT - 1);
+
+                    x += chunk.worldX;
+                    z += chunk.worldZ;
+
+                    if (world.getBlock(x, y, z) == Block.SNOW_GRASS.id && y < World.WORLDHEIGHT - 1) {
+                        if (world.getBlock(x, y + 1, z) == Block.AIR.id) {
+                            world.setBlock(x, y + 1, z, Block.MUSHROOM_BROWN.id);
+                        }
+                    }
+                }
+            }
+        }
 
         // place cactus in deserts
         if (Biomes.canPlaceCactus(cb)) {
@@ -388,12 +413,19 @@ public class NewSurfaceGenerator : SurfaceGenerator {
                         var wx = x + chunk.worldX;
                         var wz = z + chunk.worldZ;
 
-                        // 50/50 ferns and bushes
-                        if (random.NextSingle() < 0.5f) {
+                        // 25% each: small fern, dense bush, red fern, green fern
+                        var roll = random.NextSingle();
+                        if (roll < 0.25f) {
                             placeSmallFern(world, random, wx, y + 1, wz);
                         }
-                        else {
+                        else if (roll < 0.5f) {
                             placeDenseBush(world, random, wx, y + 1, wz);
+                        }
+                        else if (roll < 0.75f) {
+                            world.setBlockSilent(wx, y + 1, wz, Block.FERN_RED.id);
+                        }
+                        else {
+                            world.setBlockSilent(wx, y + 1, wz, Block.FERN_GREEN.id);
                         }
                     }
                 }

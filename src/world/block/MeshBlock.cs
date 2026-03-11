@@ -26,7 +26,7 @@ public class MeshBlock : Ladder {
         var below = world.getBlock(x, y - 1, z);
         return fullBlock[below] || below == id;
     }
-
+    
     public override void place(World world, int x, int y, int z, byte metadata, Placement info) {
         byte facing;
         if (info.face is RawDirection.UP or RawDirection.DOWN) {
@@ -65,7 +65,7 @@ public class MeshBlock : Ladder {
         var v1 = uv1.Y;
 
         const float t = 1f / 16f;
-
+        
         br.applySimpleLighting(RawDirection.NONE);
 
         // front face
