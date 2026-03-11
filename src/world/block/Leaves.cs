@@ -81,11 +81,11 @@ public class Leaves : Block {
             // broken without scythe: nothing
             return;
         }
-        // mushrooms: when broken with scythe, drops 1 mushroom; without scythe, drop nothing
+        // mushrooms: when broken with scythe, drops 1 mushroom; without scythe, drops nothing
         if (id == MUSHROOM_BROWN.id) {
             if (canBreak) {
                 // broken with scythe: drop 1 mushroom
-                drops.Add(new ItemStack(Item.MUSHROOM_BROWN, 1, 0));
+                drops.Add(new ItemStack(Item.BROWN_MUSHROOM, 1, 0));
             }
             // broken without scythe: nothing
             return;
@@ -93,7 +93,7 @@ public class Leaves : Block {
         if (id == MUSHROOM_RED.id) {
             if (canBreak) {
                 // broken with scythe: drops 1 mushroom
-                drops.Add(new ItemStack(Item.MUSHROOM_RED, 1, 0));
+                drops.Add(new ItemStack(Item.RED_MUSHROOM, 1, 0));
             }
             // broken without scythe: nothing
             return;

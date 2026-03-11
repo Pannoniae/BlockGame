@@ -120,8 +120,8 @@ public class Item {
     public static Item STRAWBERRY;
     public static Item BLACKBERRY_SEEDS;
     public static Item BLACKBERRY;
-    public static Item MUSHROOM_BROWN;
-    public static Item MUSHROOM_RED;
+    public static Item BROWN_MUSHROOM;
+    public static Item RED_MUSHROOM;
 
     public static Item BOW_WOOD;
     public static Item ARROW_WOOD;
@@ -494,13 +494,13 @@ public class Item {
         BANANA.tex = uv("items.png", 15, 11);
         material[BANANA.id] = true;
 
-        MUSHROOM_BROWN = register("brown_mushroom", new Food("Brown Mushroom", 5));
-        MUSHROOM_BROWN.tex = uv("items.png", 6, 11);
-        material[MUSHROOM_BROWN.id] = true;
+        BROWN_MUSHROOM = register("brown_mushroom", new Food("Brown Mushroom", 5));
+        BROWN_MUSHROOM.tex = uv("items.png", 6, 11);
+        material[BROWN_MUSHROOM.id] = true;
 
-        MUSHROOM_RED = register("red_mushroom", new Food("Red Mushroom", 5));
-        MUSHROOM_RED.tex = uv("items.png", 7, 11);
-        material[MUSHROOM_RED.id] = true;
+        RED_MUSHROOM = register("red_mushroom", new Food("Red Mushroom", 5));
+        RED_MUSHROOM.tex = uv("items.png", 7, 11);
+        material[RED_MUSHROOM.id] = true;
 
 
         //mixed items
@@ -587,8 +587,8 @@ public class Item {
         Registry.ITEMS.blackList[Block.CROP_STRAWBERRY.item.id] = true;
         Registry.ITEMS.blackList[Block.FARMLAND.item.id] = true;
         Registry.ITEMS.blackList[Block.BLACKBERRY_BUSH_SAPLING.item.id] = true;
-        Registry.ITEMS.blackList[Block.MUSHROOM_BROWN.item.id] = true;
-        Registry.ITEMS.blackList[Block.MUSHROOM_RED.item.id] = true;
+        //Registry.ITEMS.blackList[Block.MUSHROOM_BROWN.item.id] = true;
+        //Registry.ITEMS.blackList[Block.MUSHROOM_RED.item.id] = true;
         Registry.ITEMS.blackList[Block.OAK_FENCE.item.id] = true;
         Registry.ITEMS.blackList[Block.MAHOGANY_FENCE.item.id] = true;
         Registry.ITEMS.blackList[Block.MAPLE_FENCE.item.id] = true;
