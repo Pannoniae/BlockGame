@@ -296,7 +296,7 @@ public class NewSurfaceGenerator : SurfaceGenerator {
                     z += chunk.worldZ;
 
                     if (world.getBlock(x, y, z) == Block.SNOW_GRASS.id && y < World.WORLDHEIGHT - 1) {
-                        if (world.getBlock(x, y + 1, z) == Block.AIR.id) {
+                        if (world.getBlock(x, y + 1, z) == Block.AIR.id || world.getBlock(x, y + 1, z) == Block.SNOW.id) {
                             world.setBlock(x, y + 1, z, Block.MUSHROOM_BROWN.id);
                         }
                     }
