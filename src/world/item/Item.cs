@@ -122,6 +122,7 @@ public class Item {
     public static Item BLACKBERRY;
     public static Item BROWN_MUSHROOM;
     public static Item RED_MUSHROOM;
+    public static Item GREEN_MUSHROOM;
 
     public static Item BOW_WOOD;
     public static Item ARROW_WOOD;
@@ -501,7 +502,10 @@ public class Item {
         RED_MUSHROOM = register("red_mushroom", new Food("Red Mushroom", 5));
         RED_MUSHROOM.tex = uv("items.png", 7, 11);
         material[RED_MUSHROOM.id] = true;
-
+        
+        GREEN_MUSHROOM = register("green_mushroom", new Food("Green Mushroom", -10));
+        GREEN_MUSHROOM.tex = uv("items.png", 7, 12);
+        material[GREEN_MUSHROOM.id] = true;
 
         //mixed items
         BOTTLE = register("bottle", new Item("Empty Bottle"));
@@ -589,6 +593,7 @@ public class Item {
         Registry.ITEMS.blackList[Block.BLACKBERRY_BUSH_SAPLING.item.id] = true;
         //Registry.ITEMS.blackList[Block.MUSHROOM_BROWN.item.id] = true;
         //Registry.ITEMS.blackList[Block.MUSHROOM_RED.item.id] = true;
+        //Registry.ITEMS.blackList[Block.MUSHROOM_GREEN.item.id] = true;
         Registry.ITEMS.blackList[Block.OAK_FENCE.item.id] = true;
         Registry.ITEMS.blackList[Block.MAHOGANY_FENCE.item.id] = true;
         Registry.ITEMS.blackList[Block.MAPLE_FENCE.item.id] = true;

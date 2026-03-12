@@ -634,8 +634,11 @@ public partial class NewWorldGenerator {
                     }
                 }
                 else {
-                    topBlock =  Block.GRASS.id;
-                    filler =  Block.DIRT.id;
+                    // biome-aware surface block
+                    var temp = chunk.biomeData.getTemp(x, height, z);
+                    var hum = chunk.biomeData.getHum(x, height, z);
+                    var biome = Biomes.getType(temp, hum, height);
+                    (topBlock, filler) = Biomes.getBlocks(biome, blockVar);
                 }
 
                 if (chunk.getBlock(x, height, z) == Block.STONE.id && amt >= 1f) {

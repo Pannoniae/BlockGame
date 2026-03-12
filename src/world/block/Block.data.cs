@@ -952,25 +952,25 @@ public partial class Block {
         FERN_RED.itemLike();
         FERN_RED.setFlammable(60);
 
-        MUSHROOM_BROWN = register("brownMushroom", new Leaves("Brown Mushroom"));
+        MUSHROOM_BROWN = register("brownMushroom", new Leaves("BrownMushroom"));
         MUSHROOM_BROWN.setTex(crossUVs(28, 2));
         MUSHROOM_BROWN.setModel(BlockModel.makeGrass(MUSHROOM_BROWN));
         MUSHROOM_BROWN.transparency();
         MUSHROOM_BROWN.noCollision();
         MUSHROOM_BROWN.waterTransparent();
-        //MUSHROOM_BROWN.itemLike();
-        MUSHROOM_BROWN.material(Material.FOOD);
+        MUSHROOM_BROWN.itemLike();
+        optionalTool[MUSHROOM_BROWN.id] = false;
 
-        MUSHROOM_RED = register("redMushroom", new Leaves("Red Mushroom"));
+        MUSHROOM_RED = register("redMushroom", new Leaves("RedMushroom"));
         MUSHROOM_RED.setTex(crossUVs(29, 2));
         MUSHROOM_RED.setModel(BlockModel.makeGrass(MUSHROOM_RED));
         MUSHROOM_RED.transparency();
         MUSHROOM_RED.noCollision();
         MUSHROOM_RED.waterTransparent();
-        //MUSHROOM_RED.itemLike();
-        MUSHROOM_RED.material(Material.FOOD);
+        MUSHROOM_RED.itemLike();
+        optionalTool[MUSHROOM_RED.id] = false;
 
-        MUSHROOM_GREEN = register("greenMushroom", new Leaves("Green Mushroom"));
+        MUSHROOM_GREEN = register("greenMushroom", new Leaves("GreenMushroom"));
         MUSHROOM_GREEN.setTex(crossUVs(19, 7));
         MUSHROOM_GREEN.setModel(BlockModel.makeGrass(MUSHROOM_GREEN));
         MUSHROOM_GREEN.transparency();
@@ -978,7 +978,7 @@ public partial class Block {
         MUSHROOM_GREEN.waterTransparent();
         MUSHROOM_GREEN.itemLike();
         MUSHROOM_GREEN.material(Material.FOOD);
-        MUSHROOM_GREEN.light(5);
+        MUSHROOM_GREEN.light(8);
 
         BLACKBERRY_BUSH = register("blackberryBush", new Bush("Blackberry Bush"));
         BLACKBERRY_BUSH.setTex(crossUVs(19, 8));

@@ -242,30 +242,15 @@ public class NewSurfaceGenerator : SurfaceGenerator {
         if (cb == BiomeType.Plains || cb == BiomeType.Forest) {
             var flowerPatchCount = random.Next(0, 3);
             for (int p = 0; p < flowerPatchCount; p++) {
-                // pick flower type for this patch
-                var r = random.NextSingle();
-                ushort flowerType = r switch {
-                    < 0.25f => Block.YELLOW_FLOWER.id,
-                    < 0.5f => Block.MARIGOLD.id,
-                    < 0.75f => Block.BLUE_TULIP.id,
-                    _ => Block.THISTLE.id
-                };
-
                 // patch centre
                 var cx = random.Next(0, Chunk.CHUNKSIZE);
                 var cz = random.Next(0, Chunk.CHUNKSIZE);
-
                 // place 4-8 flowers in patch
                 // NVM FUCK THIS IT WONT SPAWN
                 var patchSize = random.Next(32, 96);
                 for (int i = 0; i < patchSize; i++) {
-                    var x = cx + random.Next(-3, 4);
-                    var z = cz + random.Next(-3, 4);
-
-                    /*if (x < 0 || x >= Chunk.CHUNKSIZE || z < 0 || z >= Chunk.CHUNKSIZE) {
-                        continue;
-                    }*/
-
+                    var x = cx + random.Next(-4, 5);
+                    var z = cz + random.Next(-4, 5);
                     var y = random.Next(0, World.WORLDHEIGHT - 1);
 
                     x += chunk.worldX;
@@ -273,6 +258,13 @@ public class NewSurfaceGenerator : SurfaceGenerator {
 
                     if (world.getBlock(x, y, z) == Block.GRASS.id && y < World.WORLDHEIGHT - 1) {
                         if (world.getBlock(x, y + 1, z) == Block.AIR.id) {
+                            // pick random flower for this position
+                            ushort flowerType = (random.Next(4)) switch {
+                                0 => Block.YELLOW_FLOWER.id,
+                                1 => Block.MARIGOLD.id,
+                                2 => Block.BLUE_TULIP.id,
+                                _ => Block.THISTLE.id
+                            };
                             world.setBlock(x, y + 1, z, flowerType);
                         }
                     }
@@ -286,11 +278,11 @@ public class NewSurfaceGenerator : SurfaceGenerator {
             for (int p = 0; p < patchCount; p++) {
                 var cx = random.Next(0, Chunk.CHUNKSIZE);
                 var cz = random.Next(0, Chunk.CHUNKSIZE);
-                var patchSize = random.Next(4, 9);
+                var patchSize = random.Next(32, 64);
                 for (int i = 0; i < patchSize; i++) {
-                    var x = cx + random.Next(-2, 3);
-                    var z = cz + random.Next(-2, 3);
-                    var y = random.Next(0, World.WORLDHEIGHT - 1);
+                    var x = cx + random.Next(-4, 5);
+                    var z = cz + random.Next(-4, 5);
+                    var y = random.Next(0, World.WORLDHEIGHT - 3);
 
                     x += chunk.worldX;
                     z += chunk.worldZ;
