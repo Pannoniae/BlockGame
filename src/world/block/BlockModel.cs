@@ -240,6 +240,58 @@ public class BlockModel {
 
         return model;
     }
+    
+    public static BlockModel makePole(Block bl) {
+        var uvs = bl.uvs;
+        var model = new BlockModel();
+        model.faces = new Face[6];
+        // side UVs: center 2px strip, full height
+        var sideMin = uvs[0] + new UVPair(7 / 16f, 0);
+        var sideMax = uvs[0] + new UVPair(9 / 16f, 1);
+        // cap UVs: 2x2 px square in the center
+        var capMin = uvs[0] + new UVPair(7 / 16f, 6 / 16f);
+        var capMax = uvs[0] + new UVPair(9 / 16f, 8 / 16f);
+        // west
+        model.faces[0] = new(7 / 16f, 1, 9 / 16f, 7 / 16f, 0, 9 / 16f, 7 / 16f, 0, 7 / 16f, 7 / 16f, 1, 7 / 16f, sideMin, sideMax, RawDirection.WEST, true, true);
+        // east
+        model.faces[1] = new(9 / 16f, 1, 7 / 16f, 9 / 16f, 0, 7 / 16f, 9 / 16f, 0, 9 / 16f, 9 / 16f, 1, 9 / 16f, sideMin, sideMax, RawDirection.EAST, true, true);
+        // south
+        model.faces[2] = new(7 / 16f, 1, 7 / 16f, 7 / 16f, 0, 7 / 16f, 9 / 16f, 0, 7 / 16f, 9 / 16f, 1, 7 / 16f, sideMin, sideMax, RawDirection.SOUTH, true, true);
+        // north
+        model.faces[3] = new(9 / 16f, 1, 9 / 16f, 9 / 16f, 0, 9 / 16f, 7 / 16f, 0, 9 / 16f, 7 / 16f, 1, 9 / 16f, sideMin, sideMax, RawDirection.NORTH, true, true);
+        // down
+        model.faces[4] = new(9 / 16f, 0, 9 / 16f, 9 / 16f, 0, 7 / 16f, 7 / 16f, 0, 7 / 16f, 7 / 16f, 0, 9 / 16f, capMin, capMax, RawDirection.DOWN, true, true);
+        // up
+        model.faces[5] = new(7 / 16f, 1, 9 / 16f, 7 / 16f, 1, 7 / 16f, 9 / 16f, 1, 7 / 16f, 9 / 16f, 1, 9 / 16f, capMin, capMax, RawDirection.UP, true, true);
+
+        return model;
+    }
+    
+    public static BlockModel makePost(Block bl) {
+        var uvs = bl.uvs;
+        var model = new BlockModel();
+        model.faces = new Face[6];
+        // side UVs: center 4px strip, full height
+        var sideMin = uvs[0] + new UVPair(6 / 16f, 0);
+        var sideMax = uvs[0] + new UVPair(10 / 16f, 1);
+        // cap UVs: 4x4 px square in the center
+        var capMin = uvs[0] + new UVPair(6 / 16f, 6 / 16f);
+        var capMax = uvs[0] + new UVPair(10 / 16f, 10 / 16f);
+        // west
+        model.faces[0] = new(6 / 16f, 1, 10 / 16f, 6 / 16f, 0, 10 / 16f, 6 / 16f, 0, 6 / 16f, 6 / 16f, 1, 6 / 16f, sideMin, sideMax, RawDirection.WEST, true, true);
+        // east
+        model.faces[1] = new(10 / 16f, 1, 6 / 16f, 10 / 16f, 0, 6 / 16f, 10 / 16f, 0, 10 / 16f, 10 / 16f, 1, 10 / 16f, sideMin, sideMax, RawDirection.EAST, true, true);
+        // south
+        model.faces[2] = new(6 / 16f, 1, 6 / 16f, 6 / 16f, 0, 6 / 16f, 10 / 16f, 0, 6 / 16f, 10 / 16f, 1, 6 / 16f, sideMin, sideMax, RawDirection.SOUTH, true, true);
+        // north
+        model.faces[3] = new(10 / 16f, 1, 10 / 16f, 10 / 16f, 0, 10 / 16f, 6 / 16f, 0, 10 / 16f, 6 / 16f, 1, 10 / 16f, sideMin, sideMax, RawDirection.NORTH, true, true);
+        // down
+        model.faces[4] = new(10 / 16f, 0, 10 / 16f, 10 / 16f, 0, 6 / 16f, 6 / 16f, 0, 6 / 16f, 6 / 16f, 0, 10 / 16f, capMin, capMax, RawDirection.DOWN, true, true);
+        // up
+        model.faces[5] = new(6 / 16f, 1, 10 / 16f, 6 / 16f, 1, 6 / 16f, 10 / 16f, 1, 6 / 16f, 10 / 16f, 1, 10 / 16f, capMin, capMax, RawDirection.UP, true, true);
+
+        return model;
+    }
 
     public static BlockModel emptyBlock() {
         var model = new BlockModel();

@@ -173,6 +173,11 @@ public partial class Block {
     public static Block FIRE;
     public static Block NG;
     public static Block SIGN;
+    public static Block WPOLE;
+    public static Block WPOST;
+    public static Block SPOLE;
+    public static Block SPOST;
+    
     public static Fence OAK_FENCE;
     public static Fence MAHOGANY_FENCE;
     public static Fence PINE_FENCE;
@@ -203,7 +208,7 @@ public partial class Block {
     public static Block BUTTON;
     public static Block IC_DETECTOR;
     public static Block OBSERVER;
-
+    
     public static void preLoad() {
         if (!Net.mode.isDed()) {
             atlas = Game.textures.blockTexture;
@@ -513,7 +518,7 @@ public partial class Block {
         IRON_CHAIN.setHardness(0.75);
 
         BUTTON = register("button", new Button("Button"));
-        BUTTON.setTex(cubeUVs(15, 3));
+        BUTTON.setTex(cubeUVs(21, 3));
         renderType[BUTTON.id] = RenderType.CUSTOM;
         BUTTON.partialBlock();
         BUTTON.material(Material.METAL);
@@ -525,13 +530,11 @@ public partial class Block {
         renderType[IC_DETECTOR.id] = RenderType.CUBE_DYNTEXTURE;
         IC_DETECTOR.material(Material.STONE);
         
-
         OBSERVER = register("observer", new Block("Observer"));
         OBSERVER.setTex(ldetectorUVs(5, 0,19, 3, 20, 3));
         renderType[OBSERVER.id] = RenderType.CUBE_DYNTEXTURE;
         OBSERVER.material(Material.STONE);
         OBSERVER.light(10);
-
 
         // the blocks
         COAL_BLOCK = register("coalBlock", new Block("Block of Coal"));
@@ -1060,7 +1063,8 @@ public partial class Block {
         TORCH.itemLike();
         TORCH.material(Material.WOOD);
         hardness[TORCH.id] = 0;
-
+        
+        
         CRAFTING_TABLE = register("craftingTable", new CraftingTable("Crafting Table"));
         CRAFTING_TABLE.setTex(CTUVs(4, 3, 3, 3, 2, 3, 5, 3));
         CRAFTING_TABLE.setModel(BlockModel.makeCube(CRAFTING_TABLE));
@@ -1138,7 +1142,6 @@ public partial class Block {
         LADDER.setTex(uv("blocks.png", 10, 3));
         LADDER.transparency();
         LADDER.noCollision();
-        // render as item!
         LADDER.itemLike();
         LADDER.material(Material.WOOD);
         LADDER.setHardness(0.5);
@@ -1147,7 +1150,6 @@ public partial class Block {
         MESH = register("mesh", new MeshBlock("Mesh"));
         MESH.setTex(uv("blocks.png", 11, 3));
         MESH.transparency();
-        // render as item!
         MESH.itemLike();
         MESH.material(Material.METAL);
         MESH.setHardness(1.5);
@@ -1171,7 +1173,35 @@ public partial class Block {
         SIGN.setTex(uv("blocks.png", 2, 10), uv("blocks.png", 1, 5));
         SIGN.material(Material.WOOD);
         SIGN.setFlammable(30);
-
+        
+        WPOLE = register("wPole", new Block("Wooden Pole"));
+        WPOLE.setTex(uv("blocks.png", 12, 3));
+        WPOLE.setModel(BlockModel.makePole(WPOLE));
+        WPOLE.partialBlock();
+        WPOLE.itemLike();
+        WPOLE.material(Material.WOOD);
+        
+        WPOST = register("wPost", new Block("Wooden Post"));
+        WPOST.setTex(uv("blocks.png", 13, 3));
+        WPOST.setModel(BlockModel.makePost(WPOST));
+        WPOST.partialBlock();
+        WPOST.itemLike();
+        WPOST.material(Material.WOOD);
+        
+        SPOLE = register("sPole", new Block("Stone Pole"));
+        SPOLE.setTex(uv("blocks.png", 14, 3));
+        SPOLE.setModel(BlockModel.makePole(SPOLE));
+        SPOLE.partialBlock();
+        SPOLE.itemLike();
+        SPOLE.material(Material.STONE);
+        
+        SPOST = register("sPost", new Block("Stone Post"));
+        SPOST.setTex(uv("blocks.png", 15, 3));
+        SPOST.setModel(BlockModel.makePost(SPOST));
+        SPOST.partialBlock();
+        SPOST.itemLike();
+        SPOST.material(Material.STONE);
+       
         OAK_FENCE = register("oakFence", new Fence("Oak Fence", 0));
         OAK_FENCE.material(Material.WOOD);
         OAK_FENCE.setFlammable(30);

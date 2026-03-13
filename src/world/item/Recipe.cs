@@ -47,6 +47,11 @@ public class Recipe {
     */
 
     public static Recipe STICK;
+    public static Recipe WPOLE;
+    public static Recipe SPOLE;
+    public static Recipe WPOST;
+    public static Recipe SPOST;
+    
     public static Recipe CRAFTING_TABLE;
     public static Recipe TORCH;
     public static Recipe OAK_CHEST;
@@ -180,24 +185,77 @@ public class Recipe {
             .noShape()
             .ingredients(Block.PALM_LOG.item);
 
-        // stick (2 planks vertically) - any plank type works
-        STICK = register(new ItemStack(Item.STICK, 4));
-        STICK.shape(01_01, 2);
+        // stick (1 plank) - any plank type works
+        STICK = register(new ItemStack(Item.STICK, 32));
+        STICK.shape(01, 2);
         STICK.ingredients(Block.OAK_PLANKS.item);
-        register(new ItemStack(Item.STICK, 4))
+        register(new ItemStack(Item.STICK, 32))
+            .shape(01, 2)
+            .ingredients(Block.MAHOGANY_PLANKS.item);
+        register(new ItemStack(Item.STICK, 32))
+            .shape(01, 2)
+            .ingredients(Block.MAPLE_PLANKS.item);
+        register(new ItemStack(Item.STICK, 32))
+            .shape(01, 2)
+            .ingredients(Block.PINE_PLANKS.item);
+        register(new ItemStack(Item.STICK, 32))
+            .shape(01, 2)
+            .ingredients(Block.PALM_PLANKS.item);
+        register(new ItemStack(Item.STICK, 32))
+            .shape(01, 2)
+            .ingredients(Block.REDWOOD_PLANKS.item);
+        
+        // wpole (2 planks vertically) - any wood type works
+        WPOLE = register(new ItemStack(Block.WPOLE.item, 32));
+        WPOLE.shape(01_01, 2);
+        WPOLE.ingredients(Block.OAK_PLANKS.item);
+        register(new ItemStack(Block.WPOLE.item, 32))
             .shape(01_01, 2)
             .ingredients(Block.MAHOGANY_PLANKS.item);
-        register(new ItemStack(Item.STICK, 4))
+        register(new ItemStack(Block.WPOLE.item, 32))
             .shape(01_01, 2)
             .ingredients(Block.MAPLE_PLANKS.item);
-        register(new ItemStack(Item.STICK, 4))
+        register(new ItemStack(Block.WPOLE.item, 32))
             .shape(01_01, 2)
             .ingredients(Block.PINE_PLANKS.item);
-        register(new ItemStack(Item.STICK, 4))
+        register(new ItemStack(Block.WPOLE.item, 32))
             .shape(01_01, 2)
             .ingredients(Block.PALM_PLANKS.item);
-
-
+        register(new ItemStack(Block.WPOLE.item, 32))
+            .shape(01_01, 2)
+            .ingredients(Block.REDWOOD_PLANKS.item);
+        
+        // spole (2 stone blocks vertically)
+        SPOLE = register(new ItemStack(Block.SPOLE.item, 32));
+        SPOLE.shape(01_01, 2);
+        SPOLE.ingredients(Block.STONE.item);
+        
+        // wpost (3 planks vertically) - any wood type works
+        WPOST = register(new ItemStack(Block.WPOST.item, 16));
+        WPOST.shape(010_010_010, 3);
+        WPOST.ingredients(Block.OAK_PLANKS.item);
+        register(new ItemStack(Block.WPOST.item, 16))
+            .shape(010_010_010, 3)
+            .ingredients(Block.MAHOGANY_PLANKS.item);
+        register(new ItemStack(Block.WPOST.item, 16))
+            .shape(010_010_010, 3)
+            .ingredients(Block.MAPLE_PLANKS.item);  
+        register(new ItemStack(Block.WPOST.item, 16))
+            .shape(010_010_010, 3)
+            .ingredients(Block.PINE_PLANKS.item);   
+        register(new ItemStack(Block.WPOST.item, 16))
+            .shape(010_010_010, 3)
+            .ingredients(Block.PALM_PLANKS.item);   
+        register(new ItemStack(Block.WPOST.item, 16))
+            .shape(010_010_010, 3)
+            .ingredients(Block.REDWOOD_PLANKS.item);
+        
+        //spost (3 stone blocks vertically)
+        SPOST = register(new ItemStack(Block.SPOST.item, 16));
+        SPOST.shape(010_010_010, 3);
+        SPOST.ingredients(Block.STONE.item);
+        
+        
         // ladder (6 sticks in H shape)
         LADDER = register(new ItemStack(Block.LADDER.item, 1));
         LADDER.shape(101_111_101, 3);
@@ -226,40 +284,40 @@ public class Recipe {
             .ingredients(Block.PALM_PLANKS.item, Item.STICK);
 
         // slab (3 planks horizontally) - any plank type works
-        OAK_SLAB = register(new ItemStack(Block.OAK_SLAB.item, 3));
+        OAK_SLAB = register(new ItemStack(Block.OAK_SLAB.item, 2));
         OAK_SLAB.shape(000_000_111, 3);
         OAK_SLAB.ingredients(Block.OAK_PLANKS.item);
-        register(new ItemStack(Block.MAHOGANY_SLAB.item, 3))
+        register(new ItemStack(Block.MAHOGANY_SLAB.item, 2))
             .shape(000_000_111, 3)
             .ingredients(Block.MAHOGANY_PLANKS.item);
-        register(new ItemStack(Block.MAPLE_SLAB.item, 3))
+        register(new ItemStack(Block.MAPLE_SLAB.item, 2))
             .shape(000_000_111, 3)
             .ingredients(Block.MAPLE_PLANKS.item);
-        register(new ItemStack(Block.PINE_SLAB.item, 3))
+        register(new ItemStack(Block.PINE_SLAB.item, 2))
             .shape(000_000_111, 3)
             .ingredients(Block.PINE_PLANKS.item);
-        register(new ItemStack(Block.PINE_SLAB.item, 3))
+        register(new ItemStack(Block.PINE_SLAB.item, 2))
             .shape(000_000_111, 3)
             .ingredients(Block.PALM_PLANKS.item);
-        register(new ItemStack(Block.STONE_SLAB.item, 3))
+        register(new ItemStack(Block.STONE_SLAB.item, 2))
             .shape(000_000_111, 3)
             .ingredients(Block.STONE.item);
-        register(new ItemStack(Block.COBBLESTONE_SLAB.item, 3))
+        register(new ItemStack(Block.COBBLESTONE_SLAB.item, 2))
             .shape(000_000_111, 3)
             .ingredients(Block.COBBLESTONE.item);
-        register(new ItemStack(Block.CANDY_SLAB.item, 3))
+        register(new ItemStack(Block.CANDY_SLAB.item, 2))
             .shape(000_000_111, 3)
             .ingredients(Block.CANDY.item);
-        register(new ItemStack(Block.BASALT_SLAB.item, 3))
+        register(new ItemStack(Block.BASALT_SLAB.item, 2))
             .shape(000_000_111, 3)
             .ingredients(Block.BASALT.item);
-        register(new ItemStack(Block.BRICKBLOCK_SLAB.item, 3))
+        register(new ItemStack(Block.BRICKBLOCK_SLAB.item, 2))
             .shape(000_000_111, 3)
             .ingredients(Block.BRICK_BLOCK.item);
-        register(new ItemStack(Block.STONE_BRICK_SLAB.item, 3))
+        register(new ItemStack(Block.STONE_BRICK_SLAB.item, 2))
             .shape(000_000_111, 3)
             .ingredients(Block.STONE_BRICK.item);
-        register(new ItemStack(Block.SAND_BRICK_SLAB.item, 3))
+        register(new ItemStack(Block.SAND_BRICK_SLAB.item, 2))
             .shape(000_000_111, 3)
             .ingredients(Block.SAND_BRICK.item);
 

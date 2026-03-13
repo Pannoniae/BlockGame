@@ -41,6 +41,11 @@ public class SignItem : Item {
             metadata = rotation;
         }
 
+        // don't replace existing blocks
+        if (world.getBlock(x, y, z) != Block.AIR.id) {
+            return null;
+        }
+
         if (!signBlock.canPlace(world, x, y, z, info)) {
             return null;
         }

@@ -205,6 +205,10 @@ public class Item {
         STICK = register("stick", new Item("Stick"));
         STICK.tex = uv("items.png", 0, 8);
         material[STICK.id] = true;
+        
+        /*WPOLE = register("wpole", new Item("Wodden Pole"));
+        WPOLE.tex = uv("items.png", 0, 8);
+        material[WPOLE.id] = true;*/
 
         SIGN_ITEM = register("signItem", new SignItem("Sign", Block.SIGN));
         SIGN_ITEM.tex = uv("items.png", 1, 7);
