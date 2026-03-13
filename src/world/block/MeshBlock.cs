@@ -1,6 +1,7 @@
 using BlockGame.GL.vertexformats;
 using BlockGame.render;
 using BlockGame.util;
+using BlockGame.world.entity;
 
 namespace BlockGame.world.block;
 
@@ -30,7 +31,7 @@ public class MeshBlock : Ladder {
     public override void place(World world, int x, int y, int z, byte metadata, Placement info) {
         byte facing;
         if (info.face is RawDirection.UP or RawDirection.DOWN) {
-            facing = (byte)info.hfacing;
+            facing = (byte)Direction.getOpposite(info.hfacing);
         }
         else {
             facing = (byte)((byte)info.face | WALL_BIT);
@@ -41,6 +42,32 @@ public class MeshBlock : Ladder {
     }
 
     public override byte maxValidMetadata() => 7;
+
+    public override void interact(World world, int x, int y, int z, Entity e) {
+        var metadata = world.getBlockRaw(x, y, z).getMetadata();
+
+        // wall-placed: always climbable
+        if (isWall(metadata)) {
+            e.onLadder = true;
+            return;
+        }
+
+        // floor-placed: only from the front face side
+        // compare against slab inner edge, not block center,
+        // because the slab is 1/16 thick at one edge
+        const double t = 1.0 / 16;
+        byte facing = (byte)(metadata & 0b11);
+        bool front = facing switch {
+            0 => e.position.X < x + 1 - t, // WEST: slab at +X, climb from -X
+            1 => e.position.X > x + t,     // EAST: slab at -X, climb from +X
+            2 => e.position.Z < z + 1 - t, // SOUTH: slab at +Z, climb from -Z
+            _ => e.position.Z > z + t,     // NORTH: slab at -Z, climb from +Z
+        };
+
+        if (front) {
+            e.onLadder = true;
+        }
+    }
 
     public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
         base.render(br, x, y, z, vertices);
