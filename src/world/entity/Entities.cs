@@ -12,7 +12,7 @@ public enum SpawnType {
     PASSIVE,   // animals
     HOSTILE,    // monsters
     CAVE,       // hostile but only spawns in caves
-    JUNGLE     // spawns only in jungle biomes
+    JUNGLE     // hostile but only spawns in jungle biome
 }
 
 public static class SpawnTypeExt {
@@ -73,7 +73,7 @@ public class Entities {
         spawnType[COW] = SpawnType.PASSIVE;
         spawnType[PIG] = SpawnType.PASSIVE;
         spawnType[ZOMBIE] = SpawnType.HOSTILE;
-        spawnType[EYE] = SpawnType.HOSTILE;
+        spawnType[EYE] = SpawnType.CAVE;
         spawnType[MUMMY] = SpawnType.CAVE;
         spawnType[DODO] = SpawnType.PASSIVE;
         spawnType[BIGEYE] = SpawnType.HOSTILE;

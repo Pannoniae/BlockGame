@@ -41,6 +41,8 @@ public partial class Block {
     public static Block COBBLESTONE_STAIRS;
     public static Block BASALT_STAIRS;
     public static Block BRICKBLOCK_STAIRS;
+    
+    public static Block STONE_WALL;
 
     public static Block CLAY_BLOCK;
     public static Block BRICK_BLOCK;
@@ -279,8 +281,11 @@ public partial class Block {
 
         STONE_STAIRS = register("stoneStairs", new Stairs("Stone Stairs"));
         STONE_STAIRS.setTex(cubeUVs(5, 0));
-        STONE_STAIRS.partialBlock();
         STONE_STAIRS.material(Material.STONE);
+        
+        STONE_WALL= register("stoneWall", new Walls("Stone Wall"));
+        STONE_WALL.setTex(cubeUVs(5, 0));
+        STONE_WALL.material(Material.STONE);
 
         COBBLESTONE = register("cobblestone", new Block("Cobblestone"));
         COBBLESTONE.setTex(uv("blocks.png", 6, 1));
@@ -293,7 +298,6 @@ public partial class Block {
 
         COBBLESTONE_STAIRS = register("cobblestoneStairs", new Stairs("Cobblestone Stairs"));
         COBBLESTONE_STAIRS.setTex(cubeUVs(6, 1));
-        COBBLESTONE_STAIRS.partialBlock();
         COBBLESTONE_STAIRS.material(Material.STONE);
 
         GRAVEL = register("gravel", new GravelBlock("Gravel"));
@@ -376,7 +380,6 @@ public partial class Block {
 
         BRICKBLOCK_STAIRS = register("brickBlockStairs", new Stairs("Brick Stairs"));
         BRICKBLOCK_STAIRS.setTex(cubeUVs(0, 2));
-        BRICKBLOCK_STAIRS.partialBlock();
         BRICKBLOCK_STAIRS.material(Material.STONE);
 
         STONE_BRICK = register("stoneBrick", new Block("Stone Brick"));
@@ -390,7 +393,6 @@ public partial class Block {
 
         STONE_BRICK_STAIRS = register("stoneBrickStairs", new Stairs("Stone Brick Stairs"));
         STONE_BRICK_STAIRS.setTex(cubeUVs(1, 2));
-        STONE_BRICK_STAIRS.partialBlock();
         STONE_BRICK_STAIRS.material(Material.STONE);
 
         SAND_BRICK = register("sandBrick", new Block("Sand Brick"));
@@ -403,7 +405,6 @@ public partial class Block {
         SAND_BRICK_SLAB.material(Material.STONE);
         SAND_BRICK_STAIRS = register("sandBrickStairs", new Stairs("Sand Brick Stairs"));
         SAND_BRICK_STAIRS.setTex(cubeUVs(2, 2));
-        SAND_BRICK_STAIRS.partialBlock();
         SAND_BRICK_STAIRS.material(Material.STONE);
 
 
@@ -670,7 +671,6 @@ public partial class Block {
 
         OAK_STAIRS = register("oakStairs", new Stairs("Oak Stairs"));
         OAK_STAIRS.setTex(cubeUVs(0, 5));
-        OAK_STAIRS.partialBlock();
         OAK_STAIRS.material(Material.WOOD);
         OAK_STAIRS.setFlammable(30);
 
@@ -713,7 +713,6 @@ public partial class Block {
 
         MAPLE_STAIRS = register("mapleStairs", new Stairs("Maple Stairs"));
         MAPLE_STAIRS.setTex(cubeUVs(5, 5));
-        MAPLE_STAIRS.partialBlock();
         MAPLE_STAIRS.material(Material.WOOD);
         MAPLE_STAIRS.setFlammable(30);
 
@@ -755,7 +754,6 @@ public partial class Block {
 
         MAHOGANY_STAIRS = register("mahoganyStairs", new Stairs("Mahogany Stairs"));
         MAHOGANY_STAIRS.setTex(cubeUVs(3, 2));
-        MAHOGANY_STAIRS.partialBlock();
         MAHOGANY_STAIRS.material(Material.WOOD);
         MAHOGANY_STAIRS.setFlammable(30);
 
@@ -820,7 +818,6 @@ public partial class Block {
 
         PINE_STAIRS = register("pineStairs", new Stairs("Pine Stairs"));
         PINE_STAIRS.setTex(cubeUVs(8, 2));
-        PINE_STAIRS.partialBlock();
         PINE_STAIRS.material(Material.WOOD);
         PINE_STAIRS.setFlammable(30);
 
@@ -862,7 +859,6 @@ public partial class Block {
 
         PALM_STAIRS = register("palmStairs", new Stairs("Palm Stairs"));
         PALM_STAIRS.setTex(cubeUVs(13, 2));
-        PALM_STAIRS.partialBlock();
         PALM_STAIRS.material(Material.WOOD);
         PALM_STAIRS.setFlammable(30);
 
@@ -909,7 +905,6 @@ public partial class Block {
 
         REDWOOD_STAIRS = register("redwoodStairs", new Stairs("Redwood Stairs"));
         REDWOOD_STAIRS.setTex(cubeUVs(18, 2));
-        REDWOOD_STAIRS.partialBlock();
         REDWOOD_STAIRS.material(Material.WOOD);
         REDWOOD_STAIRS.setFlammable(30);
 

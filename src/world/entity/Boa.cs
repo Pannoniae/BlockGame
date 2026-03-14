@@ -20,8 +20,8 @@ public class Boa : Hostile {
 
     public override AABB calcAABB(Vector3D pos) {
         return new AABB(
-            pos.X - 0.5, pos.Y, pos.Z - 0.5,
-            pos.X + 0.5, pos.Y + 0.5, pos.Z + 0.5
+            pos.X - 1f, pos.Y, pos.Z - 1f,
+            pos.X + 1f, pos.Y + 1f, pos.Z + 1f
         );
     }
     protected override bool shouldContinueUpdate(double dt) {
