@@ -1173,6 +1173,7 @@ public partial class Block {
         WPOLE.setTex(uv("blocks.png", 12, 3));
         WPOLE.setModel(BlockModel.makePole(WPOLE));
         WPOLE.partialBlock();
+        AABB[WPOLE.id] = new AABB(new Vector3D(7 / 16f, 0, 7 / 16f), new Vector3D(9 / 16f, 1, 9 / 16f));
         WPOLE.itemLike();
         WPOLE.material(Material.WOOD);
         
@@ -1180,6 +1181,7 @@ public partial class Block {
         WPOST.setTex(uv("blocks.png", 13, 3));
         WPOST.setModel(BlockModel.makePost(WPOST));
         WPOST.partialBlock();
+        AABB[WPOST.id] = new AABB(new Vector3D(6 / 16f, 0, 6 / 16f), new Vector3D(10 / 16f, 1, 10 / 16f));
         WPOST.itemLike();
         WPOST.material(Material.WOOD);
         
