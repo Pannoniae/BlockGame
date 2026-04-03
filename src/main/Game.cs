@@ -195,6 +195,7 @@ public partial class Game {
                 Window.PrioritizeSdl();
                 // set hints
                 SDL3.SDL_SetHint(SDL3.SDL_HINT_APP_NAME, "BlockGame");
+                SDL3.SDL_SetHint("SDL_OPENGL_FORCE_SRGB_FRAMEBUFFER", "1");
                 //SDL3.SDL_SetHint(SDL3.SDL_HINT_WINDOWS_GAMEINPUT, "1");
 
                 // print SDL version!
@@ -1279,6 +1280,11 @@ public partial class Game {
 
         if (currentScreen == Screen.GAME_SCREEN) {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, Settings.instance.framebufferEffects ? fbo : 0);
+            // disable sRGB conversion when rendering to FBO (Rgba16f) — some AMD drivers
+            // erroneously apply it even to non-sRGB attachments (SDL#14898)
+            if (Settings.instance.framebufferEffects) {
+                GL.Disable(EnableCap.FramebufferSrgb);
+            }
         }
 
         // clear AFTER binding the framebuffer
@@ -1315,7 +1321,7 @@ public partial class Game {
 
             // Handle MSAA resolve if needed
             if (Settings.instance.msaa > 1) {
-                // Resolve MSAA framebuffer to regular texture
+                // Resolve MSAA framebuffer to regular texture (FBO→FBO, keep sRGB disabled)
                 GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, fbo);
                 GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, resolveFbo);
                 GL.BlitFramebuffer(0, 0, ssaaWidth, ssaaHeight, 0, 0, ssaaWidth, ssaaHeight,
@@ -1330,6 +1336,9 @@ public partial class Game {
                 GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
                 graphics.tex(0, FBOtex);
             }
+
+            // re-enable sRGB conversion for output to default framebuffer
+            GL.Enable(EnableCap.FramebufferSrgb);
 
             // Restore viewport for final screen rendering
 
