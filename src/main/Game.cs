@@ -273,6 +273,8 @@ public partial class Game {
         #if !DEBUG
         //GlfwProvider.GLFW.Value.WindowHint(WindowHintBool.ContextNoError, true);
         #endif
+        // request sRGB-capable default framebuffer for GL_FRAMEBUFFER_SRGB
+        GlfwProvider.UninitializedGLFW.Value.WindowHint(WindowHintBool.SrgbCapable, true);
         window = Window.Create(windowOptions);
 
         setTitle("BlockGame", title, "");

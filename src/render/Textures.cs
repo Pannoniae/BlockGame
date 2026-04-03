@@ -70,8 +70,8 @@ public class Textures {
 
         // THEN load textures (will use pack system)
         background = get("textures/bg.png");
-        lightTexture = get("textures/lightmap.png");
-        lightTexture2 = get("textures/lightmap.png");
+        lightTexture = get("textures/lightmap.png", srgb: false);
+        lightTexture2 = get("textures/lightmap.png", srgb: false);
         waterOverlay = get("textures/water.png");
         lavaOverlay = get("textures/lava.png");
         sunTexture = get("textures/sun_03.png");
@@ -357,9 +357,9 @@ public class Textures {
         return Assets.open(path);
     }
 
-    public BTexture2D get(string path) {
+    public BTexture2D get(string path, bool srgb = true) {
         if (!textures.TryGetValue(path, out _)) {
-            textures[path] = new BTexture2D(path);
+            textures[path] = new BTexture2D(path) { srgb = srgb };
             textures[path].reload();
         }
 
