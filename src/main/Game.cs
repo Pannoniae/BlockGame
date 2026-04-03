@@ -275,6 +275,7 @@ public partial class Game {
         #endif
         // request sRGB-capable default framebuffer for GL_FRAMEBUFFER_SRGB
         GlfwProvider.UninitializedGLFW.Value.WindowHint(WindowHintBool.SrgbCapable, true);
+        SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 1);
         window = Window.Create(windowOptions);
 
         setTitle("BlockGame", title, "");
