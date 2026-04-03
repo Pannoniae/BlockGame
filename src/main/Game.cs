@@ -276,7 +276,7 @@ public partial class Game {
         #endif
         window = Window.Create(windowOptions);
 
-        setTitle("BlockGame", title, "");
+        setTitle("BlockGame", title, ""); 
         window.Load += init;
         window.FocusChanged += focus;
         //window.Update += update;
