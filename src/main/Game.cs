@@ -273,9 +273,6 @@ public partial class Game {
         #if !DEBUG
         //GlfwProvider.GLFW.Value.WindowHint(WindowHintBool.ContextNoError, true);
         #endif
-        // request sRGB-capable default framebuffer for GL_FRAMEBUFFER_SRGB
-        GlfwProvider.UninitializedGLFW.Value.WindowHint(WindowHintBool.SrgbCapable, true);
-        SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 1);
         window = Window.Create(windowOptions);
 
         setTitle("BlockGame", title, "");
@@ -696,6 +693,24 @@ public partial class Game {
 
         // gamma-correct rendering: GPU converts linear→sRGB on write to sRGB framebuffers
         GL.Enable(EnableCap.FramebufferSrgb);
+
+        // check if the default framebuffer is actually sRGB
+        // GL_BACK_LEFT = 0x0402 for default framebuffer
+        // query both front and back buffers
+        GL.GetFramebufferAttachmentParameter(
+            FramebufferTarget.Framebuffer,
+            (FramebufferAttachment)0x0400, // GL_FRONT_LEFT
+            FramebufferAttachmentParameterName.FramebufferAttachmentColorEncoding,
+            out int fbEncFront);
+        GL.GetFramebufferAttachmentParameter(
+            FramebufferTarget.Framebuffer,
+            (FramebufferAttachment)0x0402, // GL_BACK_LEFT
+            FramebufferAttachmentParameterName.FramebufferAttachmentColorEncoding,
+            out int fbEncBack);
+        Log.info($"Default framebuffer FRONT_LEFT: 0x{fbEncFront:X4} ({(fbEncFront == 0x8C41 ? "sRGB" : "LINEAR")})");
+        Log.info($"Default framebuffer BACK_LEFT:  0x{fbEncBack:X4} ({(fbEncBack == 0x8C41 ? "sRGB" : "LINEAR")})");
+        GL.GetInteger(GLEnum.FramebufferSrgb, out int srgbState);
+        Log.info($"GL_FRAMEBUFFER_SRGB enabled: {srgbState != 0}");
 
         GL.ClipControl(ClipControlOrigin.LowerLeft, ClipControlDepth.ZeroToOne);
 

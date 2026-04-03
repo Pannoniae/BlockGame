@@ -406,6 +406,9 @@ namespace Silk.NET.Windowing.Glfw
             // Set multisample samples
             _glfw.WindowHint(WindowHintInt.Samples, opts.Samples ?? GLFW.Glfw.DontCare);
 
+            // sRGB-capable default framebuffer
+            _glfw.WindowHint(WindowHintBool.SrgbCapable, true);
+
             var share = SharedContext;
             _nonFullscreenSize = opts.Size;
             _nonFullscreenPosition = opts.Position;

@@ -211,6 +211,9 @@ namespace Silk.NET.Windowing.Sdl
             SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_MULTISAMPLEBUFFERS, (opts.Samples == null || opts.Samples == -1) ? 0 : 1);
             SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_MULTISAMPLESAMPLES, (opts.Samples == null || opts.Samples == -1) ? 0 : opts.Samples.Value);
 
+            // sRGB-capable default framebuffer
+            SDL3.SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 1);
+
             // Create window
             /*SdlWindow = SDL3.SDL_CreateWindow
             (
