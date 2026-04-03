@@ -6,6 +6,13 @@ using Molten.DoublePrecision;
 namespace BlockGame.world.block;
 
 public partial class Block {
+
+    public static ReadOnlySpan<float> aoArray => [1.0f, 0.5f, 0.25f, 0.1f];
+
+    public static ReadOnlySpan<float> a => [
+        0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1
+    ];
+
     public static bool notSolid(int block) {
         return block == 0 || get(block).layer != RenderLayer.SOLID;
     }
@@ -84,9 +91,8 @@ public partial class Block {
     }
 
     public static Color packColour(byte direction, byte ao, byte light) {
-        Span<float> aoArray = [1.0f, 0.75f, 0.5f, 0.25f];
-        Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
 
+        Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
         direction = (byte)(direction & 0b111);
         var blocklight = (byte)(light >> 4);
         var skylight = (byte)(light & 0xF);
@@ -102,7 +108,6 @@ public partial class Block {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Color packColour(byte direction, byte ao) {
-        Span<float> aoArray = [1.0f, 0.75f, 0.5f, 0.25f];
         Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
 
         direction &= 0b111;
@@ -114,7 +119,6 @@ public partial class Block {
     public static uint packColourB(byte direction, byte ao) {
         // can we just inline the array?
 
-        Span<float> aoArray = [1.0f, 0.75f, 0.5f, 0.25f];
         Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
 
 
@@ -125,7 +129,6 @@ public partial class Block {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static uint packColourBTinted(byte direction, byte ao, byte tr, byte tg, byte tb) {
-        Span<float> aoArray = [1.0f, 0.75f, 0.5f, 0.25f];
         Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
         direction &= 0b111;
         float shade = a[direction] * aoArray[ao];

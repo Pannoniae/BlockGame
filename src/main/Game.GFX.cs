@@ -158,7 +158,7 @@ public partial class Game {
             // Create multisampled color texture
             GL.DeleteTexture(FBOtex);
             FBOtex = GL.CreateTexture(TextureTarget.Texture2DMultisample);
-            GL.TextureStorage2DMultisample(FBOtex, (uint)samples, SizedInternalFormat.Rgba8,
+            GL.TextureStorage2DMultisample(FBOtex, (uint)samples, SizedInternalFormat.Rgba16f,
                 (uint)ssaaWidth, (uint)ssaaHeight, true);
 
             // Create multisampled depth buffer
@@ -184,7 +184,7 @@ public partial class Game {
 
             GL.DeleteTexture(resolveTex);
             resolveTex = GL.CreateTexture(TextureTarget.Texture2D);
-            GL.TextureStorage2D(resolveTex, 1, SizedInternalFormat.Rgba8, (uint)ssaaWidth, (uint)ssaaHeight);
+            GL.TextureStorage2D(resolveTex, 1, SizedInternalFormat.Rgba16f, (uint)ssaaWidth, (uint)ssaaHeight);
             GL.TextureParameter(resolveTex, TextureParameterName.TextureBaseLevel, 0);
             GL.TextureParameter(resolveTex, TextureParameterName.TextureMaxLevel, 0);
             var filter = Settings.instance.resolutionScaleLinear ? (int)GLEnum.Linear : (int)GLEnum.Nearest;
@@ -206,7 +206,7 @@ public partial class Game {
 
             GL.DeleteTexture(FBOtex);
             FBOtex = GL.CreateTexture(TextureTarget.Texture2D);
-            GL.TextureStorage2D(FBOtex, 1, SizedInternalFormat.Rgba8, (uint)ssaaWidth, (uint)ssaaHeight);
+            GL.TextureStorage2D(FBOtex, 1, SizedInternalFormat.Rgba16f, (uint)ssaaWidth, (uint)ssaaHeight);
             GL.TextureParameter(FBOtex, TextureParameterName.TextureBaseLevel, 0);
             GL.TextureParameter(FBOtex, TextureParameterName.TextureMaxLevel, 0);
             var filter = Settings.instance.resolutionScaleLinear ? (int)GLEnum.Linear : (int)GLEnum.Nearest;

@@ -1527,13 +1527,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         idc.end();
     }
 
-
-    public static readonly float[] aoArray = [1.0f, 0.75f, 0.5f, 0.25f];
-
-    public static readonly float[] a = [
-        0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1
-    ];
-
     public Color getLightColourDarken(byte skylight, byte blocklight) {
         var px = Game.textures.light(blocklight, skylight);
         var lightVal = new Color4(px.R / 255f, px.G / 255f, px.B / 255f, px.A / 255f);
@@ -1561,7 +1554,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         //var darken = Game.world.getSkyDarken(Game.world.worldTick);
         //lightVal *= 1 - darken;
 
-        float tint = a[dir] * aoArray[ao];
+        float tint = Block.a[dir] * Block.aoArray[ao];
         var ab = new Color(lightVal.R / 255f * tint, lightVal.G / 255f * tint, lightVal.B / 255f * tint, 1);
         return ab;
     }

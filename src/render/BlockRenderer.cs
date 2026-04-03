@@ -363,15 +363,12 @@ public partial class BlockRenderer {
             ctx.shouldFlipVertices = false;
         }
 
-        Span<float> aoArray = [1.0f, 0.75f, 0.5f, 0.25f];
-        Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
-
 
         for (int i = 0; i < 4; i++) {
             float tint = (dir == RawDirection.NONE
                 ? 1f
                 : // no shading for non-directional faces, no AO!
-                a[(byte)dir]) * aoArray[ao.bytes[i]];
+                Block.a[(byte)dir]) * Block.aoArray[ao.bytes[i]];
 
             //var res = (tint);
             // set alpha to 1!

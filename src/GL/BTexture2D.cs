@@ -17,6 +17,8 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
     public double iwidth;
     public double iheight;
 
+    public bool srgb = true;
+
     public Memory<Rgba32> imageData;
     public Image<Rgba32> image = null!;
 
@@ -110,7 +112,8 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
     }
 
     private unsafe void uploadImage(Silk.NET.OpenGL.Legacy.GL GL, Image<Rgba32> img) {
-        GL.TextureStorage2D(handle, 1, SizedInternalFormat.Rgba8, (uint)img.Width, (uint)img.Height);
+        var fmt = srgb ? SizedInternalFormat.Srgb8Alpha8 : SizedInternalFormat.Rgba8;
+        GL.TextureStorage2D(handle, 1, fmt, (uint)img.Width, (uint)img.Height);
 
         if (false && Game.isAMDCard) {
             // old AMD drivers have R/B swap bug, convert to BGRA and upload
@@ -160,6 +163,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
     }
 
     public BTexture2D(uint width, uint height, bool linear = false) {
+        srgb = false; // programmatic/font textures are data, not color
         unsafe {
             var GL = Game.GL;
 

@@ -99,18 +99,7 @@ vec3 scanlines(vec2 uv) {
     vec3 lower_d = texelFetch(u_colorTexture, ivec2(int(dx), y), 0).rgb;
     vec3 lower_e = texelFetch(u_colorTexture, ivec2(int(ex), y), 0).rgb;
     
-    // Convert every sample to linear color
-    upper_a = srgb_to_linear(upper_a);
-    upper_b = srgb_to_linear(upper_b);
-    upper_c = srgb_to_linear(upper_c);
-    upper_d = srgb_to_linear(upper_d);
-    upper_e = srgb_to_linear(upper_e);
-    
-    lower_a = srgb_to_linear(lower_a);
-    lower_b = srgb_to_linear(lower_b);
-    lower_c = srgb_to_linear(lower_c);
-    lower_d = srgb_to_linear(lower_d);
-    lower_e = srgb_to_linear(lower_e);
+    // FBO stores linear values, no conversion needed
     
     // The x coordinates of the closest
     vec3 beam = vec3(scaledUV.x - 0.5);
@@ -267,9 +256,7 @@ void main() {
     // Apply phosphor mask
     col = mask(col, gl_FragCoord.xy);
     
-    // Convert back to srgb
-    col = linear_to_srgb(col);
-    
+    // GL_FRAMEBUFFER_SRGB handles linear→sRGB conversion on output
     fragColour = vec4(col, 1.0);
     
     fragColour.rgb += gradientDither(fragColour.rgb);

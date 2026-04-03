@@ -691,6 +691,9 @@ public partial class Game {
         GL.FrontFace(FrontFaceDirection.Ccw);
         GL.CullFace(GLEnum.Back);
 
+        // gamma-correct rendering: GPU converts linear→sRGB on write to sRGB framebuffers
+        GL.Enable(EnableCap.FramebufferSrgb);
+
         GL.ClipControl(ClipControlOrigin.LowerLeft, ClipControlDepth.ZeroToOne);
 
         // init memoryutils!

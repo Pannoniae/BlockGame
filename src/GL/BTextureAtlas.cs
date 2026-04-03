@@ -94,7 +94,7 @@ public class BTextureAtlas : BTexture2D {
         GL.TextureParameter(handle, TextureParameterName.TextureMaxLevel, maxLevel);
 
         const uint maxPossibleLevels = 5u;
-        GL.TextureStorage2D(handle, maxPossibleLevels, SizedInternalFormat.Rgba8, (uint)width, (uint)height);
+        GL.TextureStorage2D(handle, maxPossibleLevels, SizedInternalFormat.Srgb8Alpha8, (uint)width, (uint)height);
 
         if (!image.DangerousTryGetSinglePixelMemory(out imageData)) {
             throw new SkillIssueException("Couldn't load the atlas contiguously!");
@@ -180,26 +180,40 @@ public class BTextureAtlas : BTexture2D {
      * 
      * 
      */
+    private static float srgbToLinear(float c) {
+        return c <= 0.04045f ? c / 12.92f : MathF.Pow((c + 0.055f) / 1.055f, 2.4f);
+    }
+
+    private static float linearToSrgb(float c) {
+        return c <= 0.0031308f ? c * 12.92f : 1.055f * MathF.Pow(c, 1.0f / 2.4f) - 0.055f;
+    }
+
     private static Rgba32 avgColourWeighted(Rgba32 c0, Rgba32 c1, Rgba32 c2, Rgba32 c3) {
         float a0 = c0.A / 255f;
         float a1 = c1.A / 255f;
         float a2 = c2.A / 255f;
         float a3 = c3.A / 255f;
-    
+
         float totalAlpha = a0 + a1 + a2 + a3;
-    
+
         if (totalAlpha == 0)
             return new Rgba32(0, 0, 0, 0);
-    
-        float r = (c0.R * a0 + c1.R * a1 + c2.R * a2 + c3.R * a3) / totalAlpha;
-        float g = (c0.G * a0 + c1.G * a1 + c2.G * a2 + c3.G * a3) / totalAlpha;
-        float b = (c0.B * a0 + c1.B * a1 + c2.B * a2 + c3.B * a3) / totalAlpha;
-    
+
+        // linearize RGB before averaging to avoid darkening mipmaps
+        float r0 = srgbToLinear(c0.R / 255f), r1 = srgbToLinear(c1.R / 255f), r2 = srgbToLinear(c2.R / 255f), r3 = srgbToLinear(c3.R / 255f);
+        float g0 = srgbToLinear(c0.G / 255f), g1 = srgbToLinear(c1.G / 255f), g2 = srgbToLinear(c2.G / 255f), g3 = srgbToLinear(c3.G / 255f);
+        float b0 = srgbToLinear(c0.B / 255f), b1 = srgbToLinear(c1.B / 255f), b2 = srgbToLinear(c2.B / 255f), b3 = srgbToLinear(c3.B / 255f);
+
+        float r = (r0 * a0 + r1 * a1 + r2 * a2 + r3 * a3) / totalAlpha;
+        float g = (g0 * a0 + g1 * a1 + g2 * a2 + g3 * a3) / totalAlpha;
+        float b = (b0 * a0 + b1 * a1 + b2 * a2 + b3 * a3) / totalAlpha;
+
+        // re-encode to sRGB for storage
         return new Rgba32(
-            (byte)(r + 0.5f),
-            (byte)(g + 0.5f),
-            (byte)(b + 0.5f),
-            (byte)(totalAlpha > 0 ? 255 : 0)  // 63.75 = 255/4
+            (byte)(linearToSrgb(r) * 255f + 0.5f),
+            (byte)(linearToSrgb(g) * 255f + 0.5f),
+            (byte)(linearToSrgb(b) * 255f + 0.5f),
+            (byte)(totalAlpha > 0 ? 255 : 0)
         );
     }
 
@@ -297,7 +311,7 @@ public class BTextureAtlas : BTexture2D {
         
         // Calculate maximum possible mipmap levels based on texture dimensions
         const uint maxPossibleLevels = 5u;
-        GL.TextureStorage2D(handle, maxPossibleLevels, SizedInternalFormat.Rgba8, (uint)image.Width, (uint)image.Height);
+        GL.TextureStorage2D(handle, maxPossibleLevels, SizedInternalFormat.Srgb8Alpha8, (uint)image.Width, (uint)image.Height);
         if (!image.DangerousTryGetSinglePixelMemory(out imageData)) {
             throw new SkillIssueException("Couldn't load the atlas contiguously!");
         }
