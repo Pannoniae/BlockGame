@@ -18,7 +18,7 @@ public sealed partial class WorldRenderer {
 
     private void renderSky(double interp) {
         if (Settings.instance.renderDistance <= 4) {
-            var clearColour = Game.graphics.getHorizonColour(world, world.worldTick);
+            var clearColour = Game.graphics.getHorizonColour(world, world.worldTick).toLinear();
             GL.ClearColor(clearColour.R / 255f, clearColour.G / 255f, clearColour.B / 255f, 1f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             return;
@@ -37,7 +37,8 @@ public sealed partial class WorldRenderer {
 
         float sunAngle = world.getSunAngle(world.worldTick);
 
-        var skyColour = currentSkyColour;
+        var skyColour = currentSkyColour.toLinear();
+        var horizonLin = currentHorizonColour.toLinear();
         var underSkyColour = new Color(skyColour.R / 255f * 0.3f, skyColour.G / 255f * 0.3f, skyColour.B / 255f * 0.4f);
 
         // Setup fog
@@ -50,7 +51,7 @@ public sealed partial class WorldRenderer {
         idc.setColour(Color.White);
 
         idc.enableFog(true);
-        idc.fogColor(currentHorizonColour.toVec4());
+        idc.fogColor(horizonLin.toVec4());
         idc.setFogType(FogType.Linear);
         //idc.setFogDensity(0.002f);
         idc.fogDistance(0f, 128f);
@@ -72,7 +73,7 @@ public sealed partial class WorldRenderer {
         idt.view(modelView);
         idt.proj(proj);
 
-        renderSkyDome(currentHorizonColour, currentSkyColour, underSkyColour);
+        renderSkyDome(horizonLin, skyColour, underSkyColour);
 
         mat.pop();
 

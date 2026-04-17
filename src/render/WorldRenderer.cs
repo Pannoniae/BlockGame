@@ -364,8 +364,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var isActualCMDL = newm == RendererMode.Auto && Game.hasCMDL;
         if (oldm == RendererMode.CommandList || newm == RendererMode.CommandList || isActualCMDL) {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-            GL.ClearColor(defaultClearColour.R / 255f, defaultClearColour.G / 255f,
-                defaultClearColour.B / 255f, 1f);
+            var cc = defaultClearColour.toLinear();
+            GL.ClearColor(cc.R / 255f, cc.G / 255f, cc.B / 255f, 1f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         }
 
@@ -415,8 +415,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         worldShader.setUniform(lightTexture, 1);
         //shader.setUniform(drawDistance, dd);
 
-        worldShader.setUniform(fogColour, defaultFogColour.toVec4());
-        worldShader.setUniform(horizonColour, defaultClearColour.toVec4());
+        worldShader.setUniform(fogColour, defaultFogColour.toLinear().toVec4());
+        worldShader.setUniform(horizonColour, defaultClearColour.toLinear().toVec4());
 
         waterShader.setUniform(waterBlockTexture, 0);
         waterShader.setUniform(waterLightTexture, 1);
@@ -557,10 +557,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         if (liquid == Block.WATER) {
             // set fog colour to blue
-            worldShader.setUniform(fogColour, Color.CornflowerBlue.toVec4());
-            waterShader.setUniform(waterFogColour, Color.CornflowerBlue.toVec4());
-            worldShader.setUniform(horizonColour, Color.CornflowerBlue.toVec4());
-            waterShader.setUniform(waterHorizonColour, Color.CornflowerBlue.toVec4());
+            worldShader.setUniform(fogColour, Color.CornflowerBlue.toLinear().toVec4());
+            waterShader.setUniform(waterFogColour, Color.CornflowerBlue.toLinear().toVec4());
+            worldShader.setUniform(horizonColour, Color.CornflowerBlue.toLinear().toVec4());
+            waterShader.setUniform(waterHorizonColour, Color.CornflowerBlue.toLinear().toVec4());
 
             // do exp2 close
             worldShader.setUniform(fogType, 1);
@@ -570,10 +570,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
         else if (liquid == Block.LAVA) {
             // set fog colour to orange
-            worldShader.setUniform(fogColour, Color.OrangeRed.toVec4());
-            waterShader.setUniform(waterFogColour, Color.OrangeRed.toVec4());
-            worldShader.setUniform(horizonColour, Color.OrangeRed.toVec4());
-            waterShader.setUniform(waterHorizonColour, Color.OrangeRed.toVec4());
+            worldShader.setUniform(fogColour, Color.OrangeRed.toLinear().toVec4());
+            waterShader.setUniform(waterFogColour, Color.OrangeRed.toLinear().toVec4());
+            worldShader.setUniform(horizonColour, Color.OrangeRed.toLinear().toVec4());
+            waterShader.setUniform(waterHorizonColour, Color.OrangeRed.toLinear().toVec4());
 
             // do exp2 close
             worldShader.setUniform(fogType, 1);
@@ -588,10 +588,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
             worldShader.setUniform(fogType, 0);
             waterShader.setUniform(waterFogType, 0);
-            worldShader.setUniform(fogColour, currentFogColour.toVec4());
-            waterShader.setUniform(waterFogColour, currentFogColour.toVec4());
-            worldShader.setUniform(horizonColour, currentHorizonColour.toVec4());
-            waterShader.setUniform(waterHorizonColour, currentHorizonColour.toVec4());
+            worldShader.setUniform(fogColour, currentFogColour.toLinear().toVec4());
+            waterShader.setUniform(waterFogColour, currentFogColour.toLinear().toVec4());
+            worldShader.setUniform(horizonColour, currentHorizonColour.toLinear().toVec4());
+            waterShader.setUniform(waterHorizonColour, currentHorizonColour.toLinear().toVec4());
         }
     }
 
@@ -1144,7 +1144,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // set up fog
         ide.setFogType(FogType.Linear);
         ide.enableFog(true);
-        ide.fogColor(currentHorizonColour.toVec4());
+        ide.fogColor(currentHorizonColour.toLinear().toVec4());
         ide.fogDistance(Settings.instance.renderDistance * Chunk.CHUNKSIZE * 0.25f, Settings.instance.renderDistance * Chunk.CHUNKSIZE - 16);
 
         // render all entities
@@ -1243,7 +1243,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         idt.setFogType(FogType.Linear);
         idt.enableFog(true);
-        idt.fogColor(currentHorizonColour.toVec4());
+        idt.fogColor(currentHorizonColour.toLinear().toVec4());
         idt.fogDistance(Settings.instance.renderDistance * Chunk.CHUNKSIZE * 0.25f, Settings.instance.renderDistance * Chunk.CHUNKSIZE - 16);
 
         var uv = Block.uv("blocks.png", 3, 14);

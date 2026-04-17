@@ -478,6 +478,15 @@ public static partial class Meth {
         public Color4 toColor4() {
             return new Color4(color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f);
         }
+
+        /** convert sRGB color to linear for GPU use */
+        public Color toLinear() {
+            return new Color(srgbToLinear(color.R / 255f), srgbToLinear(color.G / 255f), srgbToLinear(color.B / 255f), color.A / 255f);
+        }
+
+        private static float srgbToLinear(float c) {
+            return c <= 0.04045f ? c / 12.92f : MathF.Pow((c + 0.055f) / 1.055f, 2.4f);
+        }
     }
 
     extension(Color4 color) {
