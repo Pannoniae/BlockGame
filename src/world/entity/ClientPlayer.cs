@@ -120,9 +120,11 @@ public class ClientPlayer : Player {
             if (!gameMode.gameplay && now - lastMouseAction > Constants.breakDelayMs) {
                 var block = Block.get(world.getBlock(pos));
                 if (block != null && block.id != 0) {
-                    block.shatter(world, pos.X, pos.Y, pos.Z);
-                    world.setBlock(pos.X, pos.Y, pos.Z, 0);
-                    world.blockUpdateNeighbours(pos.X, pos.Y, pos.Z);
+                    if (!block.tryPartialBreak(world, pos.X, pos.Y, pos.Z)) {
+                        block.shatter(world, pos.X, pos.Y, pos.Z);
+                        world.setBlock(pos.X, pos.Y, pos.Z, 0);
+                        world.blockUpdateNeighbours(pos.X, pos.Y, pos.Z);
+                    }
                     if (block.mat != null) {
                         Game.snd.playBlockBreak(block.mat.smat);
                     }
@@ -220,19 +222,31 @@ public class ClientPlayer : Player {
 
         // 9. check if fully broken
         if (state.progress >= 1.0) {
-            block.shatter(world, pos.X, pos.Y, pos.Z);
-
-            var metadata = val.getMetadata();
-            if (gameMode.gameplay) {
-                drops.Clear();
-                block.getDrop(drops, world, pos.X, pos.Y, pos.Z, metadata, canBreak);
-                foreach (var drop in drops) {
-                    world.spawnBlockDrop(pos.X, pos.Y, pos.Z, drop.getItem(), drop.quantity, drop.metadata);
+            if (block.tryPartialBreak(world, pos.X, pos.Y, pos.Z)) {
+                // partial break handled (e.g. fence panel removed)
+                if (gameMode.gameplay) {
+                    drops.Clear();
+                    block.getDrop(drops, world, pos.X, pos.Y, pos.Z, val.getMetadata(), canBreak);
+                    foreach (var drop in drops) {
+                        world.spawnBlockDrop(pos.X, pos.Y, pos.Z, drop.getItem(), drop.quantity, drop.metadata);
+                    }
                 }
             }
+            else {
+                block.shatter(world, pos.X, pos.Y, pos.Z);
 
-            world.setBlock(pos.X, pos.Y, pos.Z, 0);
-            world.blockUpdateNeighbours(pos.X, pos.Y, pos.Z);
+                var metadata = val.getMetadata();
+                if (gameMode.gameplay) {
+                    drops.Clear();
+                    block.getDrop(drops, world, pos.X, pos.Y, pos.Z, metadata, canBreak);
+                    foreach (var drop in drops) {
+                        world.spawnBlockDrop(pos.X, pos.Y, pos.Z, drop.getItem(), drop.quantity, drop.metadata);
+                    }
+                }
+
+                world.setBlock(pos.X, pos.Y, pos.Z, 0);
+                world.blockUpdateNeighbours(pos.X, pos.Y, pos.Z);
+            }
             if (block.mat != null) {
                 Game.snd.playBlockBreak(block.mat.smat);
             }

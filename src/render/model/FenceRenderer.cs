@@ -10,15 +10,19 @@ public class FenceRenderer : BlockEntityRenderer<FenceBlockEntity> {
 
     public const int typeHeight = 17; // height per fence type in atlas
 
-    // cubes per fence type [fenceType]
-    private readonly Cube[] board1;
-    private readonly Cube[] board2;
-    private readonly Cube[] board3;
-    private readonly Cube[] board4;
-    private readonly Cube[] pillar1;
-    private readonly Cube[] pillar2;
-    private readonly Cube[] pillar3;
-    private readonly Cube[] pillar4;
+    // boards[fenceType][variant][boardIdx]
+    // variant: 0=full, 1=shortL, 2=shortR, 3=shortLR
+    // boardIdx: 0-3 (outer top, outer bot, inner top, inner bot)
+    private readonly Cube[][][] boards;
+
+    // pillars[fenceType][pillarIdx] — 0=x1, 1=x5, 2=x9, 3=x13
+    private readonly Cube[][] pillars;
+
+    // board layout: (posY, posZ) for each of the 4 boards
+    private static readonly (int py, int pz)[] boardLayout = [(14, 15), (3, 15), (14, 13), (3, 13)];
+
+    // how many pixels to trim at a corner end (clears both inner+outer boards of the perpendicular panel)
+    private const int trim = 3;
 
     public FenceRenderer() {
         var tex = Game.textures.fence;
@@ -26,27 +30,36 @@ public class FenceRenderer : BlockEntityRenderer<FenceBlockEntity> {
         int ys = tex.height;
         int numTypes = ys / typeHeight;
 
-        board1 = new Cube[numTypes];
-        board2 = new Cube[numTypes];
-        board3 = new Cube[numTypes];
-        board4 = new Cube[numTypes];
-        pillar1 = new Cube[numTypes];
-        pillar2 = new Cube[numTypes];
-        pillar3 = new Cube[numTypes];
-        pillar4 = new Cube[numTypes];
+        boards = new Cube[numTypes][][];
+        pillars = new Cube[numTypes][];
 
         for (int i = 0; i < numTypes; i++) {
             int yOff = i * typeHeight;
-            // pillars: 2 wide, 16 tall, 1 thick at 4 X positions
-            pillar1[i] = new Cube().pos(1, 16, 14).off(0, -16, 0).ext(2, 16, 1).tex(34, yOff).gen(xs, ys);
-            pillar2[i] = new Cube().pos(5, 16, 14).off(0, -16, 0).ext(2, 16, 1).tex(40, yOff).gen(xs, ys);
-            pillar3[i] = new Cube().pos(9, 16, 14).off(0, -16, 0).ext(2, 16, 1).tex(46, yOff).gen(xs, ys);
-            pillar4[i] = new Cube().pos(13, 16, 14).off(0, -16, 0).ext(2, 16, 1).tex(52, yOff).gen(xs, ys);
-            // boards: 16 wide, 2 tall, 1 thick
-            board1[i] = new Cube().pos(0, 14, 15).off(0, -2, 0).ext(16, 2, 1).tex(0, yOff).gen(xs, ys);
-            board2[i] = new Cube().pos(0, 3, 15).off(0, -2, 0).ext(16, 2, 1).tex(0, yOff).gen(xs, ys);
-            board3[i] = new Cube().pos(0, 14, 13).off(0, -2, 0).ext(16, 2, 1).tex(0, yOff).gen(xs, ys);
-            board4[i] = new Cube().pos(0, 3, 13).off(0, -2, 0).ext(16, 2, 1).tex(0, yOff).gen(xs, ys);
+
+            // build 4 board variants
+            boards[i] = new Cube[4][];
+            for (int v = 0; v < 4; v++) {
+                bool shortL = (v & 1) != 0;
+                bool shortR = (v & 2) != 0;
+                int xOff = shortL ? trim : 0;
+                int width = 16 - (shortL ? trim : 0) - (shortR ? trim : 0);
+
+                boards[i][v] = new Cube[4];
+                for (int b = 0; b < 4; b++) {
+                    var (py, pz) = boardLayout[b];
+                    boards[i][v][b] = new Cube()
+                        .pos(xOff, py, pz).off(0, -2, 0)
+                        .ext(width, 2, 1).tex(0, yOff).gen(xs, ys);
+                }
+            }
+
+            // pillars
+            pillars[i] = [
+                new Cube().pos(1, 16, 14).off(0, -16, 0).ext(2, 16, 1).tex(34, yOff).gen(xs, ys),
+                new Cube().pos(5, 16, 14).off(0, -16, 0).ext(2, 16, 1).tex(40, yOff).gen(xs, ys),
+                new Cube().pos(9, 16, 14).off(0, -16, 0).ext(2, 16, 1).tex(46, yOff).gen(xs, ys),
+                new Cube().pos(13, 16, 14).off(0, -16, 0).ext(2, 16, 1).tex(52, yOff).gen(xs, ys),
+            ];
         }
     }
 
@@ -59,7 +72,7 @@ public class FenceRenderer : BlockEntityRenderer<FenceBlockEntity> {
         var blockId = world.getBlock(pos.X, pos.Y, pos.Z);
         var fence = Block.blocks[blockId] as Fence;
         int ft = fence?.fenceType ?? 0;
-        if (ft >= board1.Length) ft = 0; // fallback if type exceeds atlas
+        if (ft >= boards.Length) ft = 0;
 
         // get lighting
         var light = world.inWorld(pos.X, pos.Y, pos.Z) ? world.getLight(pos.X, pos.Y, pos.Z) : (byte)15;
@@ -71,42 +84,54 @@ public class FenceRenderer : BlockEntityRenderer<FenceBlockEntity> {
         // bind fence atlas
         Game.graphics.tex(0, Game.textures.fence);
 
-        // get facing from block metadata
+        // metadata is a bitmask: bit 0=east, 1=west, 2=south, 3=north
         var metadata = world.getBlockRaw(pos.X, pos.Y, pos.Z).getMetadata();
-        var facing = metadata & 0b11;
 
-        mat.push();
-
-        // rotate based on facing: 0=W, 1=E, 2=S, 3=N
-        mat.translate(0.5f, 0, 0.5f);
-        float rot = facing switch {
-            0 => 90, // west
-            1 => -90,  // east
-            2 => 180, // south
-            _ => 0    // north
-        };
-        mat.rotate(rot, 0, 1, 0);
-        mat.translate(-0.5f, 0, -0.5f);
-
-        ide.model(mat);
         ide.view(Game.camera.getViewMatrix(interp));
         ide.proj(Game.camera.getProjectionMatrix());
 
-        ide.begin(PrimitiveType.Quads);
-
         const float pixelScale = 1f / 16f;
-        board1[ft].xfrender(ide, mat, pixelScale);
-        board2[ft].xfrender(ide, mat, pixelScale);
-        board3[ft].xfrender(ide, mat, pixelScale);
-        board4[ft].xfrender(ide, mat, pixelScale);
-        pillar1[ft].xfrender(ide, mat, pixelScale);
-        pillar2[ft].xfrender(ide, mat, pixelScale);
-        pillar3[ft].xfrender(ide, mat, pixelScale);
-        pillar4[ft].xfrender(ide, mat, pixelScale);
 
-        ide.end();
+        // render a panel for each active edge
+        for (int edge = 0; edge < 4; edge++) {
+            if ((metadata & (1 << edge)) == 0) continue;
 
-        mat.pop();
+            // east/west (edges 0,1) always render full; north/south (2,3) shorten at perpendicular corners
+            int variant = 0;
+            bool shortL = false, shortR = false;
+            if (edge >= 2) {
+                // edge 2 (south): left end=east, right end=west
+                // edge 3 (north): left end=west, right end=east
+                int leftAdj = edge == 2 ? 0 : 1;
+                int rightAdj = edge == 2 ? 1 : 0;
+                shortL = (metadata & (1 << leftAdj)) != 0;
+                shortR = (metadata & (1 << rightAdj)) != 0;
+                variant = (shortL ? 1 : 0) | (shortR ? 2 : 0);
+            }
+
+            mat.push();
+            mat.translate(0.5f, 0, 0.5f);
+            mat.rotate(Fence.edgeRot[edge], 0, 1, 0);
+            mat.translate(-0.5f, 0, -0.5f);
+
+            ide.model(mat);
+            ide.begin(PrimitiveType.Quads);
+
+            // boards (shortened at corners for north/south only)
+            var bds = boards[ft][variant];
+            for (int b = 0; b < 4; b++)
+                bds[b].xfrender(ide, mat, pixelScale);
+
+            // pillars (skip end pillars at corners)
+            var pls = pillars[ft];
+            if (!shortL) pls[0].xfrender(ide, mat, pixelScale);
+            pls[1].xfrender(ide, mat, pixelScale);
+            pls[2].xfrender(ide, mat, pixelScale);
+            if (!shortR) pls[3].xfrender(ide, mat, pixelScale);
+
+            ide.end();
+            mat.pop();
+        }
 
         ide.setColour(Color.White);
     }

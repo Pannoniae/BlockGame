@@ -368,6 +368,14 @@ public partial class Block {
     }
 
     /**
+     * Try to partially break the block (e.g. removing one panel from a multi-panel fence).
+     * Returns true if the break was handled internally and the block should NOT be destroyed.
+     */
+    public virtual bool tryPartialBreak(World world, int x, int y, int z) {
+        return false;
+    }
+
+    /**
     * Called after the block is removed from the world.
      */
     public virtual void onBreak(World world, int x, int y, int z, byte metadata) {
