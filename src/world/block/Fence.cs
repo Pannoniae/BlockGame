@@ -47,7 +47,20 @@ public class Fence : EntityBlock {
     }
 
     public override void place(World world, int x, int y, int z, byte metadata, Placement info) {
-        byte facing = (byte)info.hfacing;
+        // pick the edge closest to the hit point within the block
+        var fx = (float)(info.hitPoint.X - Math.Floor(info.hitPoint.X));
+        var fz = (float)(info.hitPoint.Z - Math.Floor(info.hitPoint.Z));
+        // distances to each edge
+        float dWest = fx;        // 0: west edge
+        float dEast = 1f - fx;   // 1: east edge
+        float dSouth = fz;       // 2: south edge (-Z)
+        float dNorth = 1f - fz;  // 3: north edge (+Z)
+        float min = Math.Min(Math.Min(dWest, dEast), Math.Min(dSouth, dNorth));
+        byte facing;
+        if (min == dWest) facing = 1;
+        else if (min == dEast) facing = 0;
+        else if (min == dSouth) facing = 2;
+        else facing = 3;
         world.setBlockMetadata(x, y, z, ((uint)id).setMetadata(facing));
         world.blockUpdateNeighbours(x, y, z);
     }
