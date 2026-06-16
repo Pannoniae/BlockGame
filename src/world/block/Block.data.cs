@@ -1189,6 +1189,7 @@ public partial class Block {
         SPOLE.setTex(uv("blocks.png", 14, 3));
         SPOLE.setModel(BlockModel.makePole(SPOLE));
         SPOLE.partialBlock();
+        AABB[SPOLE.id] = new AABB(new Vector3D(7 / 16f, 0, 7 / 16f), new Vector3D(9 / 16f, 1, 9 / 16f));
         SPOLE.itemLike();
         SPOLE.material(Material.STONE);
         
@@ -1196,6 +1197,7 @@ public partial class Block {
         SPOST.setTex(uv("blocks.png", 15, 3));
         SPOST.setModel(BlockModel.makePost(SPOST));
         SPOST.partialBlock();
+        AABB[SPOST.id] = new AABB(new Vector3D(6 / 16f, 0, 6 / 16f), new Vector3D(10 / 16f, 1, 10 / 16f));
         SPOST.itemLike();
         SPOST.material(Material.STONE);
        

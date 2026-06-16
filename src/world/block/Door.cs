@@ -175,19 +175,6 @@ public class Door : Block {
         var u = upper(m);
         var h = hinge(m);
 
-        // check if we should mirror the texture
-        // left door: mirror player-facing side only
-        // right door: mirror opposite side only
-        bool mirrorLeftDoor = false, mirrorRightDoor = false;
-        if (br.world != null) {
-            int ly = u ? y - 1 : y;
-            bool isDoubleDoor = hasPartner(br.world, x, ly, z, f, h);
-            if (isDoubleDoor) {
-                if (!h) mirrorLeftDoor = true;   // left door: player-facing
-                else mirrorRightDoor = true;     // right door: opposite
-            }
-        }
-
         x &= 15; y &= 15; z &= 15;
 
         UVPair tex = u ? uvs[0] : uvs[1];
@@ -196,8 +183,10 @@ public class Door : Block {
             tex = new UVPair(br.forceTex.u, br.forceTex.v);
         }
 
-        var uv0 = UVPair.texCoordsi(tex);
-        var uv1 = UVPair.texCoordsi(tex + 1);
+        // door samples the block atlas, so normalise against Block.atlasRatio (texCoords),
+        // NOT texCoordsi which scales by the item atlas and lands on the wrong/empty tiles
+        var uv0 = UVPair.texCoords(tex);
+        var uv1 = UVPair.texCoords(tex + 1);
         var u0 = uv0.X;
         var v0 = uv0.Y;
         var u1 = uv1.X;
@@ -224,117 +213,98 @@ public class Door : Block {
             };
         }
 
-        // determine which faces to mirror based on door facing
-        bool mirrorWest = false, mirrorEast = false, mirrorSouth = false, mirrorNorth = false;
-        if (mirrorLeftDoor) {
-            // left door: mirror player-facing face only
-            switch (f) {
-                case 0: mirrorEast = true; break;
-                case 1: mirrorWest = true; break;
-                case 2: mirrorNorth = true; break;
-                case 3: mirrorSouth = true; break;
-            }
-        } else if (mirrorRightDoor) {
-            // right door: mirror opposite face only
-            switch (f) {
-                case 0: mirrorWest = true; break;
-                case 1: mirrorEast = true; break;
-                case 2: mirrorSouth = true; break;
-                case 3: mirrorNorth = true; break;
-            }
-        }
-
+        // --- door-local UV: the texture is glued to the slab, so it never changes on open/close ---
         var ue = u1 - u0;
         var ve = v1 - v0;
+        const float px = 1f / 16f; // one texel, in tile units
 
-        // WEST face
+        // the door spans 1 along its width axis and is thin on the other. the broad faces run along
+        // the width; the two narrow faces are the hinge-end and latch-end edges
+        bool widthIsX = x1 - x0 > 0.5f;
+
+        // is the hinge at the max end of the width axis? derived from facing/hinge/open geometry
+        bool hingeAtMax = (o, f, h) switch {
+            (false, 0, false) => true,  (false, 0, true) => false,
+            (false, 1, false) => false, (false, 1, true) => true,
+            (false, 2, false) => false, (false, 2, true) => true,
+            (false, 3, false) => true,  (false, 3, true) => false,
+            (true, 0, _) => true, (true, 2, _) => true,
+            _ => false // open f1 / f3
+        };
+
+        // width coord c (0..1 along the width axis) -> texture U: hinge edge -> u0, latch -> u1.
+        // both broad faces share this, so the handle sits on the same world side from either view
+        float uu(float c) => u0 + ue * (hingeAtMax ? 1f - c : c);
+
+        // 1px border column for a side edge at width coord c (hinge border or latch border)
+        (float lo, float hi) edgeU(float c) =>
+            (hingeAtMax ? 1f - c : c) < 0.5f ? (u0, u0 + ue * px) : (u1 - ue * px, u1);
+
+        var vTop = v0;
+        var vBot = v0 + ve;
+
+        // WEST face (x = x0) - broad when width runs along Z, otherwise a hinge/latch end edge
         if (x0 > 0f || !br.shouldCullFace(RawDirection.WEST)) {
-            float wUMin, wUMax;
-            if (mirrorWest) {
-                wUMin = u0 + ue * z1;
-                wUMax = u0 + ue * z0;
-            } else {
-                wUMin = u0 + ue * z0;
-                wUMax = u0 + ue * z1;
-            }
-            var wVMin = v0 + ve * (1f - 1f);
-            var wVMax = v0 + ve * (1f - 0f);
+            float uMin, uMax;
+            if (widthIsX) (uMin, uMax) = edgeU(x0);
+            else { uMin = uu(z1); uMax = uu(z0); }
             br.quadf(vertices, x, y, z,
                 x0, 1f, z1, x0, 0f, z1, x0, 0f, z0, x0, 1f, z0,
-                wUMin, wVMin, wUMax, wVMax, RawDirection.WEST);
+                uMin, vTop, uMax, vBot, RawDirection.WEST);
         }
 
-        // EAST face
+        // EAST face (x = x1)
         if (x1 < 1f || !br.shouldCullFace(RawDirection.EAST)) {
-            float eUMin, eUMax;
-            if (mirrorEast) {
-                eUMin = u0 + ue * z1;
-                eUMax = u0 + ue * z0;
-            } else {
-                eUMin = u0 + ue * z0;
-                eUMax = u0 + ue * z1;
-            }
-            var eVMin = v0 + ve * (1f - 1f);
-            var eVMax = v0 + ve * (1f - 0f);
+            float uMin, uMax;
+            if (widthIsX) (uMin, uMax) = edgeU(x1);
+            else { uMin = uu(z0); uMax = uu(z1); }
             br.quadf(vertices, x, y, z,
                 x1, 1f, z0, x1, 0f, z0, x1, 0f, z1, x1, 1f, z1,
-                eUMin, eVMin, eUMax, eVMax, RawDirection.EAST);
+                uMin, vTop, uMax, vBot, RawDirection.EAST);
         }
 
-        // SOUTH face
+        // SOUTH face (z = z0) - broad when width runs along X, otherwise an end edge
         if (z0 > 0f || !br.shouldCullFace(RawDirection.SOUTH)) {
-            float sUMin, sUMax;
-            if (mirrorSouth) {
-                sUMin = u0 + ue * x1;
-                sUMax = u0 + ue * x0;
-            } else {
-                sUMin = u0 + ue * x0;
-                sUMax = u0 + ue * x1;
-            }
-            var sVMin = v0 + ve * (1f - 1f);
-            var sVMax = v0 + ve * (1f - 0f);
+            float uMin, uMax;
+            if (!widthIsX) (uMin, uMax) = edgeU(z0);
+            else { uMin = uu(x0); uMax = uu(x1); }
             br.quadf(vertices, x, y, z,
                 x0, 1f, z0, x0, 0f, z0, x1, 0f, z0, x1, 1f, z0,
-                sUMin, sVMin, sUMax, sVMax, RawDirection.SOUTH);
+                uMin, vTop, uMax, vBot, RawDirection.SOUTH);
         }
 
-        // NORTH face
+        // NORTH face (z = z1)
         if (z1 < 1f || !br.shouldCullFace(RawDirection.NORTH)) {
-            float nUMin, nUMax;
-            if (mirrorNorth) {
-                nUMin = u0 + ue * x1;
-                nUMax = u0 + ue * x0;
-            } else {
-                nUMin = u0 + ue * x0;
-                nUMax = u0 + ue * x1;
-            }
-            var nVMin = v0 + ve * (1f - 1f);
-            var nVMax = v0 + ve * (1f - 0f);
+            float uMin, uMax;
+            if (!widthIsX) (uMin, uMax) = edgeU(z1);
+            else { uMin = uu(x1); uMax = uu(x0); }
             br.quadf(vertices, x, y, z,
                 x1, 1f, z1, x1, 0f, z1, x0, 0f, z1, x0, 1f, z1,
-                nUMin, nVMin, nUMax, nVMax, RawDirection.NORTH);
+                uMin, vTop, uMax, vBot, RawDirection.NORTH);
         }
 
+        // caps show the tile's top 1px frame row, mapped along the width (top row is always opaque)
+        float capMin = widthIsX ? uu(x0) : uu(z0);
+        float capMax = widthIsX ? uu(x1) : uu(z1);
+        var capV0 = v0;
+        var capV1 = v0 + ve * px; // very top 1px row, stretched across the 2px cap
+
+        // the two door halves meet in the middle; don't draw the internal seam between them
+        var below = br.getBlockCached(0, -1, 0).getID();
+        var above = br.getBlockCached(0, 1, 0).getID();
+
         // DOWN face
-        if (!br.shouldCullFace(RawDirection.DOWN)) {
-            var dUMin = u0 + ue * x0;
-            var dUMax = u0 + ue * x1;
-            var dVMin = v0 + ve * (1f - z1);
-            var dVMax = v0 + ve * (1f - z0);
+        if (below != id && !br.shouldCullFace(RawDirection.DOWN)) {
             br.quadf(vertices, x, y, z,
                 x1, 0f, z1, x1, 0f, z0, x0, 0f, z0, x0, 0f, z1,
-                dUMin, dVMin, dUMax, dVMax, RawDirection.DOWN);
+                capMax, capV0, capMin, capV1, RawDirection.DOWN);
         }
 
         // UP face
-        if (!br.shouldCullFace(RawDirection.UP)) {
-            var upUMin = u0 + ue * x0;
-            var upUMax = u0 + ue * x1;
-            var upVMin = v0 + ve * (1f - z0);
-            var upVMax = v0 + ve * (1f - z1);
+        if (above != id && !br.shouldCullFace(RawDirection.UP)) {
             br.quadf(vertices, x, y, z,
                 x0, 1f, z1, x0, 1f, z0, x1, 1f, z0, x1, 1f, z1,
-                upUMin, upVMin, upUMax, upVMax, RawDirection.UP);
+                capMin, capV0, capMax, capV1, RawDirection.UP);
         }
     }
 
