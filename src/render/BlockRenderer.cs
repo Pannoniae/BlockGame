@@ -52,17 +52,16 @@ public partial class BlockRenderer {
 
     public World? world;
 
+    /** Texture override for the breaking overlay. (-1, -1) means "off". */
     public UVPair forceTex = new UVPair(-1, -1);
 
     /** Hack to convert between vertices. */
     private readonly List<BlockVertexPacked> _listHack = new(24);
 
-    private bool isRenderingWorld;
-
     public bool smoothLighting;
     public bool AO;
 
-    public ref struct RenderContext {
+    public struct RenderContext {
         [InlineArray(27)]
         public struct ArrayBlockCache {
             public uint block;
@@ -96,8 +95,6 @@ public partial class BlockRenderer {
 
         public int vertexCount;
 
-        public Color currentTint;
-
         public bool shouldFlipVertices;
 
         /**
@@ -106,63 +103,27 @@ public partial class BlockRenderer {
          * The rotation is always around the centre!
          */
         public byte rot;
-
-        public readonly uint getBlock() {
-            // this is unsafe but we know the cache is always 27 elements
-            return blockCache[13];
-        }
-
-        public readonly byte getLight() {
-            // this is unsafe but we know the cache is always 27 elements
-            return lightCache[13];
-        }
-
-        public readonly uint getBlockCached(int x, int y, int z) {
-            // this is unsafe but we know the cache is always 27 elements
-            return blockCache[(y + 1) * LOCALCACHESIZE_SQ + (z + 1) * LOCALCACHESIZE + (x + 1)];
-        }
-
-        public readonly byte getLightCached(int x, int y, int z) {
-            // this is unsafe but we know the cache is always 27 elements
-            return lightCache[(y + 1) * LOCALCACHESIZE_SQ + (z + 1) * LOCALCACHESIZE + (x + 1)];
-        }
     }
 
-    public static unsafe RenderContext* _ctx;
-
-    public static unsafe ref RenderContext ctx => ref Unsafe.AsRef<RenderContext>(_ctx);
-
-    public static unsafe void setCtx(ref RenderContext context) {
-        _ctx = (RenderContext*)Unsafe.AsPointer(ref context);
-    }
-
+    /**
+     * Per-block scratch
+     */
+    public RenderContext ctx;
 
     public uint getBlock() {
-        unsafe {
-            // this is unsafe but we know the cache is always 27 elements
-            return ctx.blockCache[13];
-        }
+        return ctx.blockCache[13];
     }
 
     public byte getLight() {
-        unsafe {
-            // this is unsafe but we know the cache is always 27 elements
-            return ctx.lightCache[13];
-        }
+        return ctx.lightCache[13];
     }
 
     public uint getBlockCached(int x, int y, int z) {
-        unsafe {
-            // this is unsafe but we know the cache is always 27 elements
-            return ctx.blockCache[(y + 1) * LOCALCACHESIZE_SQ + (z + 1) * LOCALCACHESIZE + (x + 1)];
-        }
+        return ctx.blockCache[(y + 1) * LOCALCACHESIZE_SQ + (z + 1) * LOCALCACHESIZE + (x + 1)];
     }
 
     public byte getLightCached(int x, int y, int z) {
-        unsafe {
-            // this is unsafe but we know the cache is always 27 elements
-            return ctx.lightCache[(y + 1) * LOCALCACHESIZE_SQ + (z + 1) * LOCALCACHESIZE + (x + 1)];
-        }
+        return ctx.lightCache[(y + 1) * LOCALCACHESIZE_SQ + (z + 1) * LOCALCACHESIZE + (x + 1)];
     }
 
     public void rot(int quarters) {
@@ -173,30 +134,26 @@ public partial class BlockRenderer {
         ctx.rot = 0;
     }
 
-    // setup for world context
-    // do we need this?
-    public unsafe void setupWorld(bool smoothLighting = true, bool AO = true) {
-        this.smoothLighting = smoothLighting && Settings.instance.smoothLighting;
-        this.AO = AO && Settings.instance.AO;
-        isRenderingWorld = true;
-    }
-
-    // setup for standalone context
-    public void setupStandalone() {
-        smoothLighting = false;
-        AO = false;
-        isRenderingWorld = false;
-    }
-
     public void setWorld(World? world) {
         // clean all the previous stuff
         Array.Clear(neighbourSections);
 
         this.world = world;
+    }
 
-        smoothLighting = smoothLighting && Settings.instance.smoothLighting;
-        AO = AO && Settings.instance.AO;
-        isRenderingWorld = true;
+    /** Get the actual texture coordinates for the UVPair */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public UVPair getTex(UVPair min) {
+        return forceTex.u >= 0 && forceTex.v >= 0 ? forceTex : min;
+    }
+
+    /** Get the actual texture coordinates for the UVPair rectangle */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void getTex(ref UVPair min, ref UVPair max) {
+        if (forceTex.u >= 0 && forceTex.v >= 0) {
+            min = forceTex;
+            max = forceTex + 1;
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -221,7 +178,7 @@ public partial class BlockRenderer {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static unsafe byte calculateVertexLightAndAO(int x0, int y0, int z0, int x1, int y1, int z1, int x2, int y2,
+    private byte calculateVertexLightAndAO(int x0, int y0, int z0, int x1, int y1, int z1, int x2, int y2,
         int z2, byte lb, out byte opacity) {
         // since we're using a cache now, we're getting the offsets from the cache which is 3x3x3
         // so +1 is +3, -1 is -3, etc.
@@ -247,7 +204,7 @@ public partial class BlockRenderer {
      * TODO there could be a 4x version of this, which does all 4 vertices at once for a face.... and average2 could have an average2x4 version too which does 128 bits at once and writes an entire opacity uint at once
      */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void getDirectionOffsetsAndData(RawDirection dir, byte lb, out FourBytes light, out FourBytes o) {
+    private void getDirectionOffsetsAndData(RawDirection dir, byte lb, out FourBytes light, out FourBytes o) {
         Unsafe.SkipInit(out o);
         Unsafe.SkipInit(out light);
         switch (dir) {
@@ -347,6 +304,17 @@ public partial class BlockRenderer {
     }
 
 
+    /** Pick the lighting flavour for a face. */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void applyLighting(RawDirection dir, Lit lit) {
+        if (lit == Lit.Face) {
+            applyFaceLighting(dir);
+        }
+        else {
+            applySimpleLighting(dir);
+        }
+    }
+
     public unsafe void applyFaceLighting(RawDirection dir) {
         calculateFaceLighting(dir, out FourBytes light, out FourBytes ao);
 
@@ -383,37 +351,16 @@ public partial class BlockRenderer {
     /// Apply simple uniform lighting without AO for faces like torch rendering.
     /// Uses the current block's light level, not neighbour light.
     /// </summary>
-    public unsafe void applySimpleLighting(RawDirection dir) {
+    public void applySimpleLighting(RawDirection dir) {
         ctx.shouldFlipVertices = false;
 
         var blockLight = getLightCached(0, 0, 0);
 
-        // uniform lighting for all 4 vertices
-        Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
-
-        var tint = dir == RawDirection.NONE
-            ? 1f
-            : // no shading for non-directional faces
-            a[(byte)dir]; // no AO!
+        // no shading at all for non-directional faces!
+        var tint = dir == RawDirection.NONE ? 1f : Block.a[(byte)dir];
 
         for (int i = 0; i < 4; i++) {
             ctx.colourCache[i] = new Vector4(tint, tint, tint, 1);
-            ctx.lightColourCache[i] = blockLight;
-        }
-    }
-
-    /**
-     * applySimpleLighting but no directional shading lol
-     */
-    public unsafe void applySimpleLightingNoDir() {
-        ctx.shouldFlipVertices = false;
-
-        var blockLight = getLightCached(0, 0, 0);
-
-        // uniform lighting for all 4 vertices
-
-        for (int i = 0; i < 4; i++) {
-            ctx.colourCache[i] = new Vector4(1, 1, 1, 1);
             ctx.lightColourCache[i] = blockLight;
         }
     }
@@ -435,7 +382,7 @@ public partial class BlockRenderer {
         float x2, float y2, float z2,
         float x3, float y3, float z3,
         UVPair min, UVPair max,
-        RawDirection lightDir = RawDirection.NONE) {
+        RawDirection lightDir = RawDirection.NONE, Lit lit = Lit.Simple) {
         rotate(ref x0, ref z0);
         rotate(ref x1, ref z1);
         rotate(ref x2, ref z2);
@@ -444,7 +391,7 @@ public partial class BlockRenderer {
         var texmin = UVPair.texCoords(min);
         var texmax = UVPair.texCoords(max);
 
-        applySimpleLighting(lightDir);
+        applyLighting(lightDir, lit);
         begin();
         vertex(bx + x0, by + y0, bz + z0, texmin.X, texmin.Y);
         vertex(bx + x1, by + y1, bz + z1, texmin.X, texmax.Y);
@@ -463,13 +410,13 @@ public partial class BlockRenderer {
         float x2, float y2, float z2,
         float x3, float y3, float z3,
         float u0, float v0, float u1, float v1,
-        RawDirection lightDir = RawDirection.NONE) {
+        RawDirection lightDir = RawDirection.NONE, Lit lit = Lit.Simple) {
         rotate(ref x0, ref z0);
         rotate(ref x1, ref z1);
         rotate(ref x2, ref z2);
         rotate(ref x3, ref z3);
 
-        applySimpleLighting(lightDir);
+        applyLighting(lightDir, lit);
         begin();
         vertex(bx + x0, by + y0, bz + z0, u0, v0);
         vertex(bx + x1, by + y1, bz + z1, u0, v1);
@@ -487,62 +434,13 @@ public partial class BlockRenderer {
         float x2, float y2, float z2,
         float x3, float y3, float z3,
         float u0, float v0, float u1, float v1,
-        RawDirection lightDir = RawDirection.NONE) {
+        RawDirection lightDir = RawDirection.NONE, Lit lit = Lit.Simple) {
         rotate(ref x0, ref z0);
         rotate(ref x1, ref z1);
         rotate(ref x2, ref z2);
         rotate(ref x3, ref z3);
 
-        applySimpleLighting(lightDir);
-        begin();
-        vertex(bx + x0, by + y0, bz + z0, u0, v0);
-        vertex(bx + x1, by + y1, bz + z1, u0, v1);
-        vertex(bx + x2, by + y2, bz + z2, u1, v1);
-        vertex(bx + x3, by + y3, bz + z3, u1, v0);
-        endTwo(vertices);
-    }
-
-    /// <summary>
-    /// Single quad primitive. Positions in local block coords (0-1 range).
-    /// Winding order: p0→p1→p2→p3 should be counter-clockwise when viewed from front.
-    /// </summary>
-    public void quadf(List<BlockVertexPacked> vertices, int bx, int by, int bz,
-        float x0, float y0, float z0,
-        float x1, float y1, float z1,
-        float x2, float y2, float z2,
-        float x3, float y3, float z3,
-        float u0, float v0, float u1, float v1,
-        RawDirection lightDir = RawDirection.NONE) {
-        rotate(ref x0, ref z0);
-        rotate(ref x1, ref z1);
-        rotate(ref x2, ref z2);
-        rotate(ref x3, ref z3);
-
-        applyFaceLighting(lightDir);
-        begin();
-        vertex(bx + x0, by + y0, bz + z0, u0, v0);
-        vertex(bx + x1, by + y1, bz + z1, u0, v1);
-        vertex(bx + x2, by + y2, bz + z2, u1, v1);
-        vertex(bx + x3, by + y3, bz + z3, u1, v0);
-        end(vertices);
-    }
-
-    /// <summary>
-    /// Double-sided quad (renders both front and back faces).
-    /// </summary>
-    public void quadDoublef(List<BlockVertexPacked> vertices, int bx, int by, int bz,
-        float x0, float y0, float z0,
-        float x1, float y1, float z1,
-        float x2, float y2, float z2,
-        float x3, float y3, float z3,
-        float u0, float v0, float u1, float v1,
-        RawDirection lightDir = RawDirection.NONE) {
-        rotate(ref x0, ref z0);
-        rotate(ref x1, ref z1);
-        rotate(ref x2, ref z2);
-        rotate(ref x3, ref z3);
-
-        applyFaceLighting(lightDir);
+        applyLighting(lightDir, lit);
         begin();
         vertex(bx + x0, by + y0, bz + z0, u0, v0);
         vertex(bx + x1, by + y1, bz + z1, u0, v1);
@@ -902,300 +800,91 @@ public partial class BlockRenderer {
     /// <summary>
     /// Core block rendering method that handles both world and GUI stuff.
     /// </summary>
+    public void renderBlock(Block block, byte metadata, Vector3I worldPos, List<BlockVertexPacked> vertices,
+        byte lightOverride = 255,
+        Color tintOverride = default) {
+        ctx = default;
+        vertices.Clear();
+
+        smoothLighting = false;
+        AO = false;
+
+        uint blockID = block.getID();
+        var bl = Block.get(blockID.getID());
+
+        // fake cache
+        fillCacheStandalone(blockID.setMetadata(metadata), lightOverride);
+
+        renderBlockSwitch(bl, 0, 0, 0, metadata, vertices);
+
+        // everything except MODEL is emitted by the switch above
+        // very shit hack, should be refactored
+        if (Block.renderType[(int)blockID] != RenderType.MODEL) {
+            return;
+        }
+
+        Span<BlockVertexPacked> tmp = stackalloc BlockVertexPacked[4];
+        var faces = block.model.faces;
+
+        for (int d = 0; d < faces.Length; d++) {
+            var face = faces[d];
+            var dir = face.direction;
+
+            var min = face.min;
+            var max = face.max;
+            getTex(ref min, ref max);
+            var tex = UVPair.texCoords(min);
+            var texMax = UVPair.texCoords(max);
+
+            // directional shading only, light is applied in shader
+            var tint = Block.packColour((byte)dir, 0);
+            if (tintOverride != default) {
+                tint = tintOverride * tint;
+            }
+
+            tmp[0] = new BlockVertexPacked(worldPos.X + face.x1, worldPos.Y + face.y1, worldPos.Z + face.z1,
+                tex.X, tex.Y, tint);
+            tmp[1] = new BlockVertexPacked(worldPos.X + face.x2, worldPos.Y + face.y2, worldPos.Z + face.z2,
+                tex.X, texMax.Y, tint);
+            tmp[2] = new BlockVertexPacked(worldPos.X + face.x3, worldPos.Y + face.y3, worldPos.Z + face.z3,
+                texMax.X, texMax.Y, tint);
+            tmp[3] = new BlockVertexPacked(worldPos.X + face.x4, worldPos.Y + face.y4, worldPos.Z + face.z4,
+                texMax.X, tex.Y, tint);
+
+            tmp[0].light = lightOverride;
+            tmp[1].light = lightOverride;
+            tmp[2].light = lightOverride;
+            tmp[3].light = lightOverride;
+
+            vertices.AddRange(tmp);
+        }
+    }
+
     public void renderBlock(Block block, byte metadata, Vector3I worldPos, List<BlockVertexTinted> vertices,
-        VertexConstructionMode mode = VertexConstructionMode.OPAQUE,
         byte lightOverride = 255,
-        Color tintOverride = default,
-        bool cullFaces = true) {
-        // SETUP CACHE
-        RenderContext c = new();
-        setCtx(ref c);
+        Color tintOverride = default) {
+        renderBlock(block, metadata, worldPos, _listHack, lightOverride, tintOverride);
 
         vertices.Clear();
-
-        if (isRenderingWorld) {
-            fillCache(ref MemoryMarshal.GetReference(neighbours), ref MemoryMarshal.GetReference(neighbourLights));
-            renderBlockWorld(block, worldPos, vertices, mode, cullFaces);
-        }
-        else {
-            renderBlockStandalone(block, worldPos, vertices, lightOverride, tintOverride, metadata);
+        foreach (var p in _listHack) {
+            vertices.Add(toTinted(p));
         }
     }
 
-    /** totally not a gross hack */
-    public void renderBlock(Block block, byte metadata, Vector3I worldPos, List<BlockVertexLighted> vertices,
-        VertexConstructionMode mode = VertexConstructionMode.OPAQUE,
-        byte lightOverride = 255,
-        Color tintOverride = default,
-        bool cullFaces = true) {
-        // SETUP CACHE
-        RenderContext c = new();
-        setCtx(ref c);
+    private static BlockVertexTinted toTinted(BlockVertexPacked p) {
+        var lightColour = WorldRenderer.getLightColour((byte)(p.light & 0xF), (byte)(p.light >> 4));
 
-        vertices.Clear();
-        renderBlockStandalone(block, worldPos, vertices, lightOverride, tintOverride, metadata);
-    }
-
-    [SkipLocalsInit]
-    private unsafe void renderBlockWorld(Block block, Vector3I worldPos, List<BlockVertexTinted> vertices, VertexConstructionMode mode,
-        bool cullFaces) {
-        Span<BlockVertexTinted> tempVertices = stackalloc BlockVertexTinted[4];
-
-        ref Face facesRef = ref MemoryMarshal.GetArrayDataReference(block.model.faces);
-
-        for (int d = 0; d < block.model.faces.Length; d++) {
-            var face = Unsafe.Add(ref facesRef, d);
-            var dir = face.direction;
-
-            if (cullFaces && dir != RawDirection.NONE) {
-                // get neighbour from cache
-                var vec = Direction.getDirection(dir);
-                uint neighbourBlock = getBlockCached(vec.X, vec.Y, vec.Z);
-                // if neighbour is solid, skip rendering this face
-                if (Block.fullBlock[neighbourBlock.getID()]) {
-                    continue;
-                }
-            }
-
-            // texcoords
-            var texCoords = face.min;
-            var texCoordsMax = face.max;
-            var tex = UVPair.texCoords(texCoords);
-            var texMax = UVPair.texCoords(texCoordsMax);
-
-            // vertex positions
-            float x1 = worldPos.X + face.x1;
-            float y1 = worldPos.Y + face.y1;
-            float z1 = worldPos.Z + face.z1;
-            float x2 = worldPos.X + face.x2;
-            float y2 = worldPos.Y + face.y2;
-            float z2 = worldPos.Z + face.z2;
-            float x3 = worldPos.X + face.x3;
-            float y3 = worldPos.Y + face.y3;
-            float z3 = worldPos.Z + face.z3;
-            float x4 = worldPos.X + face.x4;
-            float y4 = worldPos.Y + face.y4;
-            float z4 = worldPos.Z + face.z4;
-
-            // lighting
-            byte light = world.getLightC(worldPos.X, worldPos.Y, worldPos.Z);
-
-            var tint = WorldRenderer.calculateTint((byte)dir, 0, light);
-
-            // create vertices
-            tempVertices[0] = new BlockVertexTinted(x1, y1, z1, tex.X, tex.Y, tint.R, tint.G, tint.B, tint.A);
-            tempVertices[1] = new BlockVertexTinted(x2, y2, z2, tex.X, texMax.Y, tint.R, tint.G, tint.B, tint.A);
-            tempVertices[2] = new BlockVertexTinted(x3, y3, z3, texMax.X, texMax.Y, tint.R, tint.G, tint.B, tint.A);
-            tempVertices[3] = new BlockVertexTinted(x4, y4, z4, texMax.X, tex.Y, tint.R, tint.G, tint.B, tint.A);
-
-            vertices.AddRange(tempVertices);
-        }
-    }
-
-    [SkipLocalsInit]
-    private void renderBlockStandalone(Block block, Vector3I worldPos, List<BlockVertexLighted> vertices, byte lightOverride,
-        Color tintOverride, byte metadata = 0) {
-        Span<BlockVertexLighted> tempVertices = stackalloc BlockVertexLighted[4];
-
-        uint blockID = block.getID();
-        var bl = Block.get(blockID.getID());
-
-        // we render to a temp list
-        _listHack.Clear();
-
-        // turn off AO and smooth lighting for standalone rendering! it won't work properly and it will mess the lighting up
-        // because we don't have a proper cache
-
-        setupStandalone();
-
-        // setup (fake) cache
-        fillCacheStandalone(blockID.setMetadata(metadata), lightOverride);
-
-        renderBlockSwitch(bl, 0, 0, 0, metadata, _listHack);
-
-        if (Block.renderType[(int)blockID] != RenderType.MODEL) {
-            // now we convert it to the REAL vertices
-            foreach (var vertex in _listHack) {
-                // convert to tinted vertex
-                // we need to restore the UVs (so multiply by inverse atlas)
-                // and we need to uncompress the positions
-                var lightedVertex = new BlockVertexLighted {
-                    x = vertex.x / 256f - 16f,
-                    y = vertex.y / 256f - 16f,
-                    z = vertex.z / 256f - 16f,
-                    u = vertex.u / 32768f,
-                    v = vertex.v / 32768f,
-                    cu = vertex.cu,
-                    light = vertex.light
-                };
-
-                vertices.Add(lightedVertex);
-            }
-
-            return;
-        }
-
-        var faces = block.model.faces;
-
-        for (int d = 0; d < faces.Length; d++) {
-            var face = faces[d];
-            var dir = face.direction;
-
-            // texture coordinates
-            var texCoords = face.min;
-            var texCoordsMax = face.max;
-            var tex = UVPair.texCoords(texCoords);
-            var texMax = UVPair.texCoords(texCoordsMax);
-
-            // check for forced texture override (for breaking overlay)
-            if (forceTex.u >= 0 && forceTex.v >= 0) {
-                tex = UVPair.texCoords(forceTex);
-                texMax = UVPair.texCoords(new UVPair(forceTex.u + 1, forceTex.v + 1));
-            }
-
-            // vertex positions
-            float x1 = worldPos.X + face.x1;
-            float y1 = worldPos.Y + face.y1;
-            float z1 = worldPos.Z + face.z1;
-            float x2 = worldPos.X + face.x2;
-            float y2 = worldPos.Y + face.y2;
-            float z2 = worldPos.Z + face.z2;
-            float x3 = worldPos.X + face.x3;
-            float y3 = worldPos.Y + face.y3;
-            float z3 = worldPos.Z + face.z3;
-            float x4 = worldPos.X + face.x4;
-            float y4 = worldPos.Y + face.y4;
-            float z4 = worldPos.Z + face.z4;
-
-            // calculate tint
-            Color tint;
-            if (tintOverride != default) {
-                // use provided tint
-                tint = tintOverride * WorldRenderer.calculateTint((byte)dir, 0, lightOverride);
-            }
-            else {
-                // calculate tint based on direction and light
-                tint = WorldRenderer.calculateTint((byte)dir, 0, lightOverride);
-            }
-
-            // create vertices
-            tempVertices[0] = new BlockVertexLighted(x1, y1, z1, tex.X, tex.Y, tint.R, tint.G, tint.B, tint.A, lightOverride);
-            tempVertices[1] = new BlockVertexLighted(x2, y2, z2, tex.X, texMax.Y, tint.R, tint.G, tint.B, tint.A, lightOverride);
-            tempVertices[2] = new BlockVertexLighted(x3, y3, z3, texMax.X, texMax.Y, tint.R, tint.G, tint.B, tint.A, lightOverride);
-            tempVertices[3] = new BlockVertexLighted(x4, y4, z4, texMax.X, tex.Y, tint.R, tint.G, tint.B, tint.A, lightOverride);
-
-            vertices.AddRange(tempVertices);
-        }
-    }
-
-    [SkipLocalsInit]
-    private void renderBlockStandalone(Block block, Vector3I worldPos, List<BlockVertexTinted> vertices, byte lightOverride,
-        Color tintOverride, byte metadata = 0) {
-        Span<BlockVertexTinted> tempVertices = stackalloc BlockVertexTinted[4];
-
-        uint blockID = block.getID();
-        var bl = Block.get(blockID.getID());
-
-        // we render to a temp list
-        _listHack.Clear();
-
-        // turn off AO and smooth lighting for standalone rendering! it won't work properly and it will mess the lighting up
-        // because we don't have a proper cache
-
-        setupStandalone();
-
-        // setup (fake) cache
-        fillCacheStandalone(blockID.setMetadata(metadata), lightOverride);
-
-        renderBlockSwitch(bl, 0, 0, 0, metadata, _listHack);
-
-        if (Block.renderType[(int)blockID] != RenderType.MODEL) {
-            // now we convert it to the REAL vertices
-            foreach (var vertex in _listHack) {
-                // convert to tinted vertex
-                // we need to restore the UVs (so multiply by inverse atlas)
-                // and we need to uncompress the positions
-                var tintedVertex = new BlockVertexTinted();
-                tintedVertex.x = vertex.x / 256f - 16f;
-                tintedVertex.y = vertex.y / 256f - 16f;
-                tintedVertex.z = vertex.z / 256f - 16f;
-                tintedVertex.u = vertex.u / 32768f;
-                tintedVertex.v = vertex.v / 32768f;
-
-                // apply lighting from vertex.light to the base colour in vertex.cu
-                var blocklight = (byte)(vertex.light >> 4);
-                var skylight = (byte)(vertex.light & 0xF);
-                var lightColor = WorldRenderer.getLightColour(skylight, blocklight);
-
-                // unpack base colour
-                var r = (byte)(vertex.cu & 0xFF);
-                var g = (byte)((vertex.cu >> 8) & 0xFF);
-                var b = (byte)((vertex.cu >> 16) & 0xFF);
-                var a = (byte)((vertex.cu >> 24) & 0xFF);
-
-                // multiply by light
-                r = (byte)(r / 255f * lightColor.R);
-                g = (byte)(g / 255f * lightColor.G);
-                b = (byte)(b / 255f * lightColor.B);
-
-                tintedVertex.cu = (uint)(r | (g << 8) | (b << 16) | (a << 24));
-                vertices.Add(tintedVertex);
-            }
-
-            return;
-        }
-
-        var faces = block.model.faces;
-
-        for (int d = 0; d < faces.Length; d++) {
-            var face = faces[d];
-            var dir = face.direction;
-
-            // texture coordinates
-            var texCoords = face.min;
-            var texCoordsMax = face.max;
-            var tex = UVPair.texCoords(texCoords);
-            var texMax = UVPair.texCoords(texCoordsMax);
-
-            // check for forced texture override (for breaking overlay)
-            if (forceTex.u >= 0 && forceTex.v >= 0) {
-                tex = UVPair.texCoords(forceTex);
-                texMax = UVPair.texCoords(new UVPair(forceTex.u + 1, forceTex.v + 1));
-            }
-
-            // vertex positions
-            float x1 = worldPos.X + face.x1;
-            float y1 = worldPos.Y + face.y1;
-            float z1 = worldPos.Z + face.z1;
-            float x2 = worldPos.X + face.x2;
-            float y2 = worldPos.Y + face.y2;
-            float z2 = worldPos.Z + face.z2;
-            float x3 = worldPos.X + face.x3;
-            float y3 = worldPos.Y + face.y3;
-            float z3 = worldPos.Z + face.z3;
-            float x4 = worldPos.X + face.x4;
-            float y4 = worldPos.Y + face.y4;
-            float z4 = worldPos.Z + face.z4;
-
-            // calculate tint
-            Color tint;
-            if (tintOverride != default) {
-                // use provided tint
-                tint = tintOverride * WorldRenderer.calculateTint((byte)dir, 0, lightOverride);
-            }
-            else {
-                // calculate tint based on direction and light
-                tint = WorldRenderer.calculateTint((byte)dir, 0, lightOverride);
-            }
-
-            // create vertices
-            tempVertices[0] = new BlockVertexTinted(x1, y1, z1, tex.X, tex.Y, tint.R, tint.G, tint.B, tint.A);
-            tempVertices[1] = new BlockVertexTinted(x2, y2, z2, tex.X, texMax.Y, tint.R, tint.G, tint.B, tint.A);
-            tempVertices[2] = new BlockVertexTinted(x3, y3, z3, texMax.X, texMax.Y, tint.R, tint.G, tint.B, tint.A);
-            tempVertices[3] = new BlockVertexTinted(x4, y4, z4, texMax.X, tex.Y, tint.R, tint.G, tint.B, tint.A);
-
-            vertices.AddRange(tempVertices);
-        }
+        return new BlockVertexTinted {
+            x = p.x / 256f - 16f,
+            y = p.y / 256f - 16f,
+            z = p.z / 256f - 16f,
+            u = p.u / 32768f,
+            v = p.v / 32768f,
+            r = (byte)(p.r / 255f * lightColour.R),
+            g = (byte)(p.g / 255f * lightColour.G),
+            b = (byte)(p.b / 255f * lightColour.B),
+            a = p.a
+        };
     }
 
 
@@ -1206,13 +895,9 @@ public partial class BlockRenderer {
                 var uvs = bl.uvs;
                 var tx = uvs[0]; // use first texture for all faces
                 var txm = tx + 1;
+                getTex(ref tx, ref txm);
                 var uvx = UVPair.texCoords(tx);
                 var uvxm = UVPair.texCoords(txm);
-
-                if (forceTex.u >= 0 && forceTex.v >= 0) {
-                    uvx = UVPair.texCoords(forceTex);
-                    uvxm = UVPair.texCoords(new UVPair(forceTex.u + 1, forceTex.v + 1));
-                }
 
                 renderCube(x & 0xF, y & 0xF, z & 0xF, vertices, 0, 0, 0, 1, 1, 1, uvx.X, uvx.Y, uvxm.X, uvxm.Y);
                 break;
@@ -1243,9 +928,7 @@ public partial class BlockRenderer {
 
 
     public void meshChunk(SubChunk subChunk) {
-        // SETUP CACHE
-        RenderContext c = new();
-        setCtx(ref c);
+        ctx = default;
 
         subChunk.vao?.Dispose();
         subChunk.vao = new SharedBlockVAO(Game.renderer.chunkVAO);
@@ -1408,17 +1091,10 @@ public partial class BlockRenderer {
         //ReadOnlySpan<int> normalOrder = [0, 1, 2, 3];
         //ReadOnlySpan<int> flippedOrder = [3, 0, 1, 2];
 
-
-        // BYTE OF SETTINGS
-        // 1 = AO
-        // 2 = smooth lighting
         var smoothLighting = Settings.instance.smoothLighting;
         var AO = Settings.instance.AO;
-        //ushort cv = 0;
-        //ushort ci = 0;
-
-        // setup blockrenderer
-        setupWorld(smoothLighting, AO);
+        this.smoothLighting = smoothLighting;
+        this.AO = AO;
 
         for (int idx = 0; idx < Chunk.MAXINDEX; idx++) {
             // index for array accesses
@@ -1726,22 +1402,7 @@ public partial class BlockRenderer {
         }
     }
 
-    public unsafe void fillCacheEmpty() {
-        // fill the cache with empty blocks
-        for (int y = 0; y < LOCALCACHESIZE; y++) {
-            for (int z = 0; z < LOCALCACHESIZE; z++) {
-                for (int x = 0; x < LOCALCACHESIZE; x++) {
-                    // calculate the index in the cache
-                    int index = y * LOCALCACHESIZE_SQ + z * LOCALCACHESIZE + x;
-                    // set the block and light value to empty
-                    ctx.blockCache[index] = 0;
-                    ctx.lightCache[index] = 15;
-                }
-            }
-        }
-    }
-
-    public unsafe void fillCacheStandalone(uint block, byte light) {
+    public void fillCacheStandalone(uint block, byte light) {
         // fill the cache with the given light value
         for (int y = 0; y < LOCALCACHESIZE; y++) {
             for (int z = 0; z < LOCALCACHESIZE; z++) {
@@ -1825,9 +1486,13 @@ public partial class BlockRenderer {
     }
 }
 
-public enum VertexConstructionMode {
-    OPAQUE,
-    TRANSLUCENT
+/** Less copypaste instead of f-suffixed methods, they get an argument instead */
+public enum Lit : byte {
+    /** smooth lighting + AO + directional shading from the neighbours */
+    Face,
+
+    /** the block's own light with directional shading + no AO. NONE direction means no direction shading either. */
+    Simple
 }
 
 [StructLayout(LayoutKind.Explicit)]

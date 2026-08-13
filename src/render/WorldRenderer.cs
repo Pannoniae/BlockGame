@@ -1379,14 +1379,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         breakStage--; // adjust to 0-11 range
 
         // set up block renderer for standalone rendering
-        Game.blockRenderer.setupStandalone();
-
         // force the breaking texture
         Game.blockRenderer.forceTex = Block.atlas.uv("blocks.png", breakStage, 12);
 
         // render the block using BlockRenderer
         breakVertices.Clear();
-        Game.blockRenderer.renderBlock(block, metadata, new Vector3I(0, 0, 0), breakVertices, VertexConstructionMode.OPAQUE, 15, default, false);
+        Game.blockRenderer.renderBlock(block, metadata, new Vector3I(0, 0, 0), breakVertices, 15);
 
         // reset forceTex
         Game.blockRenderer.forceTex = new UVPair(-1, -1);

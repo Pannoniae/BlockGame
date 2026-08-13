@@ -91,10 +91,7 @@ public class CandySlab : Slabs {
         var min = getTexture(0, metadata);
         var max = min + 1;
 
-        if (br.forceTex.u >= 0 && br.forceTex.v >= 0) {
-            min = br.forceTex;
-            max = br.forceTex + 1;
-        }
+        br.getTex(ref min, ref max);
 
         var uv0 = UVPair.texCoords(min);
         var uv1 = UVPair.texCoords(max);

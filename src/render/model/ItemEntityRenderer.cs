@@ -80,15 +80,13 @@ public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
         var l = world.getLightC(pos.X, pos.Y, pos.Z);
 
         Game.graphics.tex(0, Game.textures.blockTexture);
-        Game.blockRenderer.setupStandalone();
-
         // centre the block around origin
         mat.push();
         mat.translate(-0.5f, -0.5f, -0.5f);
 
         // render the block without face culling
         Game.blockRenderer.renderBlock(block, metadata, Vector3I.Zero, vertices,
-            lightOverride: l, cullFaces: false);
+            lightOverride: l);
 
         if (vertices.Count > 0) {
             // upload and render vertices using our own VAO
@@ -120,8 +118,6 @@ public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
         var l = world.getLightC(pos.X, pos.Y, pos.Z);
 
 
-
-        Game.blockRenderer.setupStandalone();
 
         // offset -0.5 so it's centred on origin
         mat.push();

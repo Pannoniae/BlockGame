@@ -105,9 +105,7 @@ public class Ladder : Block {
         var facing = getFacing(metadata);
 
         var min = uvs[0];
-        if (br.forceTex.u >= 0 && br.forceTex.v >= 0) {
-            min = br.forceTex;
-        }
+        min = br.getTex(min);
 
         var uv0 = UVPair.texCoords(min);
         var uv1 = UVPair.texCoords(min + 1);

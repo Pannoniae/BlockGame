@@ -51,10 +51,10 @@ public class GUI {
     public Rectangle scrollbarRect = new(199, 0, 6, 20);
 
     public static GUI instance;
-    private readonly StreamingVAO<BlockVertexLighted> buffer;
+    private readonly StreamingVAO<BlockVertexPacked> buffer;
     private Matrix4x4 ortho;
 
-    private readonly List<BlockVertexLighted> guiBlock;
+    private readonly List<BlockVertexPacked> guiBlock;
     private int uMVP;
     private int blockTexture = 0;
     private int lightTexture = 0;
@@ -95,9 +95,9 @@ public class GUI {
         instance = this;
         guiBlockShader = new Shader(Game.GL, nameof(guiBlockShader), "shaders/ui/simpleBlock.vert",
             "shaders/ui/simpleBlock.frag");
-        buffer = new StreamingVAO<BlockVertexLighted>();
+        buffer = new StreamingVAO<BlockVertexPacked>();
         buffer.bind();
-        buffer.setSizeLighted(Face.MAX_FACES * 4);
+        buffer.setSizePacked(Face.MAX_FACES * 4);
         // GD, 4 * Face.MAX_FACES, 6 * Face.MAX_FACES, ElementType.UnsignedShort, BufferUsage.StreamDraw
         guiBlock = [];
 
@@ -878,9 +878,8 @@ public class GUI {
 
         var idt = Game.graphics.idt;
 
-        Game.blockRenderer.setupStandalone();
         Game.blockRenderer.renderBlock(block, metadata, Vector3I.Zero, guiBlock,
-            lightOverride: 255, cullFaces: false);
+            lightOverride: 255);
 
         var mat = Game.graphics.model;
 

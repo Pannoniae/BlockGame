@@ -83,10 +83,7 @@ public class Stairs : Block {
 
         var min = uvs[0];
         var max = uvs[0] + 1;
-        if (br.forceTex.u >= 0 && br.forceTex.v >= 0) {
-            min = new UVPair(br.forceTex.u, br.forceTex.v);
-            max = min + 1;
-        }
+        br.getTex(ref min, ref max);
         var uv0 = UVPair.texCoords(min);
         var uv1 = UVPair.texCoords(max);
         float u0 = uv0.X, v0 = uv0.Y, u1 = uv1.X, v1 = uv1.Y;

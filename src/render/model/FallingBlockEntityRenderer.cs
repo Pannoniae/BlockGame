@@ -53,10 +53,8 @@ public class FallingBlockEntityRenderer : EntityRenderer<FallingBlockEntity> {
         var l = world.getLightC(pos.X, pos.Y, pos.Z);
 
         Game.graphics.tex(0, Game.textures.blockTexture);
-        Game.blockRenderer.setupStandalone();
-
         Game.blockRenderer.renderBlock(block, metadata, Vector3I.Zero, vertices,
-            lightOverride: l, cullFaces: false);
+            lightOverride: l);
 
         if (vertices.Count > 0) {
             // upload and render vertices using our own VAO

@@ -165,9 +165,7 @@ public class Torch : Block {
 
         var min = uvs[0];
 
-        if (br.forceTex.u >= 0 && br.forceTex.v >= 0) {
-            min = br.forceTex;
-        }
+        min = br.getTex(min);
 
         // torch texcoords (7/16 to 9/16 width, bottom 10 pixels)
         var su = UVPair.texCoords(new UVPair(min.u + 7 / 16f, min.v + 6 / 16f));

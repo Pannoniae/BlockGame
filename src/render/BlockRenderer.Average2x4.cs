@@ -228,7 +228,7 @@ public partial class BlockRenderer {
     /// SIMD calculateVertexLightAndAO
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static unsafe void calculateVertexLightAndAO_x4(
+    private void calculateVertexLightAndAO_x4(
         // v0
         int x00, int y00, int z00, int x01, int y01, int z01, int x02, int y02, int z02,
         // v1
@@ -306,7 +306,7 @@ public partial class BlockRenderer {
     /// SIMD getDirectionOffsetsAndData
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static unsafe void getDirectionOffsetsAndData_simd(RawDirection dir, byte lb, out FourBytes light, out FourBytes o) {
+    private void getDirectionOffsetsAndData_simd(RawDirection dir, byte lb, out FourBytes light, out FourBytes o) {
         Unsafe.SkipInit(out o);
         Unsafe.SkipInit(out light);
 

@@ -11,9 +11,7 @@ public class Button(string name) : Block(name) {
         y &= 15;
         z &= 15;
         var min = uvs?[0] ?? new UVPair(0, 0);
-        if (br.forceTex.u >= 0 && br.forceTex.v >= 0) {
-            min = br.forceTex;
-        }
+        min = br.getTex(min);
 
         var uv0 = UVPair.texCoords(min);
         var uv1 = UVPair.texCoords(min + 4/16f);

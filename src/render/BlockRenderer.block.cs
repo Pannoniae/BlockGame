@@ -16,10 +16,7 @@ public partial class BlockRenderer {
             var tex = bl.getTexture(faceIdx, metadata);
             var texm = tex + 1;
 
-            if (forceTex.u >= 0 && forceTex.v >= 0) {
-                tex = forceTex;
-                texm = new UVPair(forceTex.u + 1, forceTex.v + 1);
-            }
+            getTex(ref tex, ref texm);
 
             var uvd = UVPair.texCoords(tex);
             var uvdm = UVPair.texCoords(texm);
@@ -38,10 +35,7 @@ public partial class BlockRenderer {
             var tex = bl.getTexture(faceIdx, metadata);
             var texm = tex + 1;
 
-            if (forceTex.u >= 0 && forceTex.v >= 0) {
-                tex = forceTex;
-                texm = new UVPair(forceTex.u + 1, forceTex.v + 1);
-            }
+            getTex(ref tex, ref texm);
 
             var uvd = UVPair.texCoords(tex);
             var uvdm = UVPair.texCoords(texm);
@@ -52,10 +46,7 @@ public partial class BlockRenderer {
         var tex = bl.getTexture(0, metadata);
         var texm = tex + 1;
 
-        if (forceTex.u >= 0 && forceTex.v >= 0) {
-            tex = forceTex;
-            texm = new UVPair(forceTex.u + 1, forceTex.v + 1);
-        }
+        getTex(ref tex, ref texm);
 
         var uvd = UVPair.texCoords(tex);
         var uvdm = UVPair.texCoords(texm);
@@ -107,10 +98,7 @@ public partial class BlockRenderer {
         var tex = bl.getTexture(0, metadata);
         var texm = tex + 1;
 
-        if (forceTex.u >= 0 && forceTex.v >= 0) {
-            tex = forceTex;
-            texm = new UVPair(forceTex.u + 1, forceTex.v + 1);
-        }
+        getTex(ref tex, ref texm);
 
         var uvd = UVPair.texCoords(tex);
         var uvdm = UVPair.texCoords(texm);
@@ -158,10 +146,7 @@ public partial class BlockRenderer {
         var tex = bl.getTexture(0, metadata);
         var texm = tex + 1;
 
-        if (forceTex.u >= 0 && forceTex.v >= 0) {
-            tex = forceTex;
-            texm = new UVPair(forceTex.u + 1, forceTex.v + 1);
-        }
+        getTex(ref tex, ref texm);
 
         float inset = 0 / 16f;
         const float topInset = 4 / 16f;
@@ -169,7 +154,7 @@ public partial class BlockRenderer {
         var uvd = UVPair.texCoords(tex);
         var uvdm = UVPair.texCoords(texm);
 
-        applySimpleLightingNoDir();
+        applySimpleLighting(RawDirection.NONE);
 
         // check if block below can support fire (is solid)
         uint below = getBlockCached(0, -1, 0);
@@ -559,7 +544,7 @@ public partial class BlockRenderer {
     [SuppressMessage("ReSharper", "CompareOfFloatsByEqualityOperator")]
     public void renderCube(int x, int y, int z, List<BlockVertexPacked> vertices,
         float x0, float y0, float z0, float x1, float y1, float z1,
-        float u0, float v0, float u1, float v1) {
+        float u0, float v0, float u1, float v1, Lit lit = Lit.Face) {
         var ue = u1 - u0;
         var ve = v1 - v0;
 
@@ -574,7 +559,7 @@ public partial class BlockRenderer {
         bool render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            applyFaceLighting(RawDirection.WEST);
+            applyLighting(RawDirection.WEST, lit);
             begin();
             vertex(x + x0, y + y1, z + z1, westUMin, westVMin);
             vertex(x + x0, y + y0, z + z1, westUMin, westVMax);
@@ -594,7 +579,7 @@ public partial class BlockRenderer {
         render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            applyFaceLighting(RawDirection.EAST);
+            applyLighting(RawDirection.EAST, lit);
             begin();
             vertex(x + x1, y + y1, z + z0, eastUMin, eastVMin);
             vertex(x + x1, y + y0, z + z0, eastUMin, eastVMax);
@@ -614,7 +599,7 @@ public partial class BlockRenderer {
         render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            applyFaceLighting(RawDirection.SOUTH);
+            applyLighting(RawDirection.SOUTH, lit);
             begin();
             vertex(x + x0, y + y1, z + z0, southUMin, southVMin);
             vertex(x + x0, y + y0, z + z0, southUMin, southVMax);
@@ -634,7 +619,7 @@ public partial class BlockRenderer {
         render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            applyFaceLighting(RawDirection.NORTH);
+            applyLighting(RawDirection.NORTH, lit);
             begin();
             vertex(x + x1, y + y1, z + z1, northUMin, northVMin);
             vertex(x + x1, y + y0, z + z1, northUMin, northVMax);
@@ -654,7 +639,7 @@ public partial class BlockRenderer {
         render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            applyFaceLighting(RawDirection.DOWN);
+            applyLighting(RawDirection.DOWN, lit);
             begin();
             vertex(x + x1, y + y0, z + z1, downUMin, downVMin);
             vertex(x + x1, y + y0, z + z0, downUMin, downVMax);
@@ -674,134 +659,7 @@ public partial class BlockRenderer {
         render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            applyFaceLighting(RawDirection.UP);
-            begin();
-            vertex(x + x0, y + y1, z + z1, upUMin, upVMin);
-            vertex(x + x0, y + y1, z + z0, upUMin, upVMax);
-            vertex(x + x1, y + y1, z + z0, upUMax, upVMax);
-            vertex(x + x1, y + y1, z + z1, upUMax, upVMin);
-            end(vertices);
-        }
-    }
-
-    public void renderSimpleCube(int x, int y, int z, List<BlockVertexPacked> vertices,
-        float x0, float y0, float z0, float x1, float y1, float z1,
-        float u0, float v0, float u1, float v1) {
-        var ue = u1 - u0;
-        var ve = v1 - v0;
-
-        // WEST face
-        var westUMin = u0 + ue * z0;
-        var westUMax = u0 + ue * z1;
-        var westVMin = v0 + ve * (1f - y1);
-        var westVMax = v0 + ve * (1f - y0);
-        var nb = getBlockCached(-1, 0, 0).getID();
-
-        bool edge = x0 == 0f;
-        bool render = !Block.fullBlock[nb] || !edge;
-
-        if (render) {
-            applySimpleLighting(RawDirection.WEST);
-            begin();
-            vertex(x + x0, y + y1, z + z1, westUMin, westVMin);
-            vertex(x + x0, y + y0, z + z1, westUMin, westVMax);
-            vertex(x + x0, y + y0, z + z0, westUMax, westVMax);
-            vertex(x + x0, y + y1, z + z0, westUMax, westVMin);
-            end(vertices);
-        }
-
-        // EAST face
-        var eastUMin = u0 + ue * z0;
-        var eastUMax = u0 + ue * z1;
-        var eastVMin = v0 + ve * (1f - y1);
-        var eastVMax = v0 + ve * (1f - y0);
-        nb = getBlockCached(1, 0, 0).getID();
-
-        edge = x1 == 1f;
-        render = !Block.fullBlock[nb] || !edge;
-
-        if (render) {
-            applySimpleLighting(RawDirection.EAST);
-            begin();
-            vertex(x + x1, y + y1, z + z0, eastUMin, eastVMin);
-            vertex(x + x1, y + y0, z + z0, eastUMin, eastVMax);
-            vertex(x + x1, y + y0, z + z1, eastUMax, eastVMax);
-            vertex(x + x1, y + y1, z + z1, eastUMax, eastVMin);
-            end(vertices);
-        }
-
-        // SOUTH face
-        var southUMin = u0 + ue * x0;
-        var southUMax = u0 + ue * x1;
-        var southVMin = v0 + ve * (1f - y1);
-        var southVMax = v0 + ve * (1f - y0);
-        nb = getBlockCached(0, 0, -1).getID();
-
-        edge = z0 == 0f;
-        render = !Block.fullBlock[nb] || !edge;
-
-        if (render) {
-            applySimpleLighting(RawDirection.SOUTH);
-            begin();
-            vertex(x + x0, y + y1, z + z0, southUMin, southVMin);
-            vertex(x + x0, y + y0, z + z0, southUMin, southVMax);
-            vertex(x + x1, y + y0, z + z0, southUMax, southVMax);
-            vertex(x + x1, y + y1, z + z0, southUMax, southVMin);
-            end(vertices);
-        }
-
-        // NORTH face
-        var northUMin = u0 + ue * x0;
-        var northUMax = u0 + ue * x1;
-        var northVMin = v0 + ve * (1f - y1);
-        var northVMax = v0 + ve * (1f - y0);
-        nb = getBlockCached(0, 0, 1).getID();
-
-        edge = z1 == 1f;
-        render = !Block.fullBlock[nb] || !edge;
-
-        if (render) {
-            applySimpleLighting(RawDirection.NORTH);
-            begin();
-            vertex(x + x1, y + y1, z + z1, northUMin, northVMin);
-            vertex(x + x1, y + y0, z + z1, northUMin, northVMax);
-            vertex(x + x0, y + y0, z + z1, northUMax, northVMax);
-            vertex(x + x0, y + y1, z + z1, northUMax, northVMin);
-            end(vertices);
-        }
-
-        // DOWN face
-        var downUMin = u0 + ue * x0;
-        var downUMax = u0 + ue * x1;
-        var downVMin = v0 + ve * (1f - z1);
-        var downVMax = v0 + ve * (1f - z0);
-        nb = getBlockCached(0, -1, 0).getID();
-
-        edge = y0 == 0f;
-        render = !Block.fullBlock[nb] || !edge;
-
-        if (render) {
-            applySimpleLighting(RawDirection.DOWN);
-            begin();
-            vertex(x + x1, y + y0, z + z1, downUMin, downVMin);
-            vertex(x + x1, y + y0, z + z0, downUMin, downVMax);
-            vertex(x + x0, y + y0, z + z0, downUMax, downVMax);
-            vertex(x + x0, y + y0, z + z1, downUMax, downVMin);
-            end(vertices);
-        }
-
-        // UP face
-        var upUMin = u0 + ue * x0;
-        var upUMax = u0 + ue * x1;
-        var upVMin = v0 + ve * (1f - z1);
-        var upVMax = v0 + ve * (1f - z0);
-        nb = getBlockCached(0, 1, 0).getID();
-
-        edge = y1 == 1f;
-        render = !Block.fullBlock[nb] || !edge;
-
-        if (render) {
-            applySimpleLighting(RawDirection.UP);
+            applyLighting(RawDirection.UP, lit);
             begin();
             vertex(x + x0, y + y1, z + z1, upUMin, upVMin);
             vertex(x + x0, y + y1, z + z0, upUMin, upVMax);

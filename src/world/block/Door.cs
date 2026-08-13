@@ -179,9 +179,7 @@ public class Door : Block {
 
         UVPair tex = u ? uvs[0] : uvs[1];
 
-        if (br.forceTex.u >= 0 && br.forceTex.v >= 0) {
-            tex = new UVPair(br.forceTex.u, br.forceTex.v);
-        }
+        tex = br.getTex(tex);
 
         // door samples the block atlas, so normalise against Block.atlasRatio (texCoords),
         // NOT texCoordsi which scales by the item atlas and lands on the wrong/empty tiles
@@ -248,9 +246,9 @@ public class Door : Block {
             float uMin, uMax;
             if (widthIsX) (uMin, uMax) = edgeU(x0);
             else { uMin = uu(z1); uMax = uu(z0); }
-            br.quadf(vertices, x, y, z,
+            br.quad(vertices, x, y, z,
                 x0, 1f, z1, x0, 0f, z1, x0, 0f, z0, x0, 1f, z0,
-                uMin, vTop, uMax, vBot, RawDirection.WEST);
+                uMin, vTop, uMax, vBot, RawDirection.WEST, Lit.Face);
         }
 
         // EAST face (x = x1)
@@ -258,9 +256,9 @@ public class Door : Block {
             float uMin, uMax;
             if (widthIsX) (uMin, uMax) = edgeU(x1);
             else { uMin = uu(z0); uMax = uu(z1); }
-            br.quadf(vertices, x, y, z,
+            br.quad(vertices, x, y, z,
                 x1, 1f, z0, x1, 0f, z0, x1, 0f, z1, x1, 1f, z1,
-                uMin, vTop, uMax, vBot, RawDirection.EAST);
+                uMin, vTop, uMax, vBot, RawDirection.EAST, Lit.Face);
         }
 
         // SOUTH face (z = z0) - broad when width runs along X, otherwise an end edge
@@ -268,9 +266,9 @@ public class Door : Block {
             float uMin, uMax;
             if (!widthIsX) (uMin, uMax) = edgeU(z0);
             else { uMin = uu(x0); uMax = uu(x1); }
-            br.quadf(vertices, x, y, z,
+            br.quad(vertices, x, y, z,
                 x0, 1f, z0, x0, 0f, z0, x1, 0f, z0, x1, 1f, z0,
-                uMin, vTop, uMax, vBot, RawDirection.SOUTH);
+                uMin, vTop, uMax, vBot, RawDirection.SOUTH, Lit.Face);
         }
 
         // NORTH face (z = z1)
@@ -278,9 +276,9 @@ public class Door : Block {
             float uMin, uMax;
             if (!widthIsX) (uMin, uMax) = edgeU(z1);
             else { uMin = uu(x1); uMax = uu(x0); }
-            br.quadf(vertices, x, y, z,
+            br.quad(vertices, x, y, z,
                 x1, 1f, z1, x1, 0f, z1, x0, 0f, z1, x0, 1f, z1,
-                uMin, vTop, uMax, vBot, RawDirection.NORTH);
+                uMin, vTop, uMax, vBot, RawDirection.NORTH, Lit.Face);
         }
 
         // caps show the tile's top 1px frame row, mapped along the width (top row is always opaque)
@@ -295,16 +293,16 @@ public class Door : Block {
 
         // DOWN face
         if (below != id && !br.shouldCullFace(RawDirection.DOWN)) {
-            br.quadf(vertices, x, y, z,
+            br.quad(vertices, x, y, z,
                 x1, 0f, z1, x1, 0f, z0, x0, 0f, z0, x0, 0f, z1,
-                capMax, capV0, capMin, capV1, RawDirection.DOWN);
+                capMax, capV0, capMin, capV1, RawDirection.DOWN, Lit.Face);
         }
 
         // UP face
         if (above != id && !br.shouldCullFace(RawDirection.UP)) {
-            br.quadf(vertices, x, y, z,
+            br.quad(vertices, x, y, z,
                 x0, 1f, z1, x0, 1f, z0, x1, 1f, z0, x1, 1f, z1,
-                capMin, capV0, capMax, capV1, RawDirection.UP);
+                capMin, capV0, capMax, capV1, RawDirection.UP, Lit.Face);
         }
     }
 

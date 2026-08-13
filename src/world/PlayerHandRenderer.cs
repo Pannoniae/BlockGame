@@ -71,13 +71,10 @@ public class PlayerHandRenderer {
             var a = handItem.getItem().isBlock() && !Block.renderItemLike[handItem.getItem().getBlock()!.id];
 
             Game.graphics.tex(0, Game.textures.blockTexture);
-            Game.blockRenderer.setupStandalone();
-
             if (a) {
                 Game.blockRenderer.renderBlock(handItem.getItem().getBlock()!, (byte)handItem.metadata, Vector3I.Zero,
                     vertices,
-                    lightOverride: l,
-                    cullFaces: false);
+                    lightOverride: l);
 
                 vao.bind();
                 Game.renderer.bindQuad();
@@ -498,8 +495,6 @@ public class PlayerHandRenderer {
         var world = player.world;
         var pos = player.position.toBlockPos();
         Game.graphics.tex(0, Game.textures.blockTexture);
-        Game.blockRenderer.setupStandalone();
-
         var l = world.inWorld(pos.X, pos.Y, pos.Z) ? world.getLight(pos.X, pos.Y, pos.Z) : (byte)15;
 
         var item = handItem.getItem();
@@ -507,8 +502,7 @@ public class PlayerHandRenderer {
         if (a) {
             Game.blockRenderer.renderBlock(handItem.getItem().getBlock()!, (byte)handItem.metadata, Vector3I.Zero,
                 vertices,
-                lightOverride: l,
-                cullFaces: false);
+                lightOverride: l);
 
             vao.bind();
             Game.renderer.bindQuad();

@@ -157,14 +157,10 @@ public class SignBlock : EntityBlock {
 
         var metadata = br.getBlock().getMetadata();
         var tex = uvs[0];
-        if (br.forceTex.u >= 0 && br.forceTex.v >= 0) {
-            tex = br.forceTex;
-        }
+        tex = br.getTex(tex);
 
         var post = uvs[1];
-        if (br.forceTex.u >= 0 && br.forceTex.v >= 0) {
-            post = br.forceTex;
-        }
+        post = br.getTex(post);
 
 
         var uv0 = UVPair.texCoords(tex);
@@ -195,7 +191,7 @@ public class SignBlock : EntityBlock {
                 _ => (0f, 0f, 1f, 1f, yy0, yy1)
             };
 
-            br.renderSimpleCube(x, y, z, vertices, x0, y0, z0, x1, y1, z1, u0, v0, u1, v1);
+            br.renderCube(x, y, z, vertices, x0, y0, z0, x1, y1, z1, u0, v0, u1, v1, Lit.Simple);
         }
         else {
             // post 2px thick

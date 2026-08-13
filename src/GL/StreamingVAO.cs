@@ -28,13 +28,13 @@ public class StreamingVAO<T> where T : unmanaged {
         format();
     }
 
-    public void setSizeLighted(int size) {
+    public void setSizePacked(int size) {
         unsafe {
             vbo = GL.CreateBuffer();
             GL.NamedBufferStorage(vbo, (uint)(size * sizeof(T)), (void*)0,
                 BufferStorageMask.DynamicStorageBit);
         }
-        formatLighted();
+        formatPacked();
     }
 
     public void upload(Span<T> data) {
@@ -66,24 +66,23 @@ public class StreamingVAO<T> where T : unmanaged {
         GL.BindVertexBuffer(0, vbo, 0, 12 * sizeof(ushort));
     }
 
-    public void formatLighted() {
-        // 26 bytes in total
+    public void formatPacked() {
         GL.EnableVertexAttribArray(0);
         GL.EnableVertexAttribArray(1);
         GL.EnableVertexAttribArray(2);
         GL.EnableVertexAttribArray(3);
 
-        GL.VertexAttribFormat(0, 3, VertexAttribType.Float, false, 0);
-        GL.VertexAttribFormat(1, 2, VertexAttribType.Float, false, 0 + 6 * sizeof(ushort));
-        GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 10 * sizeof(ushort));
-        GL.VertexAttribIFormat(3, 2, VertexAttribIType.UnsignedByte, 0 + 12 * sizeof(ushort));
+        GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
+        GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
+        GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 5 * sizeof(ushort));
+        GL.VertexAttribIFormat(3, 2, VertexAttribIType.UnsignedByte, 0 + 7 * sizeof(ushort));
 
         GL.VertexAttribBinding(0, 0);
         GL.VertexAttribBinding(1, 0);
         GL.VertexAttribBinding(2, 0);
         GL.VertexAttribBinding(3, 0);
 
-        GL.BindVertexBuffer(0, vbo, 0, 14 * sizeof(ushort));
+        GL.BindVertexBuffer(0, vbo, 0, 8 * sizeof(ushort));
     }
 
     public void bind() {

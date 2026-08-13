@@ -85,10 +85,7 @@ public class CandyStairs : Stairs {
         var min = getTexture(0, metadata);
         var max = min + 1;
 
-        if (br.forceTex.u >= 0 && br.forceTex.v >= 0) {
-            min = new UVPair(br.forceTex.u, br.forceTex.v);
-            max = min + 1;
-        }
+        br.getTex(ref min, ref max);
 
         var uv0 = UVPair.texCoords(min);
         var uv1 = UVPair.texCoords(max);
