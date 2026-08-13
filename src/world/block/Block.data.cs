@@ -21,10 +21,10 @@ public partial class Block {
 
     public static Block SNOW;
 
-    //public static Block BLOODSTONE;
+    public static Block BLOODSTONE;
     public static Block HELLROCK;
 
-    //public static Block INFERNO_ROCK;
+    public static Block INFERNO_ROCK;
     public static Block GLASS;
     public static Block GLASS_FRAMED_X;
     public static Block GLASS_FRAMED_R;
@@ -313,20 +313,20 @@ public partial class Block {
         HELLSTONE.material(Material.HELL);
         // todo assign naturalness to hell blocks when we add them
 
-        //BLOODSTONE = register("bloodstone", new Block("Bloodstone"));
-        //BLOODSTONE.setTex(cubeUVs(8, 1));
-        //renderType[BLOODSTONE.id] = RenderType.CUBE;
-        //BLOODSTONE.material(Material.HELL);
+        BLOODSTONE = register("bloodstone", new Block("Bloodstone"));
+        BLOODSTONE.setTex(cubeUVs(8, 1));
+        renderType[BLOODSTONE.id] = RenderType.CUBE;
+        BLOODSTONE.material(Material.HELL);
 
         HELLROCK = register("hellrock", new Block("Hellrock"));
         HELLROCK.setTex(uv("blocks.png", 9, 0));
         renderType[HELLROCK.id] = RenderType.CUBE;
         HELLROCK.material(Material.HELL);
 
-        //INFERNO_ROCK = register("infernoRock", new Block("Inferno Rock"));
-        //INFERNO_ROCK.setTex(cubeUVs(10, 0));
-        //renderType[INFERNO_ROCK.id] = RenderType.CUBE;
-        //INFERNO_ROCK.material(Material.HELL);
+        INFERNO_ROCK = register("infernoRock", new Block("Inferno Rock"));
+        INFERNO_ROCK.setTex(cubeUVs(10, 0));
+        renderType[INFERNO_ROCK.id] = RenderType.CUBE;
+        INFERNO_ROCK.material(Material.HELL);
 
         //CALCITE = register("calcite", new Block("Calcite"));
         //CALCITE.setTex(cubeUVs(11, 0));

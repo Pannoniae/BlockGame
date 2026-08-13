@@ -389,7 +389,7 @@ public static class ListHack<T> {
     public static extern ref T[] getItems(List<T> list);
 }
 
-public class InstantDrawColour(int maxVertices) : InstantDraw<VertexTinted>(maxVertices) {
+public sealed class InstantDrawColour(int maxVertices) : InstantDraw<VertexTinted>(maxVertices) {
     public override void setup() {
         base.setup();
         instantShader = Game.graphics.instantColourShader;

@@ -128,17 +128,16 @@ class Program {
             ushort magic = BitConverter.ToUInt16(peData, optionalHeaderOffset);
             int subsystemOffset;
 
-            // PE32
-            if (magic == 0x10b) {
-                subsystemOffset = optionalHeaderOffset + 68;
-            }
-            // PE32+
-            else if (magic == 0x20b) {
-                subsystemOffset = optionalHeaderOffset + 68;
-            }
-            else {
-                Log.error($"Unknown PE magic: 0x{magic:X}");
-                return false;
+            switch (magic) {
+                // PE32
+                case 0x10b:
+                // PE32+
+                case 0x20b:
+                    subsystemOffset = optionalHeaderOffset + 68;
+                    break;
+                default:
+                    Log.error($"Unknown PE magic: 0x{magic:X}");
+                    return false;
             }
 
             if (subsystemOffset + 2 >= peData.Length) {

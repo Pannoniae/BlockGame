@@ -454,7 +454,9 @@ public class ClientPacketHandler : PacketHandler {
     }
 
     public void handleBlockBreakProgress(BlockBreakProgressPacket p) {
-        if (Game.world == null) return;
+        if (Game.world == null) {
+            return;
+        }
 
         // update other player's break progress
         if (p.progress <= 0) {
@@ -510,7 +512,14 @@ public class ClientPacketHandler : PacketHandler {
         }
 
         // find and remove entity
-        var entity = Game.world.entities.FirstOrDefault(e => e.id == p.entityID);
+        Entity? entity = null;
+        foreach (Entity e in Game.world.entities) {
+            if (e.id == p.entityID) {
+                entity = e;
+                break;
+            }
+        }
+
         if (entity != null) {
             Game.world.removeEntity(entity);
             Log.info($"Despawned entity id={p.entityID}");
@@ -529,7 +538,13 @@ public class ClientPacketHandler : PacketHandler {
         }
 
         // check if already spawned
-        var existing = Game.world.entities.FirstOrDefault(e => e.id == p.entityID);
+        Entity? existing = null;
+        foreach (Entity e in Game.world.entities) {
+            if (e.id == p.entityID) {
+                existing = e;
+                break;
+            }
+        }
         if (existing != null) {
             Log.warn($"[Client] Player '{p.username}' (entityID={p.entityID}) already exists! Skipping duplicate spawn.");
             return;
@@ -556,7 +571,14 @@ public class ClientPacketHandler : PacketHandler {
         }
 
         // find entity and update position
-        var entity = Game.world.entities.FirstOrDefault(e => e.id == p.entityID);
+        Entity? entity = null;
+        foreach (Entity e in Game.world.entities) {
+            if (e.id == p.entityID) {
+                entity = e;
+                break;
+            }
+        }
+
         if (entity != null) {
             if (entity is Humanoid humanoid) {
                 // use packet's position with current target rotation
@@ -574,7 +596,13 @@ public class ClientPacketHandler : PacketHandler {
         }
 
         // find entity and update rotation
-        var entity = Game.world.entities.FirstOrDefault(e => e.id == p.entityID);
+        Entity? entity = null;
+        foreach (Entity e in Game.world.entities) {
+            if (e.id == p.entityID) {
+                entity = e;
+                break;
+            }
+        }
         if (entity != null) {
             if (entity is Humanoid humanoid) {
                 // use packet's rotation with current target position
@@ -593,7 +621,13 @@ public class ClientPacketHandler : PacketHandler {
         }
 
         // find entity and update both position and rotation
-        var entity = Game.world.entities.FirstOrDefault(e => e.id == p.entityID);
+        Entity? entity = null;
+        foreach (Entity e in Game.world.entities) {
+            if (e.id == p.entityID) {
+                entity = e;
+                break;
+            }
+        }
         if (entity != null) {
             if (entity is Humanoid humanoid) {
                 humanoid.mpInterpolate(p.position, p.rotation);
@@ -614,7 +648,13 @@ public class ClientPacketHandler : PacketHandler {
         }
 
         // find entity and apply delta to last received position+rotation
-        var entity = Game.world.entities.FirstOrDefault(e => e.id == p.entityID);
+        Entity? entity = null;
+        foreach (Entity e in Game.world.entities) {
+            if (e.id == p.entityID) {
+                entity = e;
+                break;
+            }
+        }
         if (entity != null) {
             if (entity is Humanoid humanoid) {
                 p.applyDelta(humanoid.targetPos, humanoid.targetRot, out var newPos, out var newRot);
@@ -638,7 +678,13 @@ public class ClientPacketHandler : PacketHandler {
         }
 
         // find entity and update velocity
-        var entity = Game.world.entities.FirstOrDefault(e => e.id == p.entityID);
+        Entity? entity = null;
+        foreach (Entity e in Game.world.entities) {
+            if (e.id == p.entityID) {
+                entity = e;
+                break;
+            }
+        }
         if (entity != null) {
             // apply knockback to local player immediately (client-side)
             if (entity == Game.player) {
@@ -660,7 +706,14 @@ public class ClientPacketHandler : PacketHandler {
         }
 
         // find entity and apply state
-        var entity = Game.world.entities.FirstOrDefault(e => e.id == p.entityID);
+        Entity? entity = null;
+        foreach (Entity e in Game.world.entities) {
+            if (e.id == p.entityID) {
+                entity = e;
+                break;
+            }
+        }
+
         if (entity != null) {
             entity.state.deserialize(p.data);
             entity.applyState();
@@ -673,7 +726,13 @@ public class ClientPacketHandler : PacketHandler {
         }
 
         // find entity and apply action
-        var entity = Game.world.entities.FirstOrDefault(e => e.id == p.entityID);
+        Entity? entity = null;
+        foreach (Entity e in Game.world.entities) {
+            if (e.id == p.entityID) {
+                entity = e;
+                break;
+            }
+        }
         if (entity != null) {
             switch (p.action) {
                 case EntityActionPacket.Action.SWING:
@@ -702,11 +761,21 @@ public class ClientPacketHandler : PacketHandler {
 
     public void handleEntityDamage(EntityDamagePacket p) {
         var world = Game.world;
-        if (world == null) return;
+        if (world == null) {
+            return;
+        }
 
         // find damaged entity
-        var entity = world.entities.FirstOrDefault(e => e.id == p.entityID);
-        if (entity == null) return;
+        Entity? entity = null;
+        foreach (Entity e in world.entities) {
+            if (e.id == p.entityID) {
+                entity = e;
+                break;
+            }
+        }
+        if (entity == null) {
+            return;
+        }
 
         entity.dmgTime = 30;
 
@@ -736,10 +805,14 @@ public class ClientPacketHandler : PacketHandler {
 
     public void handleAddEffect(AddEffectPacket p) {
         var world = Game.world;
-        if (world == null) return;
+        if (world == null) {
+            return;
+        }
 
         var entity = world.entities.FirstOrDefault(e => e.id == p.entityID);
-        if (entity == null) return;
+        if (entity == null) {
+            return;
+        }
 
         // create effect based on ID
         Effect? effect = null;
@@ -756,10 +829,20 @@ public class ClientPacketHandler : PacketHandler {
 
     public void handleRemoveEffect(RemoveEffectPacket p) {
         var world = Game.world;
-        if (world == null) return;
+        if (world == null) {
+            return;
+        }
 
-        var entity = world.entities.FirstOrDefault(e => e.id == p.entityID);
-        if (entity == null) return;
+        Entity? entity = null;
+        foreach (Entity e in world.entities) {
+            if (e.id == p.entityID) {
+                entity = e;
+                break;
+            }
+        }
+        if (entity == null) {
+            return;
+        }
 
         entity.removeEffect(p.effectID);
     }
@@ -814,7 +897,13 @@ public class ClientPacketHandler : PacketHandler {
         }
 
         // find player entity
-        var entity = Game.world.entities.FirstOrDefault(e => e.id == p.entityID);
+        Entity? entity = null;
+        foreach (Entity e in Game.world.entities) {
+            if (e.id == p.entityID) {
+                entity = e;
+                break;
+            }
+        }
         if (entity is not Player player) {
             return;
         }
@@ -1051,7 +1140,13 @@ public class ClientPacketHandler : PacketHandler {
         }
 
         // update held item for other players
-        var entity = Game.world.entities.FirstOrDefault(e => e.id == p.entityID);
+        Entity? entity = null;
+        foreach (Entity e in Game.world.entities) {
+            if (e.id == p.entityID) {
+                entity = e;
+                break;
+            }
+        }
         if (entity is Humanoid humanoid) {
             humanoid.inventory.selected = p.slotIndex;
             // set the held item in their inventory
@@ -1084,7 +1179,9 @@ public class ClientPacketHandler : PacketHandler {
             case 0: {
                 // chest
                 var chestBE = blockEntity as ChestBlockEntity;
-                if (chestBE == null) return;
+                if (chestBE == null) {
+                    return;
+                }
 
                 var ctx = new ChestMenuContext(Game.player.inventory, chestBE);
                 Game.player.currentCtx = ctx;
@@ -1111,7 +1208,9 @@ public class ClientPacketHandler : PacketHandler {
             case 2: {
                 // furnace
                 var furnaceBE = blockEntity as FurnaceBlockEntity;
-                if (furnaceBE == null) return;
+                if (furnaceBE == null) {
+                    return;
+                }
 
                 var ctx = new FurnaceMenuContext(Game.player.inventory, furnaceBE);
                 Game.player.currentCtx = ctx;
