@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
@@ -21,7 +21,7 @@ public class Particles {
         // on the server we just don't bother about rendering
         this.world = world;
 
-        if (!Net.mode.isDed()) {
+        if (world.isClient) {
             drawer = new InstantDrawTexture(1024);
             drawer.setup();
         }

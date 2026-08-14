@@ -3,10 +3,11 @@ namespace BlockGame.net.packet;
 /**
  * pooled packet writer to avoid MemoryStream/BinaryWriter allocations
  * todo if we'll have multiple threads, we'll probably need threadlocal storage here
+ * actually that day is today
  */
 public static class PacketWriter {
-    private static MemoryStream? stream;
-    private static BinaryWriter? writer;
+    [ThreadStatic] private static MemoryStream? stream;
+    [ThreadStatic] private static BinaryWriter? writer;
 
     /** get a pooled writer, ready to use (stream is reset to position 0) */
     public static PacketBuffer get() {

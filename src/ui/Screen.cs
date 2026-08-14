@@ -43,6 +43,10 @@ public class Screen {
             Game.world.paused = menu.pausesWorld();
         }
 
+        if (Game.server != null) {
+            Game.server.paused = menu.pausesWorld();
+        }
+
         if (Game.world != null) {
             Game.world.inMenu = menu.isModal() || menu.isBlockingInput();
         }

@@ -18,13 +18,19 @@ namespace BlockGame.ui.menu {
             settings.centreContents();
             settings.clicked += _ => { Screen.GAME_SCREEN.openSettings(); };
 
+            var openToLAN = new Button(this, "openToLAN", false, "Open to LAN");
+            openToLAN.setPosition(new Vector2I(0, 48));
+            openToLAN.centreContents();
+            openToLAN.clicked += openToLANClicked;
+
             var mainMenu = new Button(this, "mainMenu", false, "Quit to Main Menu");
-            mainMenu.setPosition(new Vector2I(0, 48));
+            mainMenu.setPosition(new Vector2I(0, 72));
             mainMenu.centreContents();
             mainMenu.clicked += returnToMainMenu;
 
             addElement(backToGame);
             addElement(settings);
+            addElement(openToLAN);
             addElement(mainMenu);
         }
 
@@ -34,12 +40,44 @@ namespace BlockGame.ui.menu {
             if (hasElement("disconnect")) {
                 getElement("disconnect").active = Game.client?.connected ?? false;
             }
+
+            updateLANButton();
+        }
+
+        private void updateLANButton() {
+            var btn = getElement("openToLAN");
+            btn.active = Game.server != null;
+        }
+
+        private void openToLANClicked(GUIElement e) {
+            var sv = Game.server;
+            if (sv == null) {
+                return;
+            }
+
+            if (sv.isOpenToLAN) {
+                Screen.GAME_SCREEN.CHAT.addMessage($"&eAlready open on port &f{sv.lanPort}");
+                Screen.GAME_SCREEN.backToGame();
+                return;
+            }
+
+            var port = sv.openToLAN();
+            Screen.GAME_SCREEN.CHAT.addMessage(port > 0
+                ? $"&aWorld opened to LAN on port &f{port}"
+                : "&cCouldn't open the world to LAN");
+
+            // back to the game so the message is actually visible
+            Screen.GAME_SCREEN.backToGame();
         }
 
         public static void returnToMainMenu(GUIElement guiElement) {
             Screen.GAME_SCREEN.trim(true);
 
-            if (Net.mode.isMPC()) {
+            if (Game.server != null) {
+                // integrated singleplayer: disconnect, stop the server, wait for the save
+                Game.instance.executeOnMainThread(Game.quitIntegratedToMenu);
+            }
+            else if (Net.mode.isMPC()) {
                 // multiplayer: disconnect and return to menu
                 Game.instance.executeOnMainThread(Game.disconnectAndReturnToMenu);
             }

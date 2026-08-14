@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
@@ -632,7 +632,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
             // in multiplayer, wait for neighbours before meshing
             // otherwise we mesh against air/null and create holes
-            if (Net.mode.isMPC()) {
+            if (!Game.world.isServer) {
                 var anyMissing = false;
 
                 Span<ChunkCoord> neighbours = [
@@ -677,7 +677,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             // todo this breaks the frame limiting in singleplayer. Why? I have no fucking idea. Fix later.
             //  for now we'll just restrict it to the MP client where we definitely don't generate anything.
             //  In SP we shouldn't set any chunk status here anyway because it's done in World.loadChunk().
-            if (Net.mode.isMPC() && chunk.status < ChunkStatus.MESHED) {
+            if (!Game.world.isServer && chunk.status < ChunkStatus.MESHED) {
                 // don't set MESHED status unless chunk has been properly lighted
                 if (chunk.status < ChunkStatus.LIGHTED) {
                     // chunk not ready for meshing, re-queue for later

@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using BlockGame.GL;
@@ -25,7 +25,8 @@ namespace BlockGame.world.block;
 public partial class Block {
     private const int particleCount = 4;
 
-    public static readonly List<ItemStack> drops = [];
+    [ThreadStatic] private static List<ItemStack>? _drops;
+    public static List<ItemStack> drops => _drops ??= [];
 
     /// <summary>
     /// Block ID
@@ -70,7 +71,8 @@ public partial class Block {
 
     public static BlockTextureAtlas atlas;
 
-    protected static readonly List<AABB> AABBList = [];
+    [ThreadStatic] private static List<AABB>? _AABBList;
+    protected static List<AABB> AABBList => _AABBList ??= [];
 
     // atlas dimensions - updated when texture pack is loaded
     public static Vector2I atlasSize = new Vector2I(512, 512);

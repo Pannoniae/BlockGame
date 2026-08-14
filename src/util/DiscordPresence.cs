@@ -129,7 +129,8 @@ public class DiscordPresence : IDisposable {
             int cx = x >> 4;
             int cz = z >> 4;
 
-            var chunk = player.world.getChunk(new ChunkCoord(cx, cz));
+            // don't crash if we're missing the chunk for some reason
+            player.world.getChunkMaybe(new ChunkCoord(cx, cz), out var chunk);
             if (chunk?.biomeData == null) {
                 return BiomeType.Plains;
             }

@@ -6,8 +6,11 @@ using Molten;
 namespace BlockGame.world.block;
 
 public class Leaves : Block {
-    private static readonly Queue<(int x, int y, int z, int dist)> queue = [];
-    private static readonly HashSet<Vector3I> visited = [];
+    // is there a better way than copypasting this pattern?...
+    [ThreadStatic] private static Queue<(int x, int y, int z, int dist)>? _queue;
+    [ThreadStatic] private static HashSet<Vector3I>? _visited;
+    private static Queue<(int x, int y, int z, int dist)> queue => _queue ??= [];
+    private static HashSet<Vector3I> visited => _visited ??= [];
 
     /** Max distance to search for logs */
     private const int DECAY_DIST = 5;

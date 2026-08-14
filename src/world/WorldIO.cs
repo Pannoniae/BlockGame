@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using BlockGame.logic;
 using BlockGame.main;
+using BlockGame.net.srv;
 using BlockGame.util;
 using BlockGame.util.log;
 using BlockGame.util.stuff;
@@ -95,7 +96,7 @@ public class WorldIO {
         tag.addString("displayName", world.displayName);
 
         // in singleplayer we add it from the player
-        if (Net.mode.isSP()) {
+        if (world.side == Side.BOTH) {
             tag.addString("gamemode", world.player.gameMode == GameMode.survival ? "survival" : "creative");
         }
 
@@ -107,7 +108,7 @@ public class WorldIO {
         tag.addDouble("spawnY", world.spawn.Y);
         tag.addDouble("spawnZ", world.spawn.Z);
 
-        if (Net.mode.isSP()) {
+        if (world.side == Side.BOTH) {
             // save full player entity data
             var playerData = new NBTCompound("player");
             world.player.write(playerData);
@@ -615,6 +616,11 @@ public class WorldIO {
                     chunk.addEntity(entity);
                     entity.inWorld = true;
                     world.entities.Add(entity);
+                    // must be registered, otherwise entities aren't actually sent to clients!
+                    // todo is there a better design?
+                    if (!world.isClient) {
+                        GameServer.instance.entityTracker.trackEntity(entity);
+                    }
                 }
                 else {
                     Log.warn($"loadChunkFromNBT: Failed to create entity of type {type} in chunk ({posX},{posZ})");
@@ -815,6 +821,11 @@ public class WorldIO {
                     chunk.addEntity(entity);
                     entity.inWorld = true;
                     chunk.world.entities.Add(entity);
+                    // must be registered, otherwise entities aren't actually sent to clients!
+                    // todo is there a better design?
+                    if (!chunk.world.isClient) {
+                        GameServer.instance.entityTracker.trackEntity(entity);
+                    }
                 }
             }
         }

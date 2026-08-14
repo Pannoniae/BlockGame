@@ -109,30 +109,30 @@ public readonly struct Command {
                         player!.gameMode = GameMode.creative;
 
                         // switch to creative inventory context
-                        if (Net.mode.isDed()) {
-                            var srvPlayer = player as ServerPlayer;
+                        if (player is ServerPlayer) {
+                            var sp = player as ServerPlayer;
 
                             // force-close any open inventory
-                            if (srvPlayer.currentInventoryID != Constants.INV_ID_PLAYER) {
-                                srvPlayer.currentCtx?.removeViewer(srvPlayer.conn);
-                                srvPlayer.currentInventoryID = Constants.INV_ID_PLAYER;
+                            if (sp.currentInventoryID != Constants.INV_ID_PLAYER) {
+                                sp.currentCtx?.removeViewer(sp.conn);
+                                sp.currentInventoryID = Constants.INV_ID_PLAYER;
                             }
 
                             // remove viewer from old context
-                            player.inventoryCtx?.removeViewer(srvPlayer.conn);
+                            player.inventoryCtx?.removeViewer(sp.conn);
                         }
 
                         player.inventoryCtx = new CreativeInventoryContext(player.inventory, 40);
                         player.currentCtx = player.inventoryCtx; // update currentCtx to match
 
                         // sync gamemode and re-add viewer to new context
-                        if (Net.mode.isDed()) {
-                            var srvPlayer = player as ServerPlayer;
+                        if (player is ServerPlayer) {
+                            var sp = player as ServerPlayer;
 
                             // add viewer to new context
-                            player.inventoryCtx.addViewer(srvPlayer.conn, Constants.INV_ID_PLAYER);
+                            player.inventoryCtx.addViewer(sp.conn, Constants.INV_ID_PLAYER);
 
-                            srvPlayer.conn.send(new GamemodePacket {
+                            sp.conn.send(new GamemodePacket {
                                 gamemode = GameMode.creative.id
                             }, DeliveryMethod.ReliableOrdered);
                         }
@@ -149,30 +149,30 @@ public readonly struct Command {
                         player.flyMode = false;
 
                         // switch to survival inventory context
-                        if (Net.mode.isDed()) {
-                            var srvPlayer = player as ServerPlayer;
+                        if (player is ServerPlayer) {
+                            var sp = player as ServerPlayer;
 
                             // force-close any open inventory
-                            if (srvPlayer.currentInventoryID != Constants.INV_ID_PLAYER) {
-                                srvPlayer.currentCtx?.removeViewer(srvPlayer.conn);
-                                srvPlayer.currentInventoryID = Constants.INV_ID_PLAYER;
+                            if (sp.currentInventoryID != Constants.INV_ID_PLAYER) {
+                                sp.currentCtx?.removeViewer(sp.conn);
+                                sp.currentInventoryID = Constants.INV_ID_PLAYER;
                             }
 
                             // remove viewer from old context
-                            player.inventoryCtx?.removeViewer(srvPlayer.conn);
+                            player.inventoryCtx?.removeViewer(sp.conn);
                         }
 
                         player.inventoryCtx = new SurvivalInventoryContext(player.inventory);
                         player.currentCtx = player.inventoryCtx; // update currentCtx to match
 
                         // sync gamemode and re-add viewer to new context
-                        if (Net.mode.isDed()) {
-                            var srvPlayer = player as ServerPlayer;
+                        if (player is ServerPlayer) {
+                            var sp = player as ServerPlayer;
 
                             // add viewer to new context
-                            player.inventoryCtx.addViewer(srvPlayer.conn, Constants.INV_ID_PLAYER);
+                            player.inventoryCtx.addViewer(sp.conn, Constants.INV_ID_PLAYER);
 
-                            srvPlayer.conn.send(new GamemodePacket {
+                            sp.conn.send(new GamemodePacket {
                                 gamemode = GameMode.survival.id
                             }, DeliveryMethod.ReliableOrdered);
                         }
@@ -200,29 +200,29 @@ public readonly struct Command {
                                 player.gameMode = GameMode.creative;
 
                                 // switch to creative inventory context
-                                if (Net.mode.isDed()) {
-                                    var srvPlayer = player as ServerPlayer;
+                                if (player is ServerPlayer) {
+                                    var sp = player as ServerPlayer;
 
                                     // force-close any open inventory
-                                    if (srvPlayer.currentInventoryID != Constants.INV_ID_PLAYER) {
-                                        srvPlayer.currentCtx?.removeViewer(srvPlayer.conn);
-                                        srvPlayer.currentInventoryID = Constants.INV_ID_PLAYER;
+                                    if (sp.currentInventoryID != Constants.INV_ID_PLAYER) {
+                                        sp.currentCtx?.removeViewer(sp.conn);
+                                        sp.currentInventoryID = Constants.INV_ID_PLAYER;
                                     }
 
                                     // remove viewer from old context
-                                    player.inventoryCtx?.removeViewer(srvPlayer.conn);
+                                    player.inventoryCtx?.removeViewer(sp.conn);
                                 }
 
                                 player.inventoryCtx = new CreativeInventoryContext(player.inventory, 40);
                                 player.currentCtx = player.inventoryCtx; // update currentCtx to match
 
-                                if (Net.mode.isDed()) {
-                                    var srvPlayer = player as ServerPlayer;
+                                if (player is ServerPlayer) {
+                                    var sp = player as ServerPlayer;
 
                                     // add viewer to new context
-                                    player.inventoryCtx.addViewer(srvPlayer.conn, Constants.INV_ID_PLAYER);
+                                    player.inventoryCtx.addViewer(sp.conn, Constants.INV_ID_PLAYER);
 
-                                    srvPlayer.conn.send(new GamemodePacket {
+                                    sp.conn.send(new GamemodePacket {
                                         gamemode = GameMode.creative.id
                                     }, DeliveryMethod.ReliableOrdered);
                                 }
@@ -237,29 +237,29 @@ public readonly struct Command {
                                 player.flyMode = false;
 
                                 // switch to survival inventory context
-                                if (Net.mode.isDed()) {
-                                    var srvPlayer = player as ServerPlayer;
+                                if (player is ServerPlayer) {
+                                    var sp = player as ServerPlayer;
 
                                     // force-close any open inventory
-                                    if (srvPlayer.currentInventoryID != Constants.INV_ID_PLAYER) {
-                                        srvPlayer.currentCtx?.removeViewer(srvPlayer.conn);
-                                        srvPlayer.currentInventoryID = Constants.INV_ID_PLAYER;
+                                    if (sp.currentInventoryID != Constants.INV_ID_PLAYER) {
+                                        sp.currentCtx?.removeViewer(sp.conn);
+                                        sp.currentInventoryID = Constants.INV_ID_PLAYER;
                                     }
 
                                     // remove viewer from old context
-                                    player.inventoryCtx?.removeViewer(srvPlayer.conn);
+                                    player.inventoryCtx?.removeViewer(sp.conn);
                                 }
 
                                 player.inventoryCtx = new SurvivalInventoryContext(player.inventory);
                                 player.currentCtx = player.inventoryCtx; // update currentCtx to match
 
-                                if (Net.mode.isDed()) {
-                                    var srvPlayer = player as ServerPlayer;
+                                if (player is ServerPlayer) {
+                                    var sp = player as ServerPlayer;
 
                                     // add viewer to new context
-                                    player.inventoryCtx.addViewer(srvPlayer.conn, Constants.INV_ID_PLAYER);
+                                    player.inventoryCtx.addViewer(sp.conn, Constants.INV_ID_PLAYER);
 
-                                    srvPlayer.conn.send(new GamemodePacket {
+                                    sp.conn.send(new GamemodePacket {
                                         gamemode = GameMode.survival.id
                                     }, DeliveryMethod.ReliableOrdered);
                                 }
@@ -446,7 +446,7 @@ public readonly struct Command {
                     source.sendMessage($"Set time to {newTime}");
 
                     // reset sky colours immediately to prevent lerp lag
-                    if (Net.mode != NetMode.DED) {
+                    if (source is ClientPlayer) {
                         var world = source.getWorld();
                         Game.renderer.currentSkyColour = world.getSkyColour(newTime);
                         Game.renderer.targetSkyColour = Game.renderer.currentSkyColour;
@@ -455,7 +455,7 @@ public readonly struct Command {
                     }
 
                     // broadcast time update to all clients in multiplayer
-                    if (Net.mode.isDed()) {
+                    if (GameServer.instance != null) {
                         GameServer.instance.send(
                             new TimeUpdatePacket { worldTick = newTime, snap = true },
                             DeliveryMethod.ReliableSequenced
@@ -1107,8 +1107,12 @@ public interface CommandSource {
             var sp = this as ServerPlayer;
             return this is ServerConsole || (sp != null && GameServer.instance.isOp(sp.name));
         }
-        // in singleplayer/client, player is always OP
+        // on integrated: the host is always op
         if (Net.mode == NetMode.SP) {
+            if (this is ServerPlayer sp2) {
+                return sp2.conn.isHost || GameServer.instance.isOp(sp2.name);
+            }
+
             return true;
         }
         // in multiplayer client, check if player is OP (this won't work, server handles it)

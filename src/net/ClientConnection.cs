@@ -1,7 +1,8 @@
-using System.Buffers.Binary;
+﻿using System.Buffers.Binary;
 using System.Collections.Concurrent;
 using System.Net.Sockets;
 using BlockGame.main;
+using BlockGame.ui;
 using BlockGame.net.packet;
 using BlockGame.ui.menu;
 using BlockGame.util;
@@ -48,7 +49,17 @@ public class ClientConnection : INetEventListener {
     public bool waitingForResync = false;
 
     // chunk loading tracking
-    public int minLoadRadius = 7;  // minimum chunk radius around player before we can load in
+    public int serverRenderDistance = -1;
+
+    /**
+     * Minimum chunk radius around the player before we can load in.
+     */
+    public int minLoadRadius {
+        get {
+            var dist = serverRenderDistance > 0 ? serverRenderDistance : Settings.instance.renderDistance;
+            return Math.Min(7, dist);
+        }
+    }
     public bool initialChunksLoaded = false;  // true once minimum chunks are loaded
 
     // player list (tab menu)
@@ -77,11 +88,22 @@ public class ClientConnection : INetEventListener {
         netManager.Connect(address, port, Constants.connectionKey);
     }
 
+    public static void sendRenderDistance() {
+        if (instance is not { connected: true }) {
+            return;
+        }
+
+        instance.send(new RenderDistancePacket {
+            dist = (byte)Math.Clamp(Settings.instance.renderDistance, 2, 255)
+        }, DeliveryMethod.ReliableOrdered);
+    }
+
     public void disconnect() {
         peer?.Disconnect();
         connected = false;
         entityID = -1;
         receivedDisconnectPacket = false; // reset for next connection
+        serverRenderDistance = -1;
     }
 
     public void update() {
@@ -206,7 +228,11 @@ public class ClientConnection : INetEventListener {
         Log.info($"Connected to server: {peer.Address}");
         connected = true;
         this.peer = peer;
-        Net.mode = NetMode.MPC;
+
+        // no MPC if we're hosting!
+        if (Game.server == null) {
+            Net.mode = NetMode.MPC;
+        }
 
         // send hug
         send(new HugPacket {

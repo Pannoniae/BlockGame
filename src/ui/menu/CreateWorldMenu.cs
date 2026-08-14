@@ -1,4 +1,4 @@
-using BlockGame.main;
+﻿using BlockGame.main;
 using BlockGame.ui.element;
 using BlockGame.world;
 using BlockGame.world.worldgen.generator;
@@ -114,11 +114,10 @@ public class CreateWorldMenu : Menu {
         var generatorName = generatorButton.getState().Replace("generator.", "");
 
         // create world
-        var world = new World(Side.BOTH, folderName, seed, worldName, generatorName);
         Net.mode = NetMode.SP;
-        Game.setWorld(world);
+        Game.startIntegratedServer(folderName, seed, generatorName);
         Game.instance.switchTo(LOADING);
-        LOADING.load(world, false);
+        LOADING.connect();
     }
 
     public override void activate() {

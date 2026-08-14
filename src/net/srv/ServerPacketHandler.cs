@@ -66,6 +66,9 @@ public class ServerPacketHandler : PacketHandler {
             case CommandPacket p:
                 handleCommand(p);
                 break;
+            case RenderDistancePacket p:
+                handleRenderDistance(p);
+                break;
             case EntityStatePacket p:
                 handleEntityState(p);
                 break;
@@ -160,6 +163,13 @@ public class ServerPacketHandler : PacketHandler {
         }
 
         conn.username = p.username;
+
+        if (conn.isHost) {
+            Log.info($"User '{p.username}' logging in (integrated server)");
+            finishLogin();
+            return;
+        }
+
         bool needsRegister = !GameServer.instance.userPasswords.ContainsKey(p.username);
 
         Log.info($"User '{p.username}' {(needsRegister ? "needs to register" : "logging in")}");
@@ -415,10 +425,12 @@ public class ServerPacketHandler : PacketHandler {
         conn.updateLoadedChunks();
 
         // broadcast join message to all players
-        GameServer.instance.send(
-            new ChatMessagePacket { message = $"&e{conn.username} &ajoined the game" },
-            DeliveryMethod.ReliableOrdered
-        );
+        if (GameServer.instance.isDedicated || GameServer.instance.connections.Count > 1) {
+            GameServer.instance.send(
+                new ChatMessagePacket { message = $"&e{conn.username} &ajoined the game" },
+                DeliveryMethod.ReliableOrdered
+            );
+        }
 
         // send message to Discord bridge if up
         GameServer.instance.discord?.sendMessage($"**{conn.username}** joined the game");
@@ -865,6 +877,27 @@ public class ServerPacketHandler : PacketHandler {
         var discordMsg = TextColours.strip(formattedMsg);
 
         GameServer.instance.discord?.sendMessage(discordMsg);
+    }
+
+    private void handleRenderDistance(RenderDistancePacket p) {
+        if (!conn.authenticated || conn.player == null) {
+            return;
+        }
+
+        // only cap on actual servers, it's fine on integrated
+        var max = conn.isHost ? 96 : GameServer.instance.properties.getInt("renderDistance", 8);
+        var dist = Math.Clamp((int)p.dist, 2, max);
+
+        if (dist == conn.renderDistance) {
+            return;
+        }
+
+        conn.renderDistance = dist;
+        Log.info($"{conn.username} render distance -> {dist}");
+
+        conn.send(new RenderDistancePacket { dist = (byte)dist }, DeliveryMethod.ReliableOrdered);
+
+        conn.updateLoadedChunks();
     }
 
     private void handleCommand(CommandPacket p) {

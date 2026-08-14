@@ -37,6 +37,9 @@ public class ClientPacketHandler : PacketHandler {
         //Log.info($"[Client] Received packet of type {packet.GetType().Name}");
 
         switch (packet) {
+            case RenderDistancePacket p:
+                handleRenderDistance(p);
+                break;
             case AuthRequiredPacket p:
                 handleAuthRequired(p);
                 break;
@@ -166,6 +169,10 @@ public class ClientPacketHandler : PacketHandler {
         }
     }
 
+    private void handleRenderDistance(RenderDistancePacket p) {
+        ClientConnection.instance!.serverRenderDistance = p.dist;
+    }
+
     public void handleAuthRequired(AuthRequiredPacket p) {
         Log.info($"Auth required, needsRegister={p.needsRegister}");
 
@@ -228,6 +235,8 @@ public class ClientPacketHandler : PacketHandler {
 
         // send your local skin to server
         sendLocalSkin();
+
+        ClientConnection.sendRenderDistance();
 
         Log.info("Multiplayer world initialized, waiting for chunks...");
     }

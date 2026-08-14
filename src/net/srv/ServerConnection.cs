@@ -13,6 +13,9 @@ public class ServerConnection {
     public readonly NetPeer peer;
     public string username;
     public bool authenticated = false;
+
+    /** are we the local player of an integrated server? false on ded */
+    public bool isHost;
     public int entityID;
     public int ping;
 

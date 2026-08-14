@@ -156,36 +156,27 @@ public class ChatMenu : Menu {
             // find command to check if it's client-only
             var cmd = Command.find(cmdName);
 
-            // unknown command or singleplayer - execute locally
-            if (Net.mode == NetMode.SP) {
+            // client-only commands execute locally
+            if (cmd != null && cmd.Value.side == NetMode.CL) {
                 Command.execute(Game.player, args);
             }
-            // multiplayer client
-            else if (Net.mode.isMPC()) {
-                // client-only commands execute locally
-                if (cmd != null && cmd.Value.side == NetMode.CL) {
-                    Command.execute(Game.player, args);
-                }
-                // server commands go to server
-                else {
-                    ClientConnection.instance.send(
-                        new CommandPacket { command = msg[1..] },
-                        LiteNetLib.DeliveryMethod.ReliableOrdered
-                    );
-                }
+            else if (!Game.world.isServer && ClientConnection.instance is { connected: true }) {
+                ClientConnection.instance.send(
+                    new CommandPacket { command = msg[1..] },
+                    LiteNetLib.DeliveryMethod.ReliableOrdered
+                );
             }
             else {
-                // not connected - execute locally (will show errors if needed)
+                // no server to ask
                 Command.execute(Game.player, args);
             }
         }
         // if not command, send to server or display locally
         else {
-            // multiplayer: send to server
-            if (Net.mode.isMPC()) {
+            if (!Game.world.isServer && ClientConnection.instance is { connected: true }) {
                 ClientConnection.instance.send(new ChatMessagePacket { message = msg }, LiteNetLib.DeliveryMethod.ReliableOrdered);
             }
-            // singleplayer: just print with player name
+            // no server: just print with player name
             else {
                 addMessage($"<{Game.player.name}> {msg}");
             }

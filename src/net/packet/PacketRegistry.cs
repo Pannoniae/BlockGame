@@ -89,6 +89,7 @@ public class PacketRegistry {
         // chat & commands (0x70-0x7F)
         register(0x70, typeof(ChatMessagePacket));
         register(0x71, typeof(CommandPacket));
+        register(0x72, typeof(RenderDistancePacket));
     }
 
 

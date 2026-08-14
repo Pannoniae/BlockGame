@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 using BlockGame.GL;
 using BlockGame.main;
 using BlockGame.net;
@@ -36,7 +36,7 @@ public abstract class InventoryMenu : Menu {
         // it's guarded in dropItemStack but BUG AVOIDANCE
         var player = Game.world?.player;
         if (player?.inventory?.cursor != null && player.inventory.cursor != ItemStack.EMPTY) {
-            if (!Net.mode.isMPC()) {
+            if (Game.world.isServer) {
                 player.dropItemStack(player.inventory.cursor, withVelocity: true);
                 player.inventory.cursor = ItemStack.EMPTY;
             }
@@ -142,7 +142,7 @@ public abstract class InventoryMenu : Menu {
         if (slotIdx < 0) return;
 
         // if waiting for resync, don't process clicks
-        if (Net.mode.isMPC() && ClientConnection.instance.waitingForResync) {
+        if (!Game.world.isServer && ClientConnection.instance.waitingForResync) {
             return;
         }
 
@@ -150,7 +150,7 @@ public abstract class InventoryMenu : Menu {
         handleSlotClick(slot, button);
 
         // send to server if multiplayer
-        if (Net.mode.isMPC()) {
+        if (!Game.world.isServer) {
             ClientConnection.instance.send(new InventorySlotClickPacket {
                 invID = player.currentInventoryID,
                 idx = (ushort)slotIdx,
@@ -171,7 +171,7 @@ public abstract class InventoryMenu : Menu {
             var player = Game.player;
 
             // if mp, send packet to close on server BEFORE resetting state
-            if (Net.mode.isMPC()) {
+            if (!Game.world.isServer) {
                 ClientConnection.instance.send(new InventoryClosePacket {
                     invID = player.currentInventoryID
                 }, LiteNetLib.DeliveryMethod.ReliableOrdered);

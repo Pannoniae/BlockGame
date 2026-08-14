@@ -1,10 +1,11 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime;
 using System.Runtime.InteropServices;
 using BlockGame.net;
+using BlockGame.net.srv;
 using BlockGame.render;
 using BlockGame.world.worldgen;
 using BlockGame.ui;
@@ -106,6 +107,9 @@ public partial class Game {
     public static WorldRenderer renderer = null!;
 
     public static ClientConnection? client;
+
+    public static GameServer? server;
+    private static Thread? serverThread;
 
     private static Coroutines cs;
 
@@ -1012,6 +1016,86 @@ public partial class Game {
         }
     }
 
+    public static void startIntegratedServer(string level, int seed, string generator) {
+        if (server != null) {
+            SkillIssueException.throwNew("integrated server is already running, stop it first");
+        }
+
+        server = new GameServer(devMode, isDedicated: false, level: level, seed: seed, generator: generator);
+
+        var sv = server;
+        serverThread = new Thread(() => {
+            try {
+                sv.loop();
+            }
+            catch (Exception e) {
+                Log.error("Integrated server died:");
+                Log.error(e);
+                sv.crash = e;
+                sv.stopped.Set(); // don't leave the client waiting forever
+            }
+        }) {
+            IsBackground = true,
+            Name = "Integrated Server"
+        };
+        serverThread.Start();
+
+        client ??= new ClientConnection();
+        var cl = client;
+
+        _ = Task.Run(() => {
+            sv.ready.Wait();
+            cl.connect("127.0.0.1", sv.port, Settings.instance.playerName);
+        });
+    }
+
+    public static void stopIntegratedServer() {
+        if (server == null) {
+            return;
+        }
+
+        var sv = server;
+        sv.running = false; // loop() calls stop(), which saves the world
+
+        if (!sv.stopped.Wait(30000)) {
+            Log.error("Integrated server didn't shut down correctly - the world may not be fully saved!");
+        }
+
+        serverThread?.Join(5000);
+        serverThread = null;
+        server = null;
+    }
+
+    public static void saveWorld() {
+        if (world == null) {
+            return;
+        }
+
+        if (world.isServer) {
+            world.worldIO.save(world, world.name);
+        }
+        else if (server != null) {
+            var sv = server;
+            sv.runOnMainThread(() => sv.world.worldIO.save(sv.world, sv.world.name));
+        }
+    }
+
+    /**
+     * todo "Saving world..." screen?
+     */
+    public static void quitIntegratedToMenu() {
+        client?.disconnect();
+        client?.stop();
+        client = null;
+
+        stopIntegratedServer();
+
+        exitWorld(save: false);
+
+        instance.unlockMouse();
+        instance.switchToScreen(Screen.MAIN_MENU_SCREEN);
+    }
+
     /**
      * Centralized method to disconnect from server and return to main menu.
      * Handles both voluntary disconnects and server-initiated disconnects.
@@ -1183,6 +1267,12 @@ public partial class Game {
 
         // reset events
         inputs.reset();
+
+        var svCrash = server?.crash;
+        if (svCrash != null) {
+            server!.crash = null; // don't rethrow forever
+            throw new Exception("Integrated server crashed, cause:", svCrash);
+        }
 
         client?.update();
 
@@ -1480,11 +1570,14 @@ public partial class Game {
 
     private void close() {
         // remember if we were in MP before disconnect
-        bool wasMP = Net.mode.isMPC();
+        // integrated counts as MP
+        bool wasMP = Net.mode.isMPC() || server != null;
 
         // disconnect
         client?.stop();
         client = null;
+
+        stopIntegratedServer();
 
         // release world lock before exiting (prevents stuck lock files)
         if (!wasMP && world != null) {

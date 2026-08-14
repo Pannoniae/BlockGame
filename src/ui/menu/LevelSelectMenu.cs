@@ -1,4 +1,4 @@
-using BlockGame.main;
+﻿using BlockGame.main;
 using BlockGame.ui.element;
 using BlockGame.util.log;
 using BlockGame.util.xNBT;
@@ -54,11 +54,11 @@ public class LevelSelectMenu : ScrollableMenu {
         load = true;
 
         var worldEntry = (WorldEntry)element;
-        var world = WorldIO.load(Side.BOTH, worldEntry.folderName);
+
         Net.mode = NetMode.SP;
-        Game.setWorld(world);
+        Game.startIntegratedServer(worldEntry.folderName, worldEntry.seed, worldEntry.generatorName);
         Game.instance.switchTo(LOADING);
-        LOADING.load(world, true);
+        LOADING.connect();
     }
 
     private void deleteSelectedWorld() {

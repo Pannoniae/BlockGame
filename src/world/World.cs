@@ -123,7 +123,8 @@ public partial class World : IDisposable {
     private TimerAction saveWorld;
     public NBTCompound toBeLoadedNBT;
 
-    private static readonly List<AABB> listAABB = [];
+    [ThreadStatic] private static List<AABB>? _listAABB;
+    private static List<AABB> listAABB => _listAABB ??= [];
 
     public World(Side side, string name, int seed, string? displayName = null, string? generatorName = null) {
         this.side = side;
@@ -171,7 +172,7 @@ public partial class World : IDisposable {
     }
 
     public void init(bool loadingSave = false) {
-        if (Net.mode.isSP()) {
+        if (side == Side.BOTH) {
             Log.info("Initializing singleplayer world...");
             player = new ClientPlayer(this, 6, 20, 6);
             player.name = Settings.instance.playerName;
@@ -194,12 +195,12 @@ public partial class World : IDisposable {
                 worldTick = tag.has("time") ? tag.getInt("time") : 0;
 
                 // load full player data
-                if (Net.mode.isSP() && tag.has("player")) {
+                if (side == Side.BOTH && tag.has("player")) {
                     player.read(tag.getCompoundTag("player"));
                 }
 
                 // load gamemode
-                if (Net.mode.isSP()) {
+                if (side == Side.BOTH) {
                     var gmStr = tag.getString("gamemode", "survival");
                     player.gameMode = gmStr == "survival" ? GameMode.survival : GameMode.creative;
                     player.inventoryCtx = player.gameMode == GameMode.survival
@@ -222,7 +223,7 @@ public partial class World : IDisposable {
         }
         else {
             // find safe spawn position with proper AABB clearance
-            if (Net.mode.isSP()) {
+            if (side == Side.BOTH) {
                 ensurePlayerSpawnClearance();
                 // give starter items
                 player.inventory.initNewPlayer();
@@ -283,7 +284,7 @@ public partial class World : IDisposable {
         }
 
         // only setup autosave timer on client
-        if (Net.mode.isSP()) {
+        if (side == Side.BOTH) {
             // in hot reload, don't save that much!! fucking lagspikes
             var interval = Spy.enabled ? 180000 : 2000;
             saveWorld = Game.setInterval(interval, saveWorldMethod);
@@ -484,7 +485,7 @@ public partial class World : IDisposable {
         // don't reorder across statuses though
 
         // note: removal is faster from the end so we sort by the reverse - closest entries are at the end of the list
-        if (Net.mode.isSP()) {
+        if (side == Side.BOTH) {
             chunkLoadQueue.Sort(new ChunkTicketComparerReverse(player.position.toBlockPos()));
         }
     }
@@ -500,13 +501,13 @@ public partial class World : IDisposable {
         // create terrain
         //genTerrainNoise();
         // separate loop so all data is there
-        if (Net.mode.isSP()) {
+        if (side == Side.BOTH) {
             player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
         }
     }
 
     public void loadAroundPlayer(ChunkStatus status) {
-        if (Net.mode.isSP()) {
+        if (side == Side.BOTH) {
             player.loadChunksAroundThePlayer(Settings.instance.renderDistance, status);
         }
     }
@@ -1133,7 +1134,7 @@ public partial class World : IDisposable {
         }
 
         // unload chunks which are far away
-        if (Net.mode.isSP()) {
+        if (side == Side.BOTH) {
             var playerChunk = player.getChunk();
             foreach (var chunk in chunks) {
                 var coord = chunk.coord;
@@ -1160,7 +1161,7 @@ public partial class World : IDisposable {
         }
 
         // unload chunks which are far away
-        if (Net.mode.isSP()) {
+        if (side == Side.BOTH) {
             var playerChunk = player.getChunk();
             foreach (var chunk in chunks) {
                 var coord = chunk.coord;

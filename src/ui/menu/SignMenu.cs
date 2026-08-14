@@ -41,7 +41,7 @@ public class SignMenu : Menu {
         doneButton.clicked += _ => {
             // changes are already in signEntity.lines
             // in multiplayer, send update to server
-            if (Net.mode.isMPC()) {
+            if (!Game.world.isServer) {
                 var nbt = new util.xNBT.NBTCompound();
                 signEntity.write(nbt);
                 var nbtBytes = util.xNBT.NBT.write(nbt);

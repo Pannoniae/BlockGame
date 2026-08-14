@@ -1,4 +1,4 @@
-using SixLabors.ImageSharp;
+﻿using SixLabors.ImageSharp;
 using System.Numerics;
 using System.Runtime;
 using BlockGame.GL;
@@ -407,9 +407,7 @@ public class GameScreen : Screen {
                 remeshWorld(Settings.instance.renderDistance);
                 break;
             case Key.F:
-                if (Net.mode.isSP()) {
-                    world.worldIO.save(world, world.name);
-                }
+                Game.saveWorld();
 
                 break;
             case Key.F8 when keyboard.IsKeyPressed(Key.ShiftLeft):
@@ -627,17 +625,14 @@ public class GameScreen : Screen {
             }
         }
 
-        if (!Net.mode.isMPC()) {
+        if (Game.world.isServer) {
             Game.player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
         }
     }
 
     public void pause() {
         // save world when opening pause menu (so if the player ragequits or whatever it won't be fucked)
-
-        if (Net.mode.isSP()) {
-            Game.world.worldIO.save(Game.world, Game.world.name);
-        }
+        Game.saveWorld();
 
         // also free up memory!
         // note maybe not on PCs integrated graphics bc performance hit? this needs to be handled better, temp fix...

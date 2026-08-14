@@ -56,7 +56,35 @@ public class GameServer : INetEventListener {
     public readonly ServerConsole console = null!;
     public readonly string ip;
     public readonly string ip6;
-    public readonly int port;
+    public int port;
+
+    /** are we a dedicated server? */
+    public readonly bool isDedicated;
+
+    public NetManager? lanManager;
+
+    public int lanPort;
+
+    public bool isOpenToLAN => lanManager != null;
+
+    /** what to load */
+    private readonly string levelName;
+    private readonly int seed;
+    private readonly string generator;
+
+    public readonly ManualResetEventSlim stopped = new(false);
+
+    public volatile Exception? crash;
+
+    /**
+     * is the server ready for joins?
+     */
+    public readonly ManualResetEventSlim ready = new(false);
+
+    /**
+     * should we use better sync? volatile seems fine here
+     */
+    public volatile bool paused;
 
     public DiscordBridge? discord = null;
 
@@ -71,28 +99,48 @@ public class GameServer : INetEventListener {
     private long lastAutoSave = 0;
     private long lastNetStats = 0;
 
-    public GameServer(bool devMode) {
+
+    public GameServer(bool devMode, bool isDedicated = true, string? level = null, int seed = 0,
+        string? generator = null) {
         instance = this;
         this.devMode = devMode;
+        this.isDedicated = isDedicated;
 
-        Log.info("Server initialized");
-        //Log.info($"Dev mode: {devMode}");
+        Log.info(isDedicated ? "Server initialized" : "Integrated server initialized");
 
-        // set network mode
-        Net.mode = NetMode.DED;
+        if (isDedicated) {
+            Net.mode = NetMode.DED;
+        }
 
-        // initialize entity tracker
         entityTracker = new EntityTracker(this);
 
-        // load properties
         properties = new ServerProperties();
-        properties.load();
+        if (isDedicated) {
+            properties.load();
+        }
 
         maxPlayers = properties.getInt("maxPlayers", 20);
         pvp = properties.getBool("pvp", true);
-        ip = properties.getString("ip", "0.0.0.0");
-        ip6 = properties.getString("ip6", "::");
-        port = properties.getInt("port", 31337);
+
+        if (!isDedicated) {
+            // loopback
+            // todo connect only in-memory instead of a "real" socket....
+            levelName = level!;
+            this.seed = seed;
+            this.generator = generator!;
+            ip = "127.0.0.1";
+            ip6 = "::1";
+            port = 0;
+        }
+        else {
+            // todo stop hardcoding the defaults here, centralise in some constants
+            levelName = properties.getString("levelName", "mplevel");
+            this.seed = properties.getInt("seed", new Random().Next());
+            this.generator = properties.getString("generator", "v3");
+            ip = properties.getString("ip", "0.0.0.0");
+            ip6 = properties.getString("ip6", "::");
+            port = properties.getInt("port", 31337);
+        }
 
         try {
             netManager = new NetManager(this);
@@ -106,14 +154,19 @@ public class GameServer : INetEventListener {
             throw; // crash the server, don't run in a broken state
         }
 
+        port = netManager.LocalPort;
         Log.info($"Server listening on port {port}");
 
-        // start console
-        console = new ServerConsole(this);
+        if (isDedicated) {
+            console = new ServerConsole(this);
+        }
 
         running = true;
 
-        loop();
+        // the integrated server has its own loop
+        if (isDedicated) {
+            loop();
+        }
     }
 
     private void initDiscord() {
@@ -133,45 +186,55 @@ public class GameServer : INetEventListener {
     }
 
     public void start() {
-        loadUsers();
-        loadOps();
+        if (isDedicated) {
+            loadUsers();
+            loadOps();
 
-        Block.preLoad();
-        Item.preLoad();
-        Entities.preLoad();
-        BlockEntity.preLoad();
-        Recipe.preLoad();
-        SmeltingRecipe.preLoad();
+            Block.preLoad();
+            Item.preLoad();
+            Entities.preLoad();
+            BlockEntity.preLoad();
+            Recipe.preLoad();
+            SmeltingRecipe.preLoad();
 
-        Block.postLoad();
+            Block.postLoad();
 
-        // compute content hash to detect client/server mismatches
-        Constants.computeContentHash();
+            // compute content hash to detect client/server mismatches
+            Constants.computeContentHash();
 
-        Command.register();
+            Command.register();
 
-        initDiscord();
+            initDiscord();
+        }
 
         loadWorld();
     }
 
     public void loop() {
         Log.info($"Starting game server on {ip}:{port}...");
-        console.start();
-        Log.info("Type 'help' for available commands");
+
+        if (isDedicated) {
+            console.start();
+            Log.info("Type 'help' for available commands");
+        }
 
         // TODO: load world, initialize systems
         start();
 
-        Console.CancelKeyPress += (sender, e) => {
-            // if already stopping, ignore
-            if (stopping || !running) {
-                return;
-            }
+        if (isDedicated) {
+            Console.CancelKeyPress += (sender, e) => {
+                // if already stopping, ignore
+                if (stopping || !running) {
+                    return;
+                }
 
-            e.Cancel = true; // prevent immediate termination
-            running = false; // trigger close()
-        };
+                e.Cancel = true; // prevent immediate termination
+                running = false; // trigger close()
+            };
+        }
+
+        // world's up
+        ready.Set();
 
         // 60 TPS game loop
         sw.Restart();
@@ -202,24 +265,19 @@ public class GameServer : INetEventListener {
     private void loadWorld() {
         Log.info("Loading world...");
 
-        var levelName = properties.getString("levelName", "mplevel");
-        var levelPath = $"{levelName}/level.xnbt";
+        var levelPath = $"{WorldIO.root}{levelName}/level.xnbt";
 
         try {
             bool loading;
             if (File.Exists(levelPath)) {
                 // load existing world
-                world = WorldIO.load(levelName);
+                world = WorldIO.load(Side.SERVER, levelName);
                 Log.info($"Loaded existing world: {world.displayName}");
                 loading = true;
             }
             else {
                 // create new world
-                var seed = properties.getInt("seed", new Random().Next());
-                var generator = properties.getString("generator", "v3");
-
-                Log.error(generator);
-                world = new World(levelName, seed, levelName, generator);
+                world = new World(Side.SERVER, levelName, seed, levelName, generator);
                 Log.info($"Created new world with seed {seed}");
                 loading = false;
             }
@@ -244,7 +302,7 @@ public class GameServer : INetEventListener {
 
     private int updateCounter = 0;
     private long lastLogTime = 0;
-    private static readonly XUList<Action> mainThreadActions = [];
+    private readonly ConcurrentQueue<Action> mainThreadActions = new();
 
     public void update() {
         // 60 TPS game loop
@@ -259,11 +317,10 @@ public class GameServer : INetEventListener {
         }
 
         netManager.PollEvents();
+        lanManager?.PollEvents();
 
         // process all main thread actions (usually commands)
-        while (mainThreadActions.Count > 0) {
-            var action = mainThreadActions[0];
-            mainThreadActions.RemoveAt(0);
+        while (mainThreadActions.TryDequeue(out var action)) {
             try {
                 action();
             }
@@ -315,8 +372,10 @@ public class GameServer : INetEventListener {
             //Log.info($"Loaded {loadedChunks} chunks, queue: {queueSize} -> {world.chunkLoadQueue.Count}");
         }
 
-        // update world, entities, lighting, etc
-        world.update(mspt / 1000.0);
+        // update world, entities, lighting, etc.
+        if (!(paused && !isDedicated && connections.Count <= 1)) {
+            world.update(mspt / 1000.0);
+        }
 
         // update entity tracker (position/state broadcasting)
         entityTracker.update();
@@ -709,6 +768,9 @@ public class GameServer : INetEventListener {
     public void OnPeerConnected(NetPeer peer) {
         Log.info($"Player connected: {peer}");
         var conn = new ServerConnection(peer);
+
+        conn.isHost = !isDedicated && peerToConnection.Count == 0;
+
         peerToConnection[peer] = conn;
     }
 
@@ -720,7 +782,7 @@ public class GameServer : INetEventListener {
             connections.Remove(conn.entityID);
 
             // broadcast leave message if player was authenticated
-            if (conn.authenticated && !string.IsNullOrEmpty(conn.username)) {
+            if (conn.authenticated && !string.IsNullOrEmpty(conn.username) && (isDedicated || connections.Count > 0)) {
                 send(
                     new ChatMessagePacket { message = $"&e{conn.username} &cleft the game" },
                     DeliveryMethod.ReliableOrdered
@@ -1064,7 +1126,7 @@ public class GameServer : INetEventListener {
         Log.info("Shutting down!");
 
         // stop console thread FIRST to avoid deadlock with logging..
-        console.stop();
+        console?.stop();
 
         discord?.stop();
 
@@ -1087,9 +1149,7 @@ public class GameServer : INetEventListener {
         Log.info("Stopping server...");
 
         // run queued main thread actions to avoid dangling stuff
-        while (mainThreadActions.Count > 0) {
-            var action = mainThreadActions[0];
-            mainThreadActions.RemoveAt(0);
+        while (mainThreadActions.TryDequeue(out var action)) {
             try {
                 action();
             }
@@ -1115,12 +1175,17 @@ public class GameServer : INetEventListener {
 
         Log.info("Stopping network");
         netManager.Stop();
+        lanManager?.Stop();
         saveUsers();
-        Net.mode = NetMode.NONE;
+
+        if (isDedicated) {
+            Net.mode = NetMode.NONE;
+        }
+
         Log.info("Server stopped");
 
         // delete world.lock!!
-        var lockPath = Path.Combine(world.name, "world.lock");
+        var lockPath = WorldIO.getLockFilePath(world.name);
         try {
             if (File.Exists(lockPath)) {
                 File.Delete(lockPath);
@@ -1132,10 +1197,41 @@ public class GameServer : INetEventListener {
             Log.error(e);
         }
 
-        Environment.Exit(0);
+        instance = null!;
+        stopped.Set();
+
+        if (isDedicated) {
+            Environment.Exit(0);
+        }
     }
 
-    public static void runOnMainThread(Action action) {
-        mainThreadActions.Add(action);
+    public int openToLAN(int port = 0) {
+        if (lanManager != null) {
+            return lanPort;
+        }
+
+        try {
+            var mgr = new NetManager(this);
+            mgr.ChannelsCount = 4;
+            mgr.UseNativeSockets = true;
+            if (!mgr.Start(port)) {
+                Log.error("Failed to open to LAN: couldn't bind to socket?");
+                return -1;
+            }
+
+            lanManager = mgr;
+            lanPort = mgr.LocalPort;
+            Log.info($"Opened to LAN on port {lanPort}");
+            return lanPort;
+        }
+        catch (Exception e) {
+            Log.error("Failed to open to LAN:");
+            Log.error(e);
+            return -1;
+        }
+    }
+
+    public void runOnMainThread(Action action) {
+        mainThreadActions.Enqueue(action);
     }
 }

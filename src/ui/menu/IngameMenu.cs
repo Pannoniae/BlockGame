@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
@@ -94,7 +94,7 @@ public class IngameMenu : Menu, IDisposable {
         Game.player.inventory.selected = newSelection;
 
         // notify server of held item change in multiplayer
-        if (Net.mode.isMPC()) {
+        if (!Game.world.isServer) {
             ClientConnection.instance.send(new PlayerHeldItemChangePacket {
                 slot = (byte)newSelection
             }, LiteNetLib.DeliveryMethod.ReliableOrdered);
@@ -417,7 +417,7 @@ public class IngameMenu : Menu, IDisposable {
             debugStr.AppendFormat("FPS:{0} Chunk updates: {1}\n", i.fps, m.chunksUpdated);
             debugStr.AppendFormat("cc:{0}\n", chunk?.status.ToString() ?? "N/A");
 
-            // network stats (only if connected)
+            // network stats (only if connected to an actual server)
             if (Net.mode == NetMode.MPC && ClientConnection.instance != null) {
                 debugStr.AppendFormat("Net: \u2191{0:0.0}KB/s ({1}/s) \u2193{2:0.0}KB/s ({3}/s) ping:{4}ms\n",
                     m.bytesSent / 1024.0, m.packetsSent,

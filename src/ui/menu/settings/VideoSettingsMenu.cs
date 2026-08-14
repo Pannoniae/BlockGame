@@ -1,4 +1,5 @@
-using BlockGame.main;
+﻿using BlockGame.main;
+using BlockGame.net;
 using BlockGame.ui.element;
 using BlockGame.ui.screen;
 using Molten;
@@ -30,6 +31,8 @@ public class VideoSettingsMenu : Menu {
             var old = settings.renderDistance;
             settings.renderDistance = (int)renderDistance.value;
             remeshIfRequired(old);
+
+            ClientConnection.sendRenderDistance();
         };
         elements.Add(renderDistance);
         addElement(renderDistance);

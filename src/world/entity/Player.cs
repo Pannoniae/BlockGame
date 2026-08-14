@@ -29,7 +29,8 @@ public class Player : Mob, CommandSource {
     public const double sneakingEyeHeight = 1.45;
     public const double feetCheckHeight = 0.05;
 
-    public static List<ItemStack> drops = [];
+    [ThreadStatic] private static List<ItemStack>? _drops;
+    public static List<ItemStack> drops => _drops ??= [];
 
     public Vector3D inputVector;
 
