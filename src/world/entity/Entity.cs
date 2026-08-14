@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 using BlockGame.main;
 using BlockGame.net;
 using BlockGame.net.packet;
@@ -515,7 +515,7 @@ public partial class Entity(World world, string type) : Persistent {
         }
 
         // splash particles/sound
-        if (inWater && !wasInLiquid && splashing && !Net.mode.isDed()) {
+        if (inWater && !wasInLiquid && splashing && world.isClient) {
             world.particles.add(new WaterParticle(
                 world,
                 new Vector3D(
@@ -586,7 +586,7 @@ public partial class Entity(World world, string type) : Persistent {
             iframes = invulnerability;
             dmgTime = 30;
 
-            if (this is Player && !Net.mode.isDed()) {
+            if (this is Player && world.isClient) {
                 Game.camera.applyImpact(damage * 4);
             }
         }
@@ -637,7 +637,7 @@ public partial class Entity(World world, string type) : Persistent {
             kb = true;
             dmgTime = 30;
 
-            if (this is Player && !Net.mode.isDed()) {
+            if (this is Player && world.isClient) {
                 Game.camera.applyImpact((float)damage * 4);
             }
         }
@@ -752,7 +752,7 @@ public partial class Entity(World world, string type) : Persistent {
             swingTicks = 0;
 
             // send swing action to server when starting swing (only for local player)
-            if (Net.mode.isMPC() && this == Game.player) {
+            if (!world.isServer && this == Game.player) {
                 if (ClientConnection.instance != null && ClientConnection.instance.connected) {
                     ClientConnection.instance.send(
                         new EntityActionPacket {
@@ -769,7 +769,7 @@ public partial class Entity(World world, string type) : Persistent {
                 swinging = true;
                 swingTicks = 0;
                 airHitCD = AIR_HIT_CD;
-                if (Net.mode.isMPC() && this == Game.player) {
+                if (!world.isServer && this == Game.player) {
                     // send swing action to server when starting swing (only for local player)
                     if (ClientConnection.instance != null && ClientConnection.instance.connected) {
                         ClientConnection.instance.send(
@@ -929,7 +929,7 @@ public partial class Entity(World world, string type) : Persistent {
         velocity += force;
 
         // broadcast velocity to all clients when entity gets knocked back
-        if (Net.mode.isDed()) {
+        if (!world.isClient) {
             GameServer.instance.send(
                 position,
                 128.0,

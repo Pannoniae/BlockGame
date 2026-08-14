@@ -1,4 +1,4 @@
-using BlockGame.logic;
+﻿using BlockGame.logic;
 using BlockGame.main;
 using BlockGame.render;
 using BlockGame.ui;
@@ -15,6 +15,15 @@ using Molten.DoublePrecision;
 using MonoMod.Utils;
 
 namespace BlockGame.world;
+
+/**
+ * this will get yeeted once we stop having a split integrated server + real SP
+ */
+public enum Side : byte {
+    CLIENT,
+    SERVER,
+    BOTH
+}
 
 public partial class World : IDisposable {
     public const int WORLDSIZE = 12;
@@ -95,6 +104,14 @@ public partial class World : IDisposable {
 
     public bool isMP;
 
+    public readonly Side side;
+
+    /** is this a client with a renderer, camera and a local player? */
+    public bool isClient => side != Side.SERVER;
+
+    /** is this a server with game logic like worldgen, world tick, saving, etc.? */
+    public bool isServer => side != Side.CLIENT;
+
     /** if true, suppress network packet broadcasts (used during worldgen/chunk loading) */
     public bool nosend;
 
@@ -108,7 +125,8 @@ public partial class World : IDisposable {
 
     private static readonly List<AABB> listAABB = [];
 
-    public World(string name, int seed, string? displayName = null, string? generatorName = null) {
+    public World(Side side, string name, int seed, string? displayName = null, string? generatorName = null) {
+        this.side = side;
         this.name = name;
         this.displayName = displayName ?? name;
         this.generatorName = generatorName ?? "perlin";
@@ -193,7 +211,7 @@ public partial class World : IDisposable {
                     player.prevPosition = player.position;
                 }
 
-                if (true || !Net.mode.isMPC()) {
+                if (true || isServer) {
                     // load lighting queues (after chunks are loaded)
                     WorldIO.loadLightingQueues(this, tag);
                 }
@@ -216,7 +234,7 @@ public partial class World : IDisposable {
                 player.gameMode = GameMode.creative;
             }
             // in the multiplayer server, find a safe spawn position for the player
-            else if (Net.mode.isDed()) {
+            else if (!isClient) {
                 ensureSpawnClearance();
             }
         }
@@ -518,7 +536,7 @@ public partial class World : IDisposable {
         var limit = loading ? MAX_CHUNKLOAD_FRAMETIME_FAST : MAX_CHUNKLOAD_FRAMETIME;
 
         // if server, process all results without limit
-        if (Net.mode.isDed()) {
+        if (!isClient) {
             limit = double.MaxValue;
         }
 
@@ -564,7 +582,7 @@ public partial class World : IDisposable {
     /** This is separate so this can be called from the outside without updating the whole (still nonexistent) world. */
     public void updateChunkloading(double startTime, bool loading, ref int loadedChunks) {
         // process async chunk load results first
-        if (!Net.mode.isMPC()) {
+        if (isServer) {
             processAsyncChunkLoads(startTime, loading, ref loadedChunks);
         }
         // if MPC, skip to meshing directly
@@ -578,7 +596,7 @@ public partial class World : IDisposable {
         // otherwise don't wait for nothing
         // yes I was an idiot
         // dedicated server has no rendering, use 80% of tick budget for chunk loading
-        var limit = Net.mode == NetMode.DED ? double.MaxValue
+        var limit = !isClient ? double.MaxValue
             : loading ? MAX_CHUNKLOAD_FRAMETIME_FAST
             : MAX_CHUNKLOAD_FRAMETIME;
         while (chunkLoadQueue.Count > 0) {
@@ -631,7 +649,7 @@ public partial class World : IDisposable {
         mesh: ;
 
         // meshing (client only)
-        if (!Net.mode.isDed()) {
+        if (isClient) {
             // if we're loading, we can also mesh chunks
             // empty the meshing queue
             while (Game.renderer.meshingQueue.TryDequeue(out var sectionCoord)) {
@@ -695,7 +713,7 @@ public partial class World : IDisposable {
         }*/
 
         // execute tick actions
-        if (!Net.mode.isMPC()) {
+        if (isServer) {
             for (int i = actionQueue.Count - 1; i >= 0; i--) {
                 var action = actionQueue[i];
                 if (action.tick <= worldTick) {
@@ -716,7 +734,7 @@ public partial class World : IDisposable {
 
         // execute lighting updates ONLY IN SP
         SuperluminalPerf.BeginEvent("light");
-        //if (!Net.mode.isMPC()) {
+        //if (isServer) {
         processSkyLightRemovalQueue();
         processSkyLightQueue();
         processBlockLightRemovalQueue();
@@ -724,11 +742,11 @@ public partial class World : IDisposable {
         //}
         SuperluminalPerf.EndEvent();
 
-        if (!Net.mode.isMPC()) {
+        if (isServer) {
             // random block updates!
             foreach (var chunk in chunks.Pairs) {
                 // distance check
-                bool shouldTick = Net.mode.isDed() || Vector2I.DistanceSquared(chunk.Value.centrePos,
+                bool shouldTick = !isClient || Vector2I.DistanceSquared(chunk.Value.centrePos,
                         new Vector2I((int)player.position.X, (int)player.position.Z)) <
                     MAX_TICKING_DISTANCE * MAX_TICKING_DISTANCE;
 
@@ -748,7 +766,7 @@ public partial class World : IDisposable {
 
         updateBlockEntities();
 
-        if (!Net.mode.isMPC()) {
+        if (isServer) {
             updateSpawning();
         }
 
@@ -891,7 +909,7 @@ public partial class World : IDisposable {
         // load chunk if null
         var chunk = node.chunk;
         // don't load in MP!!
-        if (!Net.mode.isMPC() && (chunk == null || chunk.destroyed)) {
+        if (isServer && (chunk == null || chunk.destroyed)) {
             if (!chunks.TryGetValue(chunkCoord.toLong(), out chunk)) {
                 // force-load chunk synchronously
                 loadChunk(chunkCoord, ChunkStatus.LIGHTED, true);
@@ -900,7 +918,7 @@ public partial class World : IDisposable {
         }
 
         // if multiplayer client and chunk is null, just don't bother
-        if (Net.mode.isMPC() && (chunk == null || chunk.destroyed)) {
+        if (!isServer && (chunk == null || chunk.destroyed)) {
             return;
         }
 
@@ -986,7 +1004,7 @@ public partial class World : IDisposable {
 
         // load chunk if null
         var chunk = node.chunk;
-        if (!Net.mode.isMPC() && (chunk == null || chunk.destroyed)) {
+        if (isServer && (chunk == null || chunk.destroyed)) {
             if (!chunks.TryGetValue(chunkCoord.toLong(), out chunk)) {
                 // force-load chunk synchronously
                 loadChunk(chunkCoord, ChunkStatus.LIGHTED, true);
@@ -995,7 +1013,7 @@ public partial class World : IDisposable {
         }
 
         // if multiplayer client and chunk is null, just don't bother
-        if (Net.mode.isMPC() && (chunk == null || chunk.destroyed)) {
+        if (!isServer && (chunk == null || chunk.destroyed)) {
             return;
         }
 
@@ -1038,12 +1056,12 @@ public partial class World : IDisposable {
 
     public void addToChunkLoadQueue(ChunkCoord chunkCoord, ChunkStatus level) {
         // MP client gets chunks from server packets, not chunk loading
-        if (Net.mode.isMPC()) {
+        if (!isServer) {
             SkillIssueException.throwNew("Tried to queue chunk on the MP client, wtf?");
         }
 
         // if server & meshed, crash
-        if (Net.mode.isDed() && level == ChunkStatus.MESHED) {
+        if (!isClient && level == ChunkStatus.MESHED) {
             SkillIssueException.throwNew("Tried to queue chunk for meshing on dedicated server, wtf?");
         }
 
@@ -1062,7 +1080,7 @@ public partial class World : IDisposable {
         var ticket = new ChunkLoadTicket(chunkCoord, level);
         if (!chunkLoadQueue.Contains(ticket)) {
             chunkLoadQueue.Add(ticket);
-            /*if (Net.mode.isDed()) {
+            /*if (!isClient) {
                 Log.info($"Queued chunk {chunkCoord} for loading (current status: {(chunk != null ? chunk.status.ToString() : "not loaded")}, target: {level})");
             }*/
         }
@@ -1160,7 +1178,7 @@ public partial class World : IDisposable {
             for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
                 var coord = new ChunkCoord(x, z);
                 if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
-                    loadChunk(coord, Net.mode.isDed() ? ChunkStatus.LIGHTED : ChunkStatus.MESHED, true);
+                    loadChunk(coord, isClient ? ChunkStatus.MESHED : ChunkStatus.LIGHTED, true);
                 }
             }
         }
@@ -1191,7 +1209,7 @@ public partial class World : IDisposable {
         }
 
         // save chunk before unloading
-        if (Net.mode.isDed()) {
+        if (!isClient) {
             // dedicated server: save sync
             worldIO.saveChunk(this, chunk);
         }
@@ -1361,7 +1379,7 @@ public partial class World : IDisposable {
     /// </summary>
     private bool isChunkRelevant(ChunkCoord chunkCoord) {
         // server: all chunks are relevant
-        if (Net.mode.isDed()) {
+        if (!isClient) {
             return true;
         }
 
@@ -1380,7 +1398,7 @@ public partial class World : IDisposable {
 
         // on the server, all is sync! we don't have a frame yk
         // we *can* make it async later but for now it's less buggy to make it so
-        if (Net.mode.isDed()) {
+        if (!isClient) {
             immediately = true;
             // server never meshes - cap to LIGHTED
             if (status > ChunkStatus.LIGHTED) {
@@ -1390,7 +1408,7 @@ public partial class World : IDisposable {
 
         // on MP client, chunks come from server already LIGHTED - don't try to generate/light them
         // meshing happens via dirtyChunk, not loadChunk :(
-        if (Net.mode.isMPC() && status > ChunkStatus.LIGHTED) {
+        if (!isServer && status > ChunkStatus.LIGHTED) {
             status = ChunkStatus.LIGHTED;
         }
 
@@ -1462,7 +1480,7 @@ public partial class World : IDisposable {
                 chunk = c;
             }
             // if we ever reach here we're fucked
-            if (Net.mode.isMPC()) {
+            if (!isServer) {
                 SkillIssueException.throwNew("fix your fucking MP chunk handling");
                 return;
             }
@@ -1506,7 +1524,7 @@ public partial class World : IDisposable {
             chunks[chunkCoord.toLong()].lightChunk();
 
             // trigger remeshing of neighbours now that this chunk is LIGHTED
-            if (!Net.mode.isDed()) {
+            if (isClient) {
                 Span<ChunkCoord> neighbours = [
                     new(chunkCoord.x - 1, chunkCoord.z),
                     new(chunkCoord.x + 1, chunkCoord.z),
@@ -1537,7 +1555,7 @@ public partial class World : IDisposable {
             (!hasChunk || (hasChunk && chunks[chunkCoord.toLong()].status < ChunkStatus.MESHED))) {
             // check if neighbours are ready, if not defer this chunk
             if (!areNeighboursReady(chunkCoord, ChunkStatus.LIGHTED)) {
-                if (Net.mode.isMPC()) {
+                if (!isServer) {
                     // in multiplayer client, can't generate neighbours - re-queue and wait for server to send them
                     addToChunkLoadQueue(chunkCoord, status);
                     return;
@@ -1547,7 +1565,7 @@ public partial class World : IDisposable {
                 loadNeighbours(chunkCoord, ChunkStatus.LIGHTED);
             }
 
-            if (!Net.mode.isDed()) {
+            if (isClient) {
                 chunks[chunkCoord.toLong()].meshChunk();
             }
         }
@@ -1566,7 +1584,7 @@ public partial class World : IDisposable {
 
     public void blockUpdateNeighbours(int x, int y, int z) {
 
-        if (Net.mode.isMPC()) {
+        if (!isServer) {
             return;
         }
 
@@ -1579,7 +1597,7 @@ public partial class World : IDisposable {
 
     public void blockUpdateNeighboursOnly(int x, int y, int z) {
 
-        if (Net.mode.isMPC()) {
+        if (!isServer) {
             return;
         }
 
@@ -1592,7 +1610,7 @@ public partial class World : IDisposable {
     public void scheduleBlockUpdate(Vector3I pos, int delay = -1) {
 
         // todo is this correct?
-        if (Net.mode.isMPC()) {
+        if (!isServer) {
             return;
         }
 

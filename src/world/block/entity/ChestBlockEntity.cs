@@ -37,7 +37,7 @@ public class ChestBlockEntity : BlockEntity, Inventory {
 
     public void dropContents(World world, int x, int y, int z) {
         // server-only - only server spawns item entities
-        if (Net.mode.isMPC()) {
+        if (!world.isServer) {
             return;
         }
 

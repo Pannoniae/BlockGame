@@ -1,4 +1,4 @@
-using BlockGame.main;
+﻿using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world.block;
 using BlockGame.world.entity;
@@ -377,7 +377,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         var wz = coord.z * CHUNKSIZE + z;
 
         // call onBreak callback for old block if being replaced
-        if (!Net.mode.isMPC()) {
+        if (world.isServer) {
             if (oldBlock != 0 && oldBlock != block) {
                 Block.get(oldBlock).onBreak(world, wx, y, wz, 0);
             }
@@ -433,7 +433,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             world.blockLightQueue.Enqueue(new LightNode(wx, y, wz, this));
         }
 
-        if (!Net.mode.isMPC()) {
+        if (world.isServer) {
             // call onPlace callback for new block if being placed
             if (block != 0 && oldBlock != block) {
                 Block.get(block).onPlace(world, wx, y, wz, 0);
@@ -444,7 +444,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         //  which isn't tracked by the chunk tracking
         //  "the spec is what happens"
 
-        if (Net.mode.isDed()) {
+        if (!world.isClient) {
             // notify listeners
             var pos = new Vector3I(x, y, z);
             world.dirtyArea(pos, pos);
@@ -528,7 +528,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         //  which isn't tracked by the chunk tracking
         //  "the spec is what happens"
 
-        if (Net.mode.isDed()) {
+        if (!world.isClient) {
             // notify listeners
             var pos = new Vector3I(x, y, z);
             world.dirtyArea(pos, pos);
@@ -552,7 +552,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         //  which isn't tracked by the chunk tracking
         //  "the spec is what happens"
 
-        if (Net.mode.isDed()) {
+        if (!world.isClient) {
             // notify listeners
             var pos = new Vector3I(x, y, z);
             world.dirtyArea(pos, pos);
@@ -589,7 +589,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         //  which isn't tracked by the chunk tracking
         //  "the spec is what happens"
 
-        if (Net.mode.isDed()) {
+        if (!world.isClient) {
             // notify listeners
             var pos = new Vector3I(x, y, z);
             world.dirtyArea(pos, pos);
@@ -618,7 +618,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         //  which isn't tracked by the chunk tracking
         //  "the spec is what happens"
 
-        if (Net.mode.isDed()) {
+        if (!world.isClient) {
             // notify listeners
             var pos = new Vector3I(x, y, z);
             world.dirtyArea(pos, pos);

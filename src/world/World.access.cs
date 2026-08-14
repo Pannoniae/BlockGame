@@ -1,4 +1,4 @@
-using BlockGame.main;
+﻿using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
@@ -374,7 +374,7 @@ public partial class World {
         dirtyArea(pos, pos);
 
         // update neighbours
-        if (!Net.mode.isMPC()) {
+        if (isServer) {
             blockUpdateNeighboursOnly(x, y, z);
         }
     }
@@ -421,7 +421,7 @@ public partial class World {
         dirtyArea(pos, pos);
 
         // update neighbours
-        if (!Net.mode.isMPC()) {
+        if (isServer) {
             blockUpdateNeighboursOnly(x, y, z);
         }
     }
@@ -454,7 +454,7 @@ public partial class World {
         dirtyArea(pos, pos);
 
         // update neighbours
-        if (!Net.mode.isMPC()) {
+        if (isServer) {
             blockUpdateNeighboursOnly(x, y, z);
         }
     }

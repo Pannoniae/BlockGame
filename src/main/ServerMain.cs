@@ -23,6 +23,9 @@ public class ServerMain {
 
         Log.info("Launching server...");
 
+        // dedicated server keeps its worlds in the cwd, not under level/! (maybe we shouldn't?)
+        WorldIO.root = "";
+
         unsafe {
             Log.info($"The correct answer is {sizeof(BlockRenderer.RenderContext)}! What was the question?");
         }

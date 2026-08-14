@@ -114,7 +114,7 @@ public class CreateWorldMenu : Menu {
         var generatorName = generatorButton.getState().Replace("generator.", "");
 
         // create world
-        var world = new World(folderName, seed, worldName, generatorName);
+        var world = new World(Side.BOTH, folderName, seed, worldName, generatorName);
         Net.mode = NetMode.SP;
         Game.setWorld(world);
         Game.instance.switchTo(LOADING);

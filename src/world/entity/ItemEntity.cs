@@ -72,7 +72,7 @@ public class ItemEntity : Entity {
         // todo optimise this lol
 
         // don't apply attraction, it will desync and make you think you picked it up when you didn't
-        if (!Net.mode.isMPC()) {
+        if (world.isServer) {
             var nearbyPlayer = findNearestPlayer();
             if (nearbyPlayer != null) {
                 applyPlayerAttraction(nearbyPlayer, dt);

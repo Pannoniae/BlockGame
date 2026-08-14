@@ -257,7 +257,7 @@ public partial class Entity {
 
         // is player on ground? check slightly below
         // on multiplayer clients, trust server's onGround for remote entities (not local player)
-        if (false && Net.mode.isMPC() && this is not ClientPlayer) {
+        if (false && !world.isServer && this is not ClientPlayer) {
             // skip recalculation, use server's synced value
             // todo we don't sync it atm!
         }

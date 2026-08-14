@@ -1,4 +1,4 @@
-using BlockGame.main;
+﻿using BlockGame.main;
 using BlockGame.util;
 using BlockGame.util.xNBT;
 using BlockGame.world.block;
@@ -53,7 +53,7 @@ public class FallingBlockEntity : Entity {
         collide(dt);
 
         // if landed, place block
-        if (onGround && !Net.mode.isMPC()) {
+        if (onGround && world.isServer) {
             landAndPlace();
         }
     }

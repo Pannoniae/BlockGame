@@ -551,7 +551,7 @@ public class ClientPlayer : Player {
         setSwinging(true);
 
         // send to server (reuse PlaceBlockPacket for now)
-        if (Net.mode.isMPC()) {
+        if (!world.isServer) {
             var info = getPlacementInfo();
             ClientConnection.instance.send(
                 new PlaceBlockPacket { position = new Vector3I(0, 0, 0), info = info },
@@ -576,7 +576,7 @@ public class ClientPlayer : Player {
         if (!block.onUse(world, pos.X, pos.Y, pos.Z, this)) return false;
 
         // send to server
-        if (Net.mode.isMPC()) {
+        if (!world.isServer) {
             ClientConnection.instance.send(
                 new PlaceBlockPacket { position = pos, info = info },
                 DeliveryMethod.ReliableOrdered
@@ -605,7 +605,7 @@ public class ClientPlayer : Player {
         setSwinging(true);
 
         // send to server
-        if (Net.mode.isMPC()) {
+        if (!world.isServer) {
             ClientConnection.instance.send(
                 new PlaceBlockPacket { position = pos, info = info },
                 DeliveryMethod.ReliableOrdered
@@ -655,7 +655,7 @@ public class ClientPlayer : Player {
         }
 
         // multiplayer client: send packet, server will handle placement
-        if (Net.mode.isMPC()) {
+        if (!world.isServer) {
             ClientConnection.instance.send(
                 new PlaceBlockPacket { position = pos, info = info },
                 DeliveryMethod.ReliableOrdered

@@ -192,7 +192,7 @@ public class ClientPacketHandler : PacketHandler {
 
         // create multiplayer world
         // create empty world for multiplayer (no worldgen, server sends chunks)
-        var world = new World("__multiplayer", 0, "Multiplayer World", "flat");
+        var world = new World(Side.CLIENT, "__multiplayer", 0, "Multiplayer World", "flat");
 
         // set world time
         world.worldTick = p.worldTick;

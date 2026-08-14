@@ -1,4 +1,4 @@
-using System.Buffers;
+﻿using System.Buffers;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using BlockGame.logic;
@@ -41,6 +41,8 @@ public class WorldIO {
     // lock file to prevent multiple instances
     public FileStream? lockFile;
 
+    public static string root = "level/";
+
     public WorldIO(World world) {
         this.world = world;
         if (!world.isMP) {
@@ -48,7 +50,7 @@ public class WorldIO {
             chunkLoadThread = new ChunkLoadThread(this);
 
             // initialize region manager with correct world path
-            var worldPath = Net.mode.isDed() ? world.name : $"level/{world.name}";
+            var worldPath = $"{root}{world.name}";
             regionManager = new RegionManager(worldPath);
         }
     }
@@ -61,15 +63,8 @@ public class WorldIO {
             SkillIssueException.throwNew("fix your fucking game");
         }
 
-        if (Net.mode.isDed()) {
-            if (!Directory.Exists($"{filename}")) {
-                Directory.CreateDirectory($"{filename}");
-            }
-        }
-        else {
-            if (!Directory.Exists($"level/{filename}")) {
-                Directory.CreateDirectory($"level/{filename}");
-            }
+        if (!Directory.Exists($"{root}{filename}")) {
+            Directory.CreateDirectory($"{root}{filename}");
         }
 
         try {
@@ -125,14 +120,8 @@ public class WorldIO {
             saveLightingQueues(tag);
         }
 
-        if (Net.mode.isDed()) {
-            NBT.writeFile(tag, $"{world.name}/level.xnbt");
-            Log.info($"Saved world data to {world.name}/level.xnbt");
-        }
-        else {
-            NBT.writeFile(tag, $"level/{world.name}/level.xnbt");
-            Log.info($"Saved world data to level/{world.name}/level.xnbt");
-        }
+        NBT.writeFile(tag, $"{root}{world.name}/level.xnbt");
+        Log.info($"Saved world data to {root}{world.name}/level.xnbt");
     }
 
     private void saveLightingQueues(NBTCompound tag) {
@@ -200,7 +189,7 @@ public class WorldIO {
         tag.addListTag("blockUpdateQueue", blockUpdateList);
     }
 
-    public static World load(string filename) {
+    public static World load(Side side, string filename) {
         // check for lock file
         var lockPath = getLockFilePath(filename);
         if (File.Exists(lockPath)) {
@@ -219,20 +208,13 @@ public class WorldIO {
             }
         }
 
-        NBTCompound tag;
-        if (Net.mode.isDed()) {
-            Log.info($"Loaded data from {filename}/level.xnbt");
-            tag = NBT.readFile($"{filename}/level.xnbt");
-        }
-        else {
-            Log.info($"Loaded data from level/{filename}/level.xnbt");
-            tag = NBT.readFile($"level/{filename}/level.xnbt");
-        }
+        Log.info($"Loaded data from {root}{filename}/level.xnbt");
+        var tag = NBT.readFile($"{root}{filename}/level.xnbt");
 
         var seed = tag.getInt("seed");
         var displayName = tag.has("displayName") ? tag.getString("displayName") : filename;
         var generatorName = tag.has("generator") ? tag.getString("generator") : "perlin";
-        var world = new World(filename, seed, displayName, generatorName);
+        var world = new World(side, filename, seed, displayName, generatorName);
         world.toBeLoadedNBT = tag;
 
         // create lock file with PID
@@ -426,11 +408,11 @@ public class WorldIO {
     }
 
     public static void deleteLevel(string level) {
-        Directory.Delete(Net.mode.isDed() ? $"{level}" : $"level/{level}", true);
+        Directory.Delete($"{root}{level}", true);
     }
 
     public static string getLockFilePath(string worldName) {
-        return Net.mode.isDed() ? $"{worldName}/world.lock" : $"level/{worldName}/world.lock";
+        return $"{root}{worldName}/world.lock";
     }
 
     /** Check if lock file is stale (process no longer running) */
@@ -889,13 +871,13 @@ public class WorldIO {
         var z = coord.z >> 5;
         var xDir = x < 0 ? $"-{-x:X}" : x.ToString("X");
         var zDir = z < 0 ? $"-{-z:X}" : z.ToString("X");
-        return Net.mode.isDed() ? $"{levelname}/{xDir}/{zDir}/c{coord.x},{coord.z}.xnbt" : $"level/{levelname}/{xDir}/{zDir}/c{coord.x},{coord.z}.xnbt";
+        return $"{root}{levelname}/{xDir}/{zDir}/c{coord.x},{coord.z}.xnbt";
     }
 
     public static bool chunkFileExists(World world, ChunkCoord coord) {
         // check region file first
         var regionCoord = RegionManager.getRegionCoord(coord);
-        var worldPath = Net.mode.isDed() ? world.name : $"level/{world.name}";
+        var worldPath = $"{root}{world.name}";
         var regionPath = RegionFile.getRegionPath(worldPath, regionCoord.x, regionCoord.z);
 
         if (File.Exists(regionPath)) {
@@ -912,7 +894,7 @@ public class WorldIO {
     }
 
     public static bool worldExists(string level) {
-        return File.Exists(Net.mode.isDed() ? $"{level}/level.xnbt" : $"level/{level}/level.xnbt");
+        return File.Exists($"{root}{level}/level.xnbt");
     }
 
     public static Chunk loadChunkFromFile(World world, ChunkCoord coord) {
@@ -933,7 +915,7 @@ public class WorldIO {
         var regionCoord = RegionManager.getRegionCoord(coord);
         var localCoord = RegionManager.getLocalCoord(coord);
 
-        var worldPath = Net.mode.isDed() ? world.name : $"level/{world.name}";
+        var worldPath = $"{root}{world.name}";
         var regionPath = RegionFile.getRegionPath(worldPath, regionCoord.x, regionCoord.z);
 
         if (File.Exists(regionPath)) {

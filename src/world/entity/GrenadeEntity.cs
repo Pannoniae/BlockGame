@@ -119,7 +119,7 @@ public class GrenadeEntity : Entity {
         }
 
         // spawn explosion particles
-        if (!Net.mode.isDed()) {
+        if (world.isClient) {
             for (int i = 0; i < 24; i++) {
                 // random direction on sphere
                 var theta = Game.clientRandom.NextDouble() * Math.PI * 2;

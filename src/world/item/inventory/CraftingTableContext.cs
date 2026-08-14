@@ -1,4 +1,4 @@
-using BlockGame.main;
+﻿using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world.entity;
 
@@ -63,7 +63,7 @@ public class CraftingTableContext : InventoryContext {
     public CraftingGridInventory getCraftingGrid() => craftingGrid;
 
     public override void close() {
-        if (!Net.mode.isMPC()) {
+        if (player.world.isServer) {
             for (int i = 0; i < craftingGrid.grid.Length; i++) {
                 var stack = craftingGrid.grid[i];
                 if (stack != ItemStack.EMPTY && stack.quantity > 0) {

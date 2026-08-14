@@ -1,4 +1,4 @@
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using System.Numerics;
 using BlockGame.GL;
 using BlockGame.logic;
@@ -101,7 +101,7 @@ public class Player : Mob, CommandSource {
         inventory = new PlayerInventory();
 
 
-        if (!Net.mode.isDed()) {
+        if (world.isClient) {
             handRenderer = new PlayerHandRenderer(this);
             // get from registry
             modelRenderer = (PlayerRenderer)EntityRenderers.get(Entities.getID("player"));
@@ -232,7 +232,7 @@ public class Player : Mob, CommandSource {
             inputVector = Vector3D.Zero;
             strafeVector = Vector3D.Zero;
 
-            if (!Net.mode.isDed()) {
+            if (world.isClient) {
                 Game.camera.updatePosition(dt); // update death tilt
             }
 
@@ -248,12 +248,12 @@ public class Player : Mob, CommandSource {
 
         // player-specific prev vars
 
-        if (!Net.mode.isDed()) {
+        if (world.isClient) {
             Game.camera.prevBob = Game.camera.bob;
             Game.camera.prevAirBob = Game.camera.airBob;
         }
 
-        if (!Net.mode.isDed()) {
+        if (world.isClient) {
             handRenderer.prevLower = handRenderer.lower;
         }
     }
@@ -293,7 +293,7 @@ public class Player : Mob, CommandSource {
     protected override void updateTimers(double dt) {
         base.updateTimers(dt);
 
-        if (!Net.mode.isDed()) {
+        if (world.isClient) {
             handRenderer.update(dt);
         }
 
@@ -324,7 +324,7 @@ public class Player : Mob, CommandSource {
             if (fallSpeed > SAFE_FALL_SPEED) {
                 var dmg = (float)((fallSpeed - SAFE_FALL_SPEED) * FALL_DAMAGE_MULTIPLIER);
                 base.dmg(dmg);
-                if (!Net.mode.isDed()) {
+                if (world.isClient) {
                     Game.camera.applyImpact(dmg);
                 }
             }
@@ -339,7 +339,7 @@ public class Player : Mob, CommandSource {
                 // get block below player
                 var pos = position.toBlockPos() + new Vector3I(0, -1, 0);
                 var blockBelow = Block.get(world.getBlock(pos));
-                if (!Net.mode.isDed() && blockBelow?.mat != null) {
+                if (world.isClient && blockBelow?.mat != null) {
                     Game.snd.playFootstep(blockBelow.mat.smat, position);
                 }
 
@@ -354,7 +354,7 @@ public class Player : Mob, CommandSource {
         // totalTraveled already updated in Mob.postPhysics()
 
         // update camera
-        if (!Net.mode.isDed()) {
+        if (world.isClient) {
             Game.camera.updatePosition(dt);
         }
 
@@ -391,7 +391,8 @@ public class Player : Mob, CommandSource {
         base.onChunkChanged();
         //Console.Out.WriteLine("chunk changed");
 
-        if (!Net.mode.isDed() && !Net.mode.isMPC()) {
+        // only in true SP, on an integrated server we can't set directly, it goes through the server connection instead
+        if (world.side == Side.BOTH) {
             loadChunksAroundThePlayer(Settings.instance.renderDistance);
         }
     }
@@ -483,7 +484,7 @@ public class Player : Mob, CommandSource {
             inventory.selected = key > Key.Number0 ? (ushort)(key - Key.Number0 - 1) : 9;
 
             // notify server of held item change in multiplayer
-            if (Net.mode.isMPC()) {
+            if (!world.isServer) {
                 ClientConnection.instance.send(new PlayerHeldItemChangePacket {
                     slot = (byte)inventory.selected
                 }, DeliveryMethod.ReliableOrdered);
@@ -538,7 +539,7 @@ public class Player : Mob, CommandSource {
         recoilTime = 12;
         recoilStrength = strength;
 
-        if (!Net.mode.isDed()) {
+        if (world.isClient) {
             Game.camera.applyRecoil((float)strength);
         }
     }
@@ -558,7 +559,7 @@ public class Player : Mob, CommandSource {
         }
 
         // multiplayer: send packet to server
-        if (Net.mode.isMPC()) {
+        if (!world.isServer) {
             ClientConnection.instance.send(
                 new UseItemPacket(),
                 DeliveryMethod.ReliableOrdered
@@ -656,7 +657,7 @@ public class Player : Mob, CommandSource {
 
                             // sync with server
 
-                            if (Net.mode.isMPC()) {
+                            if (!world.isServer) {
                                 ClientConnection.instance.send(new PlayerHeldItemChangePacket {
                                     slot = (byte)inventory.selected
                                 }, DeliveryMethod.ReliableOrdered);
@@ -676,7 +677,7 @@ public class Player : Mob, CommandSource {
                         inventory.setStack(inventory.selected, normalisedItem);
 
                         // sync with server, since we are in creative, we can bullshit and server will accept it
-                        if (Net.mode.isMPC()) {
+                        if (!world.isServer) {
                             // creative inventory hotbar is slots 40-49 (map from player inventory slots 0-9)
                             ClientConnection.instance.send(new InventorySlotClickPacket {
                                 invID = Constants.INV_ID_CREATIVE,
@@ -784,7 +785,7 @@ public class Player : Mob, CommandSource {
         }
 
         // in multiplayer client, send packet to server
-        if (Net.mode.isMPC()) {
+        if (!world.isServer) {
             // optimistically remove from client inventory
             inventory.removeStack(inventory.selected, 1);
 
@@ -802,7 +803,7 @@ public class Player : Mob, CommandSource {
 
     /** Drop an item stack at player position. withVelocity = throw in facing direction */
     public void dropItemStack(ItemStack stack, bool withVelocity = false) {
-        if (Net.mode.isMPC()) {
+        if (!world.isServer) {
             return;
         }
 
@@ -845,7 +846,7 @@ public class Player : Mob, CommandSource {
             dropInventoryOnDeath();
         }
 
-        if (!Net.mode.isDed()) {
+        if (world.isClient) {
             // switch to death screen only if loaded
             Game.instance.executeOnMainThread(() => {
                 if (Game.instance.currentScreen != Screen.GAME_SCREEN) {
@@ -874,7 +875,7 @@ public class Player : Mob, CommandSource {
 
     public void respawn() {
         // in multiplayer client, send respawn request to server instead of respawning locally
-        if (Net.mode.isMPC() && ClientConnection.instance != null) {
+        if (!world.isServer && ClientConnection.instance != null) {
             ClientConnection.instance.send(new RespawnRequestPacket(), DeliveryMethod.ReliableOrdered);
             return;
         }

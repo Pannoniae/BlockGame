@@ -76,12 +76,12 @@ public class Furnace : EntityBlock {
         }
 
         // MP client: server will handle opening (client sent PlaceBlockPacket, will receive InventoryOpenPacket)
-        if (Net.mode.isMPC()) {
+        if (!world.isServer) {
             return true;
         }
 
         // server-side: open inventory via helper
-        if (Net.mode.isDed()) {
+        if (!world.isClient) {
             var ctx = new FurnaceMenuContext(player.inventory, be);
             return GameServer.openInventory(
                 (ServerPlayer)player,

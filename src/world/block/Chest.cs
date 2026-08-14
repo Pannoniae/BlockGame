@@ -62,12 +62,12 @@ public class Chest : EntityBlock {
         }
 
         // MP client: server will handle opening (client sent PlaceBlockPacket, will receive InventoryOpenPacket)
-        if (Net.mode.isMPC()) {
+        if (!world.isServer) {
             return true; // return true to prevent block placement
         }
 
         // server-side: open inventory via helper
-        if (Net.mode.isDed()) {
+        if (!world.isClient) {
             var ctx = new ChestMenuContext(player.inventory, be);
             return GameServer.openInventory(
                 (ServerPlayer)player,

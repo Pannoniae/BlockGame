@@ -10,11 +10,6 @@ namespace BlockGame.world.worldgen;
  * God bless him and his work.
  */
 public class TreeGenerator {
-    private static ProceduralTree oak;
-    private static ProceduralTree maple;
-    private static ProceduralTree mahogany;
-    private static ProceduralTree palm;
-
     private const float PI = MathF.PI;
 
     /** place a simple oak tree - DO NOT TOUCH THIS */
@@ -75,14 +70,14 @@ public class TreeGenerator {
     /** place a fancy tree - uses Spooner's round tree */
     public static void placeFancyTree(World world, XRandom random, int x, int y, int z) {
         int height = random.Next(4, 4 + random.Next(16));
-        oak = new ProceduralTree(world, random, x, y, z, height);
+        var oak = new ProceduralTree(world, random, x, y, z, height);
         oak.prepareRound(rootButtresses:false, trunkHeightMult:psiF);
         oak.generate(roots:false, rootButtresses:false);
     }
 
     public static void placeMapleTree(World world, XRandom random, int x, int y, int z) {
         int height = random.Next(5, 5 + random.Next(3));
-        maple = new ProceduralTree(world, random, x, y, z, height) {
+        var maple = new ProceduralTree(world, random, x, y, z, height) {
             trunkThickness = 0.8f,
             foliageDensity = 1.2f,
             branchDensity = 0.0f,
@@ -98,7 +93,7 @@ public class TreeGenerator {
 
         var t = random.NextSingle() * 1.25f + 1.25f; // trunk thickness 1.25 - 2.5
 
-        maple = new ProceduralTree(world, random, x, y, z, height) {
+        var maple = new ProceduralTree(world, random, x, y, z, height) {
             trunkThickness = t,
             foliageDensity = 1.5f + t,
             branchDensity = 0.8f + t * 0.5f,
@@ -286,7 +281,7 @@ public class TreeGenerator {
     public static void placeMediumMahogany(World world, XRandom random, int x, int y, int z) {
         int height = random.Next(7, 16);
 
-        mahogany = new ProceduralTree(world, random, x, y, z, height) {
+        var mahogany = new ProceduralTree(world, random, x, y, z, height) {
             trunkThickness = random.NextSingle() * 0.5f + 1.0f, // 1.0 - 1.5
             foliageDensity = 1.5f,
             branchDensity = 1.2f,

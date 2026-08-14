@@ -14,12 +14,12 @@ public class CraftingTable : Block {
 
     public override bool onUse(World world, int x, int y, int z, Player player) {
         // MP client: server will handle opening (client sent PlaceBlockPacket, will receive InventoryOpenPacket)
-        if (Net.mode.isMPC()) {
+        if (!world.isServer) {
             return true; // return true to prevent block placement
         }
 
         // server-side: open crafting table inventory
-        if (Net.mode.isDed()) {
+        if (!world.isClient) {
             var ctx = new CraftingTableContext(player);
             var craftingGrid = ctx.getCraftingGrid();
 

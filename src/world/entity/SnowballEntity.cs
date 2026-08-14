@@ -50,7 +50,7 @@ public class SnowballEntity : Entity {
 
     protected override void updatePhysics(double dt) {
         // spawn particle trail
-        if (!Net.mode.isDed() && age % 3 == 0 && age > 5) {
+        if (world.isClient && age % 3 == 0 && age > 5) {
             // TODO: create SnowParticle? or this is fine?
             // var particle = new SnowParticle(world, position);
             // world.particles.add(particle);

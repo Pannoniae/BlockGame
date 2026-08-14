@@ -409,7 +409,7 @@ public class Mob(World world, string type) : Entity(world, type) {
     public override void update(double dt) {
         // multiplayer client: skip AI and physics for NON-PLAYER mobs, just interpolate
         // NOTE: Player extends Mob, so we need to exclude Player subclasses!
-        if (Net.mode.isMPC() && this is not Player) {
+        if (!world.isServer && this is not Player) {
             // set prev
             savePrevVars();
 
@@ -469,7 +469,7 @@ public class Mob(World world, string type) : Entity(world, type) {
                 // get block below entity
                 var pos = position.toBlockPos() + new Vector3I(0, -1, 0);
                 var blockBelow = Block.get(world.getBlock(pos));
-                if (!Net.mode.isDed() && blockBelow?.mat != null) {
+                if (world.isClient && blockBelow?.mat != null) {
                     Game.snd.playFootstep(blockBelow.mat.smat, position);
                 }
 

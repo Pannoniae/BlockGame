@@ -138,7 +138,7 @@ public class SignBlock : EntityBlock {
         }
 
         // only open GUI on client
-        if (!Net.mode.isDed()) {
+        if (world.isClient) {
             Screen.GAME_SCREEN.switchToMenu(new ui.menu.SignMenu(be));
             //((ui.menu.SignMenu)Screen.GAME_SCREEN.currentMenu!).setup();
 

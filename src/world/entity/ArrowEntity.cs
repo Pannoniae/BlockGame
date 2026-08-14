@@ -50,7 +50,7 @@ public class ArrowEntity : ProjectileEntity {
 
     protected override void spawnTrailParticles() {
         // spawn particles every 2 ticks after initial grace period
-        if (!Net.mode.isDed() && age % 2 == 0 && age > 8) {
+        if (world.isClient && age % 2 == 0 && age > 8) {
             var particle = new ArrowParticle(world, position);
             world.particles.add(particle);
         }

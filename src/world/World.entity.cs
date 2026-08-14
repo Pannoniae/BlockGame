@@ -48,14 +48,14 @@ public partial class World {
         }
 
         // notify entity tracker on server
-        if (Net.mode.isDed()) {
+        if (!isClient) {
             GameServer.instance.entityTracker.trackEntity(entity);
         }
     }
 
     public void removeEntity(Entity entity, int i) {
         // notify entity tracker on server BEFORE removal
-        if (Net.mode.isDed()) {
+        if (!isClient) {
             GameServer.instance.entityTracker.untrackEntity(entity.id);
         }
 
@@ -85,7 +85,7 @@ public partial class World {
 
     public void removeEntity(Entity entity) {
         // notify entity tracker on server BEFORE removal
-        if (Net.mode.isDed()) {
+        if (!isClient) {
             GameServer.instance.entityTracker.untrackEntity(entity.id);
         }
 
@@ -104,7 +104,7 @@ public partial class World {
     /** spawn block drop as item entity with randomised position and velocity */
     public void spawnBlockDrop(int x, int y, int z, Item item, int count, int metadata) {
 
-        if (Net.mode.isMPC()) {
+        if (!isServer) {
             return;
         }
 
