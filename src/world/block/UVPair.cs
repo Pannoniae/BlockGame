@@ -11,7 +11,7 @@ namespace BlockGame.world.block;
 /**
  * Stores UV in normalised coordinates (0.0 to 1.0)
  */
-[StructLayout(LayoutKind.Auto)]
+[StructLayout(LayoutKind.Sequential)]
 public readonly record struct UVPair(float u, float v) {
     public const int ATLASSIZE = 16;
 

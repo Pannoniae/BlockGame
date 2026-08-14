@@ -74,8 +74,8 @@ public class StreamingVAO<T> where T : unmanaged {
 
         GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
         GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
-        GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 5 * sizeof(ushort));
-        GL.VertexAttribIFormat(3, 2, VertexAttribIType.UnsignedByte, 0 + 7 * sizeof(ushort));
+        GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 6 * sizeof(ushort));
+        GL.VertexAttribIFormat(3, 2, VertexAttribIType.UnsignedByte, 0 + 5 * sizeof(ushort));
 
         GL.VertexAttribBinding(0, 0);
         GL.VertexAttribBinding(1, 0);

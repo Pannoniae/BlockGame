@@ -27,7 +27,7 @@ public partial class BlockRenderer {
     /// AVX2 version - packs sky+block into 256-bit vectors for parallel processing
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static uint average2x4_avx2(Vector128<uint> lightNibbles, uint oFlagsPacked) {
+    internal static uint average2x4_avx2(Vector128<uint> lightNibbles, uint oFlagsPacked) {
         var oFlags = Vector128.CreateScalarUnsafe(oFlagsPacked).AsByte();
         var three = Vector128.Create((byte)3);
         var lt3 = Sse2.CompareLessThan(oFlags.AsSByte(), three.AsSByte()).AsByte();
@@ -97,7 +97,7 @@ public partial class BlockRenderer {
     /// SSE fallback
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static uint average2x4_sse(Vector128<uint> lightNibbles, uint oFlagsPacked) {
+    internal static uint average2x4_sse(Vector128<uint> lightNibbles, uint oFlagsPacked) {
         // if (oFlags < 3) oFlags &= 3; else unchanged
         var oFlags = Vector128.CreateScalarUnsafe(oFlagsPacked).AsByte();
         var three = Vector128.Create((byte)3);

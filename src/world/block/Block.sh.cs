@@ -90,9 +90,22 @@ public partial class Block {
         return (ushort)(light << 8 | ao << 3 | direction & 0b111);
     }
 
-    public static Color packColour(byte direction, byte ao, byte light) {
+    private static readonly uint[] colourLUT = buildColourLUT();
 
-        Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
+    private static uint[] buildColourLUT() {
+        var lut = new uint[8 * 4];
+        for (int dir = 0; dir < 8; dir++) {
+            for (int ao = 0; ao < 4; ao++) {
+                var shade = dir < 6 ? a[dir] : 1f;
+                byte tint = (byte)(shade * aoArray[ao] * 255);
+                lut[(dir << 2) | ao] = (uint)(tint | (tint << 8) | (tint << 16) | (255 << 24));
+            }
+        }
+
+        return lut;
+    }
+
+    public static Color packColour(byte direction, byte ao, byte light) {
         direction = (byte)(direction & 0b111);
         var blocklight = (byte)(light >> 4);
         var skylight = (byte)(light & 0xF);
@@ -108,28 +121,17 @@ public partial class Block {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Color packColour(byte direction, byte ao) {
-        Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
-
-        direction &= 0b111;
-        byte tint = (byte)(a[direction] * aoArray[ao] * 255);
-        return new Color(tint, tint, tint, (byte)255);
+        var c = colourLUT[((direction & 0b111) << 2) | (ao & 3)];
+        return new Color((byte)c, (byte)(c >> 8), (byte)(c >> 16), (byte)(c >> 24));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static uint packColourB(byte direction, byte ao) {
-        // can we just inline the array?
-
-        Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
-
-
-        direction &= 0b111;
-        byte tint = (byte)(a[direction] * aoArray[ao] * 255);
-        return (uint)(tint | (tint << 8) | (tint << 16) | (255 << 24));
+        return colourLUT[((direction & 0b111) << 2) | (ao & 3)];
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static uint packColourBTinted(byte direction, byte ao, byte tr, byte tg, byte tb) {
-        Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
         direction &= 0b111;
         float shade = a[direction] * aoArray[ao];
         return (uint)((byte)(shade * tr) | ((byte)(shade * tg) << 8) | ((byte)(shade * tb) << 16) | (255 << 24));

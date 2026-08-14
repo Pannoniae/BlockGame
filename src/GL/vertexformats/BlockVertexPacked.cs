@@ -9,18 +9,18 @@ public struct BlockVertexPacked {
     [FieldOffset(4)] public ushort z;
     [FieldOffset(6)] public ushort u;
     [FieldOffset(8)] public ushort v;
-    
+    [FieldOffset(10)] public byte light;
+    [FieldOffset(11)] public byte unused;
+
     /** We're overlapping here so you can set the colour using whatever format you already have it in
      * Colour is RGBA order
      */
-    [FieldOffset(10)] public Color c;
-    [FieldOffset(10)] public uint cu;
-    [FieldOffset(10)] public byte r;
-    [FieldOffset(11)] public byte g;
-    [FieldOffset(12)] public byte b;
-    [FieldOffset(13)] public byte a;
-    [FieldOffset(14)] public byte light;
-    [FieldOffset(15)] public byte unused;
+    [FieldOffset(12)] public Color c;
+    [FieldOffset(12)] public uint cu;
+    [FieldOffset(12)] public byte r;
+    [FieldOffset(13)] public byte g;
+    [FieldOffset(14)] public byte b;
+    [FieldOffset(15)] public byte a;
 
     public BlockVertexPacked(float x, float y, float z, float u, float v, byte r, byte g, byte b, byte a) {
         this.x = (ushort)((x + 16) * 256);

@@ -231,7 +231,7 @@ public unsafe class CommandBuffer : IDisposable {
         size = 0;
 
         // allocate buffer storage
-        GL.NamedBufferData(handle, (uint)capacity, null, VertexBufferObjectUsage.StaticDraw);
+        GL.NamedBufferData(handle, (uint)capacity, null, BufferUsageARB.StaticDraw);
 
         // allocate managed memory for staging data
         data = (byte*)NativeMemory.AlignedAlloc((nuint)capacity, 16);
@@ -366,7 +366,7 @@ public unsafe class CommandBuffer : IDisposable {
         // allocate new GPU buffer
         var oldHandle = handle;
         handle = GL.CreateBuffer();
-        GL.NamedBufferData(handle, (uint)newCapacity, null, VertexBufferObjectUsage.StaticDraw);
+        GL.NamedBufferData(handle, (uint)newCapacity, null, BufferUsageARB.StaticDraw);
         
         // allocate new staging memory
         var oldData = data;

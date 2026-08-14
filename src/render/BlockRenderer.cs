@@ -1084,7 +1084,6 @@ public partial class BlockRenderer {
         // clear arrays before starting
         chunkVertices.Clear();
 
-        ref RenderContext.ArrayVertexCache tempVertices = ref ctx.vertexCache;
         Span<uint> nba = stackalloc uint[6];
 
         // this is correct!
@@ -1095,6 +1094,9 @@ public partial class BlockRenderer {
         var AO = Settings.instance.AO;
         this.smoothLighting = smoothLighting;
         this.AO = AO;
+
+        var a = Block.atlasRatio * 32768f;
+        var texFactor = Vector128.Create(a.X, a.Y, a.X, a.Y);
 
         for (int idx = 0; idx < Chunk.MAXINDEX; idx++) {
             // index for array accesses
@@ -1163,11 +1165,19 @@ public partial class BlockRenderer {
             // status update: we fill it regardless otherwise we crash lol
             fillCache(ref neighbourRef, ref lightRef);
 
+            var rt = Block.renderType[blockID];
+
+            // plain cubes fastpath, they don't need any of the generic immediate-mode machinery
+            if (rt == RenderType.CUBE && !Block.customCulling[blockID]) {
+                renderCubeFast(x, y, z, ref neighbourRef, ref lightRef, getTex(bl.uvs[0]), texFactor, vertices);
+                continue;
+            }
+
             var wp = World.toWorldPos(subChunk.coord, x, y, z);
 
             renderBlockSwitch(bl, wp.X, wp.Y, wp.Z, neighbourRef.getMetadata(), vertices);
 
-            if (Block.renderType[blockID] != RenderType.MODEL) {
+            if (rt != RenderType.MODEL) {
                 continue;
             }
 
@@ -1178,6 +1188,11 @@ public partial class BlockRenderer {
 
             // if you get the faces BEFORE checking it's a model, it will crash on custom blocks
             ref Face facesRef = ref MemoryMarshal.GetArrayDataReference(bl.model.faces);
+
+            // broadcast per component
+            var pbx = Vector128.Create(x + 16f);
+            var pby = Vector128.Create(y + 16f);
+            var pbz = Vector128.Create(z + 16f);
 
             for (int d = 0; d < bl.model.faces.Length; d++) {
                 var dir = facesRef.direction;
@@ -1260,51 +1275,23 @@ public partial class BlockRenderer {
                     tex.Z = facesRef.max.u * 16f / Block.atlasSize;
                     tex.W = facesRef.max.v * 16f / Block.atlasSize;*/
 
-                    tex = Vector128.Create(facesRef.min.u, facesRef.min.v, facesRef.max.u, facesRef.max.v);
+                    // min and max are adjacent UVPairs, so (min.u, min.v, max.u, max.v) is one load
+                    tex = Vector128.LoadUnsafe(ref Unsafe.As<UVPair, float>(ref Unsafe.AsRef(in facesRef.min)));
 
                     if (forceTex.u >= 0 && forceTex.v >= 0) {
                         tex = Vector128.Create(forceTex.u, forceTex.v, forceTex.u + 1, forceTex.v + 1);
                     }
 
                     // divide by texture size / atlas size, multiply by scaling factor
-                    var factor = Block.atlasRatio * 32768f;
-                    // todo optimise
-                    tex = Vector128.Create(
-                        tex[0] * factor.X,
-                        tex[1] * factor.Y,
-                        tex[2] * factor.X,
-                        tex[3] * factor.Y);
+                    tex = Vector128.Multiply(tex, texFactor);
 
-                    /*Vector256<float> vec = Vector256.Create(
-                        x + facesRef.x1,
-                        y + facesRef.y1,
-                        z + facesRef.z1,
-                        x + facesRef.x2,
-                        y + facesRef.y2,
-                        z + facesRef.z2,
-                        x + facesRef.x3,
-                        y + facesRef.y3);*/
-                    // OR WE CAN JUST LOAD DIRECTLY!
-                    Vector256<float> vec = Vector256.LoadUnsafe(ref Unsafe.As<Face, float>(ref facesRef));
-                    // then add all this shit!
-                    vec = Vector256.Add(vec, Vector256.Create((float)x, y, z, x, y, z, x, y));
-
-                    vec = Vector256.Add(vec, Vector256.Create(16f));
-                    vec = Vector256.Multiply(vec, 256);
-
-                    /*Vector128<float> vec2 = Vector128.Create(
-                        z + facesRef.z3,
-                        x + facesRef.x4,
-                        y + facesRef.y4,
-                        z + facesRef.z4);*/
-
-
-                    Vector128<float> vec2 = Vector128.LoadUnsafe(in Unsafe.AsRef(in facesRef.z3));
-
-                    vec2 = Vector128.Add(vec2, Vector128.Create((float)z, x, y, z));
-
-                    vec2 = Vector128.Add(vec2, Vector128.Create(16f));
-                    vec2 = Vector128.Multiply(vec2, 256);
+                    ref float ff = ref Unsafe.As<Face, float>(ref facesRef);
+                    var Xi = Vector128.ConvertToInt32Native(
+                        Vector128.Multiply(Vector128.Add(Vector128.LoadUnsafe(ref ff, 0), pbx), 256f)).AsUInt32();
+                    var Yi = Vector128.ConvertToInt32Native(
+                        Vector128.Multiply(Vector128.Add(Vector128.LoadUnsafe(ref ff, 4), pby), 256f)).AsUInt32();
+                    var Zi = Vector128.ConvertToInt32Native(
+                        Vector128.Multiply(Vector128.Add(Vector128.LoadUnsafe(ref ff, 8), pbz), 256f)).AsUInt32();
 
                     // determine vertex order to prevent cracks (combine AO and lighting)
                     // extract skylight values and invert them (15-light = darkness)
@@ -1321,46 +1308,28 @@ public partial class BlockRenderer {
                     var shift = (ao.First + dark1 + ao.Third + dark3 >
                                  ao.Second + dark2 + ao.Fourth + dark4).toByte();
 
-                    // add vertices
-                    ref var vertex = ref tempVertices[(0 + shift) & 3];
-                    vertex.x = (ushort)vec[0];
-                    vertex.y = (ushort)vec[1];
-                    vertex.z = (ushort)vec[2];
-                    vertex.u = (ushort)tex[0];
-                    vertex.v = (ushort)tex[1];
-                    vertex.cu = bananaTint ? Block.packColourBTinted((byte)dir, ao.First, 255, 230, 80) : Block.packColourB((byte)dir, ao.First);
-                    vertex.light = light.First;
+                    // v0=(u0,v0) v1=(u0,v1) v2=(u1,v1) v3=(u1,v0)
+                    var ti = Vector128.ConvertToInt32Native(tex).AsUInt32();
+                    var U = Vector128.Shuffle(ti, Vector128.Create(0u, 0u, 2u, 2u));
+                    var V = Vector128.Shuffle(ti, Vector128.Create(1u, 3u, 3u, 1u));
 
-                    vertex = ref tempVertices[(1 + shift) & 3];
-                    vertex.x = (ushort)vec[3];
-                    vertex.y = (ushort)vec[4];
-                    vertex.z = (ushort)vec[5];
-                    vertex.u = (ushort)tex[0];
-                    vertex.v = (ushort)tex[3];
-                    vertex.cu = bananaTint ? Block.packColourBTinted((byte)dir, ao.Second, 255, 230, 80) : Block.packColourB((byte)dir, ao.Second);
-                    vertex.light = light.Second;
+                    var D = bananaTint
+                        ? Vector128.Create(
+                            Block.packColourBTinted((byte)dir, ao.First, 255, 230, 80),
+                            Block.packColourBTinted((byte)dir, ao.Second, 255, 230, 80),
+                            Block.packColourBTinted((byte)dir, ao.Third, 255, 230, 80),
+                            Block.packColourBTinted((byte)dir, ao.Fourth, 255, 230, 80))
+                        : Vector128.Create(
+                            Block.packColourB((byte)dir, ao.First),
+                            Block.packColourB((byte)dir, ao.Second),
+                            Block.packColourB((byte)dir, ao.Third),
+                            Block.packColourB((byte)dir, ao.Fourth));
 
-
-                    vertex = ref tempVertices[(2 + shift) & 3];
-                    vertex.x = (ushort)vec[6];
-                    vertex.y = (ushort)vec[7];
-                    vertex.z = (ushort)vec2[0];
-                    vertex.u = (ushort)tex[2];
-                    vertex.v = (ushort)tex[3];
-                    vertex.cu = bananaTint ? Block.packColourBTinted((byte)dir, ao.Third, 255, 230, 80) : Block.packColourB((byte)dir, ao.Third);
-                    vertex.light = light.Third;
-
-                    vertex = ref tempVertices[(3 + shift) & 3];
-                    vertex.x = (ushort)vec2[1];
-                    vertex.y = (ushort)vec2[2];
-                    vertex.z = (ushort)vec2[3];
-                    vertex.u = (ushort)tex[2];
-                    vertex.v = (ushort)tex[1];
-                    vertex.cu = bananaTint ? Block.packColourBTinted((byte)dir, ao.Fourth, 255, 230, 80) : Block.packColourB((byte)dir, ao.Fourth);
-                    vertex.light = light.Fourth;
-                    vertices.AddRange(tempVertices);
-                    //cv += 4;
-                    //ci += 6;
+                    storeQuad(ref reserve4(vertices),
+                        Xi | (Yi << 16),
+                        Zi | (U << 16),
+                        V | (spread(light) << 16),
+                        D, shift);
                 }
 
                 facesRef = ref Unsafe.Add(ref facesRef, 1);
@@ -1369,6 +1338,118 @@ public partial class BlockRenderer {
         //Console.Out.WriteLine($"vert4: {sw.Elapsed.TotalMicroseconds}us");
     }
 
+
+    /**
+     * cube corners per face
+     * (u0,v0) (u0,v1) (u1,v1) (u1,v0)
+     */
+    private static ReadOnlySpan<byte> cubeCorners => [
+        0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, // WEST
+        1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, // EAST
+        0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, // SOUTH
+        1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, // NORTH
+        1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, // DOWN
+        0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1  // UP
+    ];
+
+    private static readonly uint[] cubeOffsets = buildCubeOffsets();
+
+    private static uint[] buildCubeOffsets() {
+        var t = new uint[6 * 12];
+        for (int dir = 0; dir < 6; dir++) {
+            for (int vert = 0; vert < 4; vert++) {
+                for (int c = 0; c < 3; c++) {
+                    // we flip cubeCorners to component-major so it has the same layout as the model path
+                    t[dir * 12 + c * 4 + vert] = (uint)(cubeCorners[dir * 12 + vert * 3 + c] * 256);
+                }
+            }
+        }
+
+        return t;
+    }
+
+    [SkipLocalsInit]
+    private void renderCubeFast(int x, int y, int z, ref uint neighbourRef, ref byte lightRef, UVPair tx,
+        Vector128<float> texFactor, List<BlockVertexPacked> vertices) {
+        // (coord + 16) << 8 is the position encoding, corner offsets add 0/256(16*16)
+        var pbx = Vector128.Create((uint)((x + 16) << 8));
+        var pby = Vector128.Create((uint)((y + 16) << 8));
+        var pbz = Vector128.Create((uint)((z + 16) << 8));
+
+        // only supports one texture! if it doesn't match like grass, we can't use this
+        var texv = Vector128.Multiply(Vector128.Create(tx.u, tx.v, tx.u + 1, tx.v + 1), texFactor);
+        var ti = Vector128.ConvertToInt32Native(texv).AsUInt32();
+        var U = Vector128.Shuffle(ti, Vector128.Create(0u, 0u, 2u, 2u));
+        var V = Vector128.Shuffle(ti, Vector128.Create(1u, 3u, 3u, 1u));
+
+        ref uint offsets = ref MemoryMarshal.GetArrayDataReference(cubeOffsets);
+
+        for (int dir = 0; dir < 6; dir++) {
+            var nb = Unsafe.Add(ref neighbourRef, lightOffsets[dir]);
+
+            // todo maybe don't copypaste with the other meshing methods for the skip conditions?
+            if (Block.fullBlock[nb.getID()]) {
+                continue;
+            }
+
+            byte lb = Unsafe.Add(ref lightRef, lightOffsets[dir]);
+
+            Unsafe.SkipInit(out FourBytes light);
+            Unsafe.SkipInit(out FourBytes ao);
+            ao.Whole = 0;
+            light.Whole = 0;
+
+            if (!smoothLighting) {
+                light = new FourBytes(lb, lb, lb, lb);
+            }
+
+            if (smoothLighting || AO) {
+                FourBytes o;
+                if (Avx2.IsSupported) {
+                    getDirectionOffsetsAndData_simd((RawDirection)dir, lb, out light, out o);
+                }
+                else {
+                    getDirectionOffsetsAndData((RawDirection)dir, lb, out light, out o);
+                }
+
+                if (!smoothLighting) {
+                    light = new FourBytes(lb, lb, lb, lb);
+                }
+
+                if (AO) {
+                    ao.First = (byte)(o.First == 3 ? 3 : byte.PopCount(o.First));
+                    ao.Second = (byte)((o.Second & 3) == 3 ? 3 : byte.PopCount(o.Second));
+                    ao.Third = (byte)((o.Third & 3) == 3 ? 3 : byte.PopCount(o.Third));
+                    ao.Fourth = (byte)((o.Fourth & 3) == 3 ? 3 : byte.PopCount(o.Fourth));
+                }
+            }
+
+            // AO
+            var dark1 = ~light.First & 0xF;
+            var dark2 = ~light.Second & 0xF;
+            var dark3 = ~light.Third & 0xF;
+            var dark4 = ~light.Fourth & 0xF;
+            var shift = (ao.First + dark1 + ao.Third + dark3 >
+                         ao.Second + dark2 + ao.Fourth + dark4).toByte();
+
+            // add the corner offsets
+            var xi = Vector128.Add(pbx, Vector128.LoadUnsafe(ref offsets, (uint)(dir * 12)));
+            var yi = Vector128.Add(pby, Vector128.LoadUnsafe(ref offsets, (uint)(dir * 12 + 4)));
+            var zi = Vector128.Add(pbz, Vector128.LoadUnsafe(ref offsets, (uint)(dir * 12 + 8)));
+
+            var d = Vector128.Create(
+                Block.packColourB((byte)dir, ao.First),
+                Block.packColourB((byte)dir, ao.Second),
+                Block.packColourB((byte)dir, ao.Third),
+                Block.packColourB((byte)dir, ao.Fourth));
+
+            storeQuad(ref reserve4(vertices),
+                xi | (yi << 16),
+                zi | (U << 16),
+                V | (spread(light) << 16),
+                d, shift);
+        }
+    }
 
     /**
      * Fills the 3x3x3 local cache with blocks and light values.
@@ -1471,6 +1552,50 @@ public partial class BlockRenderer {
                             ((lightNibble >> 28) & 0xF))
                            / popcnt);
         return (byte)(sky | (block << 4));
+    }
+
+    /**
+     * TODO probably should be a util or we should just use XList?
+     */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static ref BlockVertexPacked reserve4(List<BlockVertexPacked> list) {
+        int n = list.Count;
+        CollectionsMarshal.SetCount(list, n + 4);
+        return ref Unsafe.Add(ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(list)), n);
+    }
+
+    /** Widen the four light bytes of a FourBytes into four uints */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector128<uint> spread(FourBytes light) {
+        return Sse41.IsSupported
+            ? Sse41.ConvertToVector128Int32(Vector128.CreateScalarUnsafe(light.Whole).AsByte()).AsUInt32()
+            : Vector128.Create((uint)light.First, light.Second, light.Third, light.Fourth);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static void storeQuad(ref BlockVertexPacked dst, Vector128<uint> A, Vector128<uint> B,
+        Vector128<uint> C, Vector128<uint> D, int shift) {
+        if (Sse2.IsSupported) {
+            var t0 = Sse2.UnpackLow(A, B); // A0 B0 A1 B1
+            var t1 = Sse2.UnpackHigh(A, B); // A2 B2 A3 B3
+            var t2 = Sse2.UnpackLow(C, D); // C0 D0 C1 D1
+            var t3 = Sse2.UnpackHigh(C, D); // C2 D2 C3 D3
+
+            store(ref dst, (0 + shift) & 3, Sse2.UnpackLow(t0.AsUInt64(), t2.AsUInt64()).AsUInt32());
+            store(ref dst, (1 + shift) & 3, Sse2.UnpackHigh(t0.AsUInt64(), t2.AsUInt64()).AsUInt32());
+            store(ref dst, (2 + shift) & 3, Sse2.UnpackLow(t1.AsUInt64(), t3.AsUInt64()).AsUInt32());
+            store(ref dst, (3 + shift) & 3, Sse2.UnpackHigh(t1.AsUInt64(), t3.AsUInt64()).AsUInt32());
+        }
+        else {
+            for (int i = 0; i < 4; i++) {
+                store(ref dst, (i + shift) & 3, Vector128.Create(A[i], B[i], C[i], D[i]));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static void store(ref BlockVertexPacked d, int slot, Vector128<uint> v) {
+            v.StoreUnsafe(ref Unsafe.As<BlockVertexPacked, uint>(ref Unsafe.Add(ref d, slot)));
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
