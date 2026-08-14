@@ -21,6 +21,8 @@ public struct VertexTinted {
     public byte a;
     [FieldOffset(12)]
     public Color c;
+    [FieldOffset(12)]
+    public uint cu;
 
 
     public VertexTinted(float x, float y, float z, byte r, byte g, byte b, byte a) {

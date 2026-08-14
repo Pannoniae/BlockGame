@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
 using BlockGame.util;
@@ -19,6 +20,27 @@ public enum FogType {
     Linear = 0,
     Exp = 1,
     Exp2 = 2
+}
+
+public static class Tint {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static uint mul(uint c, uint tint) {
+        // ...prolly
+        if (tint == 0xFFFFFFFFu) {
+            return c;
+        }
+
+        var p = Vector128.WidenLower(Vector128.CreateScalar(c).AsByte()) *
+                Vector128.WidenLower(Vector128.CreateScalar(tint).AsByte());
+
+        p += Vector128.ShiftRightLogical(p, 8) + Vector128<ushort>.One;
+        p = Vector128.ShiftRightLogical(p, 8);
+
+        return Vector128.Narrow(p, p).AsUInt32().ToScalar();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static uint pack(Color c) => (uint)(c.R | (c.G << 8) | (c.B << 16) | (c.A << 24));
 }
 
 public abstract class InstantDraw<T> where T : unmanaged {
@@ -61,6 +83,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
 
     // vertex tint
     public Color tint = Color.White;
+    protected uint tintU = 0xFFFFFFFFu;
 
     // Matrix components for automatic matrix computation
     protected MatrixStack? modelMatrix;
@@ -175,6 +198,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
 
     public void setColour(Color c) {
         tint = c;
+        tintU = Tint.pack(c);
     }
 
     public void setMV(ref Matrix4x4 modelView) {
@@ -372,11 +396,7 @@ public class InstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTinted
             resizeStorage();
         }
 
-        // apply tint
-        vertex.r = (byte)((vertex.r * tint.R) * (1 / 255f));
-        vertex.g = (byte)((vertex.g * tint.G) * (1 / 255f));
-        vertex.b = (byte)((vertex.b * tint.B) * (1 / 255f));
-        vertex.a = (byte)((vertex.a * tint.A) * (1 / 255f));
+        vertex.cu = Tint.mul(vertex.cu, tintU);
 
         vertices.Add(vertex);
         currentVertex++;
@@ -437,11 +457,7 @@ public sealed class InstantDrawColour(int maxVertices) : InstantDraw<VertexTinte
             resizeStorage();
         }
 
-        // apply tint
-        vertex.r = (byte)((vertex.r * tint.R) * (1 / 255f));
-        vertex.g = (byte)((vertex.g * tint.G) * (1 / 255f));
-        vertex.b = (byte)((vertex.b * tint.B) * (1 / 255f));
-        vertex.a = (byte)((vertex.a * tint.A) * (1 / 255f));
+        vertex.cu = Tint.mul(vertex.cu, tintU);
 
         vertices.Add(vertex);
         currentVertex++;
@@ -555,11 +571,7 @@ public class FastInstantDrawTexture : InstantDraw<BlockVertexTinted> {
             resizeStorage();
         }
 
-        // apply tint
-        vertex.r = (byte)((vertex.r * tint.R) * (1 / 255f));
-        vertex.g = (byte)((vertex.g * tint.G) * (1 / 255f));
-        vertex.b = (byte)((vertex.b * tint.B) * (1 / 255f));
-        vertex.a = (byte)((vertex.a * tint.A) * (1 / 255f));
+        vertex.cu = Tint.mul(vertex.cu, tintU);
 
         // write directly to mapped ptr with region offset
         unsafe {
@@ -567,9 +579,9 @@ public class FastInstantDrawTexture : InstantDraw<BlockVertexTinted> {
         }
     }
 
-    protected new void resizeStorage() {
-        var newMaxVertices = maxVertices * 2;
+    protected new void resizeStorage() => realloc(maxVertices * 2);
 
+    private void realloc(int newMaxVertices) {
         unsafe {
             // unmap old buffer
             if (mappedPtr != null) {
@@ -604,7 +616,7 @@ public class FastInstantDrawTexture : InstantDraw<BlockVertexTinted> {
             format();
         }
 
-        // DON'T reset region - new buffer is independent, keep rotating
+        regionOffset = currentRegion * maxVertices;
     }
 
     /** Pre-reserve capacity for known vertex count - zero overhead addVertex after this */
@@ -617,25 +629,22 @@ public class FastInstantDrawTexture : InstantDraw<BlockVertexTinted> {
         int newSize = maxVertices;
         while (newSize < count) newSize *= 2;
 
-        // resize once!
-        maxVertices = newSize;
-        resizeStorage();
-    }
-
-    public void reserve(int count, int mult) {
-        // todo
+        realloc(newSize);
     }
 
     public void addVertexE(BlockVertexTinted vertex) {
-        // apply tint
-        vertex.r = (byte)((vertex.r * tint.R) * (1 / 255f));
-        vertex.g = (byte)((vertex.g * tint.G) * (1 / 255f));
-        vertex.b = (byte)((vertex.b * tint.B) * (1 / 255f));
-        vertex.a = (byte)((vertex.a * tint.A) * (1 / 255f));
+        vertex.cu = Tint.mul(vertex.cu, tintU);
 
         // write directly to mapped ptr with region offset
         unsafe {
             mappedPtr[regionOffset + currentVertex++] = vertex;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void vtx(float x, float y, float z, float u, float v, uint c) {
+        unsafe {
+            mappedPtr[regionOffset + currentVertex++] = new BlockVertexTinted { x = x, y = y, z = z, u = u, v = v, cu = c };
         }
     }
 
@@ -924,11 +933,7 @@ public class InstantDrawEntity(int maxVertices) : InstantDraw<EntityVertex>(maxV
             resizeStorage();
         }
 
-        // apply tint
-        vertex.r = (byte)((vertex.r * tint.R) * (1 / 255f));
-        vertex.g = (byte)((vertex.g * tint.G) * (1 / 255f));
-        vertex.b = (byte)((vertex.b * tint.B) * (1 / 255f));
-        vertex.a = (byte)((vertex.a * tint.A) * (1 / 255f));
+        vertex.cu = Tint.mul(vertex.cu, tintU);
 
         vertices.Add(vertex);
         currentVertex++;
@@ -1055,11 +1060,7 @@ public class FastInstantDrawEntity : InstantDraw<EntityVertex> {
     }
 
     public override void addVertex(EntityVertex vertex) {
-        // apply tint
-        vertex.r = (byte)((vertex.r * tint.R) * (1 / 255f));
-        vertex.g = (byte)((vertex.g * tint.G) * (1 / 255f));
-        vertex.b = (byte)((vertex.b * tint.B) * (1 / 255f));
-        vertex.a = (byte)((vertex.a * tint.A) * (1 / 255f));
+        vertex.cu = Tint.mul(vertex.cu, tintU);
 
         vertices.Add(vertex);
         currentVertex++;

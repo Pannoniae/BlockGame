@@ -25,6 +25,7 @@ public struct EntityVertex {
     [FieldOffset(22)] public byte b;
     [FieldOffset(23)] public byte a;
     [FieldOffset(20)] public Color c;
+    [FieldOffset(20)] public uint cu;
 
     [FieldOffset(24)]
     public uint normal;

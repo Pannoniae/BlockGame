@@ -128,35 +128,25 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             goto reload;
         }
 
-        // pre-calc max verts for full 256x256 texture - static, never changes
-        cloudMaxVerts = 0;
         for (int yy = 0; yy < 256; yy++) {
+            int row = 0;
             for (int xx = 0; xx < 256; xx++) {
-                if (!pixels[(yy << 8) + xx]) continue;
+                int fc = 0;
+                if (pixels[(yy << 8) + xx]) {
+                    // top+bottom = 8 verts, 4 per visible side
+                    fc = 8;
+                    if (!pixels[(yy << 8) + ((xx + 255) & 255)]) fc += 4;
+                    if (!pixels[(yy << 8) + ((xx + 1) & 255)]) fc += 4;
+                    if (!pixels[(((yy + 255) & 255) << 8) + xx]) fc += 4;
+                    if (!pixels[(((yy + 1) & 255) << 8) + xx]) fc += 4;
+                }
 
-                // top+bottom = 8 verts always
-                int fc = 8;
-
-                // check 4 adjacents for side faces (4 verts each)
-                int adj = xx - 1;
-                adj = adj < 0 ? 255 : adj;
-                if (!pixels[(yy << 8) + adj]) fc += 4;
-
-                adj = xx + 1;
-                adj = adj >= 256 ? 0 : adj;
-                if (!pixels[(yy << 8) + adj]) fc += 4;
-
-                adj = yy - 1;
-                adj = adj < 0 ? 255 : adj;
-                if (!pixels[(adj << 8) + xx]) fc += 4;
-
-                adj = yy + 1;
-                adj = adj >= 256 ? 0 : adj;
-                if (!pixels[(adj << 8) + xx]) fc += 4;
-
-                cloudMaxVerts += fc;
+                row += fc;
+                cloudCounts[(yy + 1) * 257 + xx + 1] = cloudCounts[yy * 257 + xx + 1] + row;
             }
         }
+
+        cloudMaxVerts = cloudCounts[256 * 257 + 256];
 
         reload: ;
 

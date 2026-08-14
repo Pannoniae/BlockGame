@@ -27,6 +27,25 @@ public sealed partial class WorldRenderer {
     private readonly bool[] pixels;
     private readonly int cloudMaxVerts; // pre-calculated max verts
 
+
+    private readonly int[] cloudCounts = new int[257 * 257];
+
+
+    private int sum(int x, int y) {
+        var qx = x >> 8;
+        var rx = x & 255;
+        var qy = y >> 8;
+        var ry = y & 255;
+        return qx * qy * cloudMaxVerts
+               + qx * cloudCounts[ry * 257 + 256]
+               + qy * cloudCounts[256 * 257 + rx]
+               + cloudCounts[ry * 257 + rx];
+    }
+
+    private int cloudVerts(int x0, int x1, int y0, int y1) {
+        return sum(x1, y1) - sum(x0, y1) - sum(x1, y0) + sum(x0, y0);
+    }
+
     private void renderClouds(double interp) {
 
         // if below 4 skip it
@@ -306,20 +325,10 @@ public sealed partial class WorldRenderer {
 
     private void addCloud(float x0, float y0, float z0, float x1, float y1, float z1,
         float scale, float zScroll, Color cloudColour) {
-        // shades
-        Span<float> shades = [
-            1.0f, // top
-            0.8f, // north/south
-            0.7f, // east/west
-            0.6f // bottom
-        ];
-
-        Span<Color> cc = [
-            cloudColour * new Color(shades[0], shades[0], shades[0], 1.0f),
-            cloudColour * new Color(shades[1], shades[1], shades[1], 1.0f),
-            cloudColour * new Color(shades[2], shades[2], shades[2], 1.0f),
-            cloudColour * new Color(shades[3], shades[3], shades[3], 1.0f)
-        ];
+        uint cTop = Tint.pack(cloudColour);
+        uint cEW = Tint.pack(cloudColour * new Color(0.8f, 0.8f, 0.8f, 1.0f));
+        uint cNS = Tint.pack(cloudColour * new Color(0.7f, 0.7f, 0.7f, 1.0f));
+        uint cBot = Tint.pack(cloudColour * new Color(0.6f, 0.6f, 0.6f, 1.0f));
 
         var idt = cloudidt;
 
@@ -329,128 +338,117 @@ public sealed partial class WorldRenderer {
         int w = (int)tex.width;
         int h = (int)tex.height;
 
+        // if this isn't true, code has to be updated!
+        Debug.Assert(w == 256 && h == 256);
+
         // calc UVs for entire cloud area
         float u0 = x0 / scale;
         float u1 = x1 / scale;
         float v0 = (z0 + zScroll) / scale;
         float v1 = (z1 + zScroll) / scale;
 
-        // top face - single quad
-        idt.setColour(cc[0]);
-        idt.addVertex(new BlockVertexTinted(x0, y1, z0, u0, v0));
-        idt.addVertex(new BlockVertexTinted(x1, y1, z0, u1, v0));
-        idt.addVertex(new BlockVertexTinted(x1, y1, z1, u1, v1));
-        idt.addVertex(new BlockVertexTinted(x0, y1, z1, u0, v1));
-
-        // bottom face - single quad
-        idt.setColour(cc[3]);
-        idt.addVertex(new BlockVertexTinted(x0, y0, z1, u0, v1));
-        idt.addVertex(new BlockVertexTinted(x1, y0, z1, u1, v1));
-        idt.addVertex(new BlockVertexTinted(x1, y0, z0, u1, v0));
-        idt.addVertex(new BlockVertexTinted(x0, y0, z0, u0, v0));
-
-
         int x0o = (int)float.Floor(u0 * w);
         int x1o = (int)float.Ceiling(u1 * w);
         int y0o = (int)float.Floor(v0 * h);
         int y1o = (int)float.Ceiling(v1 * h);
 
+        idt.reserve(cloudVerts(x0o, x1o, y0o, y1o) + 8);
+
+        // top
+        idt.vtx(x0, y1, z0, u0, v0, cTop);
+        idt.vtx(x1, y1, z0, u1, v0, cTop);
+        idt.vtx(x1, y1, z1, u1, v1, cTop);
+        idt.vtx(x0, y1, z1, u0, v1, cTop);
+
+        // bottom
+        idt.vtx(x0, y0, z1, u0, v1, cBot);
+        idt.vtx(x1, y0, z1, u1, v1, cBot);
+        idt.vtx(x1, y0, z0, u1, v0, cBot);
+        idt.vtx(x0, y0, z0, u0, v0, cBot);
+
         float pw = scale / w;
         float pd = scale / h;
+        float iw = 1f / w;
+        float ih = 1f / h;
 
         var img = pixels;
 
-        for (int tx = x0o; tx < x1o; tx++) {
-            for (int ty = y0o; ty < y1o; ty++) {
-                // wrap
-                int xx = tx % w;
-                int yy = ty % h;
-                if (xx < 0) xx += w;
-                if (yy < 0) yy += h;
+        int xx0 = x0o % w;
+        if (xx0 < 0) xx0 += w;
+        int yy = y0o % h;
+        if (yy < 0) yy += h;
 
-                var pixel = img[yy * w + xx];
-                if (!pixel) {
-                    continue; // transparent
+        for (int ty = y0o; ty < y1o; ty++) {
+            int row = yy * w;
+            int row0 = (yy == 0 ? h - 1 : yy - 1) * w;
+            int row1 = (yy + 1 == h ? 0 : yy + 1) * w;
+
+            float wz0 = ty * pd - zScroll;
+            float wz1 = wz0 + pd;
+            float v = (ty + 0.5f) * ih;
+
+            int xx = xx0;
+
+            for (int tx = x0o; tx < x1o; tx++) {
+                if (img[row + xx]) {
+                    int xe = xx + 1 == w ? 0 : xx + 1;
+                    int xw = xx == 0 ? w - 1 : xx - 1;
+
+                    float wx0 = tx * pw;
+                    float wx1 = wx0 + pw;
+                    float u = (tx + 0.5f) * iw;
+
+                    // TODO don't shrink if the adjacent is also a cloud? this works but breaks at diagonals.
+                    // i dont think this is solvable without subdividing or some shit, good enough for now
+
+                    // north
+                    if (!img[row1 + xx]) {
+                        idt.vtx(wx0, y1, wz1, u, v, cNS);
+                        idt.vtx(wx1, y1, wz1, u, v, cNS);
+                        idt.vtx(wx1, y0, wz1, u, v, cNS);
+                        idt.vtx(wx0, y0, wz1, u, v, cNS);
+                    }
+
+                    // south
+                    if (!img[row0 + xx]) {
+                        idt.vtx(wx0, y0, wz0, u, v, cNS);
+                        idt.vtx(wx1, y0, wz0, u, v, cNS);
+                        idt.vtx(wx1, y1, wz0, u, v, cNS);
+                        idt.vtx(wx0, y1, wz0, u, v, cNS);
+                    }
+
+                    // east
+                    if (!img[row + xe]) {
+                        idt.vtx(wx1, y0, wz0, u, v, cEW);
+                        idt.vtx(wx1, y0, wz1, u, v, cEW);
+                        idt.vtx(wx1, y1, wz1, u, v, cEW);
+                        idt.vtx(wx1, y1, wz0, u, v, cEW);
+                    }
+
+                    // west
+                    if (!img[row + xw]) {
+                        idt.vtx(wx0, y0, wz1, u, v, cEW);
+                        idt.vtx(wx0, y0, wz0, u, v, cEW);
+                        idt.vtx(wx0, y1, wz0, u, v, cEW);
+                        idt.vtx(wx0, y1, wz1, u, v, cEW);
+                    }
                 }
 
-                // worldpos
-                float wx = tx * pw;
-                float wz = ty * pd - zScroll;
-                float wx0 = wx;
-                float wx1 = wx + pw;
-                float wz0 = wz;
-                float wz1 = wz + pd;
-
-                float u = (tx + 0.5f) / w;
-                float v = (ty + 0.5f) / h;
-
-                // TODO don't shrink if the adjacent is also a cloud? this works but breaks at diagonals.
-                // i dont think this is solvable without subdividing or some shit, good enough for now
-
-                // north
-                idt.setColour(cc[2]);
-                int adj = yy + 1;
-                adj = adj >= h ? 0 : adj;
-                if (!img[adj * w + xx]) {
-                    idt.addVertex(new BlockVertexTinted(wx0, y1, wz1, u, v));
-                    idt.addVertex(new BlockVertexTinted(wx1, y1, wz1, u, v));
-                    idt.addVertex(new BlockVertexTinted(wx1, y0, wz1, u, v));
-                    idt.addVertex(new BlockVertexTinted(wx0, y0, wz1, u, v));
-
-                }
-
-                // south
-                idt.setColour(cc[2]);
-                adj = yy - 1;
-                adj = adj < 0 ? h - 1 : adj;
-                if (!img[adj * w + xx]) {
-                    idt.addVertex(new BlockVertexTinted(wx0, y0, wz0, u, v));
-                    idt.addVertex(new BlockVertexTinted(wx1, y0, wz0, u, v));
-                    idt.addVertex(new BlockVertexTinted(wx1, y1, wz0, u, v));
-                    idt.addVertex(new BlockVertexTinted(wx0, y1, wz0, u, v));
-                }
-
-                // east
-                idt.setColour(cc[1]);
-                adj = xx + 1;
-                adj = adj >= w ? 0 : adj;
-                if (!img[yy * w + adj]) {
-                    idt.addVertex(new BlockVertexTinted(wx1, y0, wz0, u, v));
-                    idt.addVertex(new BlockVertexTinted(wx1, y0, wz1, u, v));
-                    idt.addVertex(new BlockVertexTinted(wx1, y1, wz1, u, v));
-                    idt.addVertex(new BlockVertexTinted(wx1, y1, wz0, u, v));
-                }
-
-                // west
-                idt.setColour(cc[1]);
-                adj = xx - 1;
-                adj = adj < 0 ? w - 1 : adj;
-                if (!img[yy * w + adj]) {
-                    idt.addVertex(new BlockVertexTinted(wx0, y0, wz1, u, v));
-                    idt.addVertex(new BlockVertexTinted(wx0, y0, wz0, u, v));
-                    idt.addVertex(new BlockVertexTinted(wx0, y1, wz0, u, v));
-                    idt.addVertex(new BlockVertexTinted(wx0, y1, wz1, u, v));
-                }
+                xx++;
+                if (xx == w) xx = 0;
             }
+
+            yy++;
+            if (yy == h) yy = 0;
         }
     }
 
     private void addCloudSmooth(float x0, float y0, float z0, float x1, float y1, float z1,
         float scale, float zScroll, Color cloudColour) {
-        // shades
-        Span<float> shades = [
-            1.0f, // top
-            0.8f, // north/south
-            0.7f, // east/west
-            0.6f // bottom
-        ];
-
-        Span<Color> cc = [
-            cloudColour * new Color(1f, 1f, 1f, 0.01f),
-            cloudColour * new Color(shades[1], shades[1], shades[1], 1.0f),
-            cloudColour * new Color(shades[2], shades[2], shades[2], 1.0f),
-            cloudColour * new Color(shades[3], shades[3], shades[3], 1.0f)
-        ];
+        uint cTop = Tint.pack(cloudColour * new Color(1f, 1f, 1f, 0.01f));
+        uint cEW = Tint.pack(cloudColour * new Color(0.8f, 0.8f, 0.8f, 1.0f));
+        uint cNS = Tint.pack(cloudColour * new Color(0.7f, 0.7f, 0.7f, 1.0f));
+        uint cBot = Tint.pack(cloudColour * new Color(0.6f, 0.6f, 0.6f, 1.0f));
 
         var idt = cloudidt;
 
@@ -460,113 +458,104 @@ public sealed partial class WorldRenderer {
         int w = (int)tex.width;
         int h = (int)tex.height;
 
+        Debug.Assert(w == 256 && h == 256);
+
         // calc UVs for entire cloud area
         float u0 = x0 / scale;
         float u1 = x1 / scale;
         float v0 = (z0 + zScroll) / scale;
         float v1 = (z1 + zScroll) / scale;
 
-        // top face - single quad
-        idt.setColour(cc[0]);
-        idt.addVertex(new BlockVertexTinted(x0, y1, z0, u0, v0));
-        idt.addVertex(new BlockVertexTinted(x1, y1, z0, u1, v0));
-        idt.addVertex(new BlockVertexTinted(x1, y1, z1, u1, v1));
-        idt.addVertex(new BlockVertexTinted(x0, y1, z1, u0, v1));
-
-        // bottom face - single quad
-        idt.setColour(cc[3]);
-        idt.addVertex(new BlockVertexTinted(x0, y0, z1, u0, v1));
-        idt.addVertex(new BlockVertexTinted(x1, y0, z1, u1, v1));
-        idt.addVertex(new BlockVertexTinted(x1, y0, z0, u1, v0));
-        idt.addVertex(new BlockVertexTinted(x0, y0, z0, u0, v0));
-
-
         int x0o = (int)float.Floor(u0 * w);
         int x1o = (int)float.Ceiling(u1 * w);
         int y0o = (int)float.Floor(v0 * h);
         int y1o = (int)float.Ceiling(v1 * h);
 
+        idt.reserve(cloudVerts(x0o, x1o, y0o, y1o) + 8);
+
+        // top
+        idt.vtx(x0, y1, z0, u0, v0, cTop);
+        idt.vtx(x1, y1, z0, u1, v0, cTop);
+        idt.vtx(x1, y1, z1, u1, v1, cTop);
+        idt.vtx(x0, y1, z1, u0, v1, cTop);
+
+        // bottom
+        idt.vtx(x0, y0, z1, u0, v1, cBot);
+        idt.vtx(x1, y0, z1, u1, v1, cBot);
+        idt.vtx(x1, y0, z0, u1, v0, cBot);
+        idt.vtx(x0, y0, z0, u0, v0, cBot);
+
         float pw = scale / w;
         float pd = scale / h;
+        float iw = 1f / w;
+        float ih = 1f / h;
 
         var img = pixels;
 
-        for (int tx = x0o; tx < x1o; tx++) {
-            for (int ty = y0o; ty < y1o; ty++) {
-                // wrap
-                int xx = tx % w;
-                int yy = ty % h;
-                if (xx < 0) xx += w;
-                if (yy < 0) yy += h;
+        int xx0 = x0o % w;
+        if (xx0 < 0) xx0 += w;
+        int yy = y0o % h;
+        if (yy < 0) yy += h;
 
-                var pixel = img[yy * w + xx];
-                if (!pixel) {
-                    continue; // transparent
+        for (int ty = y0o; ty < y1o; ty++) {
+            int row = yy * w;
+            int row0 = (yy == 0 ? h - 1 : yy - 1) * w;
+            int row1 = (yy + 1 == h ? 0 : yy + 1) * w;
+
+            float wz0 = ty * pd - zScroll;
+            float wz1 = wz0 + pd;
+            float v = (ty + 0.5f) * ih;
+
+            int xx = xx0;
+
+            for (int tx = x0o; tx < x1o; tx++) {
+                if (img[row + xx]) {
+                    int xe = xx + 1 == w ? 0 : xx + 1;
+                    int xw = xx == 0 ? w - 1 : xx - 1;
+
+                    float wx0 = tx * pw;
+                    float wx1 = wx0 + pw;
+                    float u = (tx + 0.5f) * iw;
+
+                    // north
+                    if (!img[row1 + xx]) {
+                        idt.vtx(wx0, y1, wz1, u, v, cTop);
+                        idt.vtx(wx1, y1, wz1, u, v, cTop);
+                        idt.vtx(wx1, y0, wz1, u, v, cNS);
+                        idt.vtx(wx0, y0, wz1, u, v, cNS);
+                    }
+
+                    // south
+                    if (!img[row0 + xx]) {
+                        idt.vtx(wx0, y0, wz0, u, v, cNS);
+                        idt.vtx(wx1, y0, wz0, u, v, cNS);
+                        idt.vtx(wx1, y1, wz0, u, v, cTop);
+                        idt.vtx(wx0, y1, wz0, u, v, cTop);
+                    }
+
+                    // east
+                    if (!img[row + xe]) {
+                        idt.vtx(wx1, y0, wz0, u, v, cEW);
+                        idt.vtx(wx1, y0, wz1, u, v, cEW);
+                        idt.vtx(wx1, y1, wz1, u, v, cTop);
+                        idt.vtx(wx1, y1, wz0, u, v, cTop);
+                    }
+
+                    // west
+                    if (!img[row + xw]) {
+                        idt.vtx(wx0, y0, wz1, u, v, cEW);
+                        idt.vtx(wx0, y0, wz0, u, v, cEW);
+                        idt.vtx(wx0, y1, wz0, u, v, cTop);
+                        idt.vtx(wx0, y1, wz1, u, v, cTop);
+                    }
                 }
 
-                // worldpos
-                float wx = tx * pw;
-                float wz = ty * pd - zScroll;
-                float wx0 = wx;
-                float wx1 = wx + pw;
-                float wz0 = wz;
-                float wz1 = wz + pd;
-
-                float u = (tx + 0.5f) / w;
-                float v = (ty + 0.5f) / h;
-
-                // TODO don't shrink if the adjacent is also a cloud? this works but breaks at diagonals.
-                // i dont think this is solvable without subdividing or some shit, good enough for now
-
-                // north
-                idt.setColour(cc[2]);
-                int adj = yy + 1;
-                adj = adj >= h ? 0 : adj;
-                if (!img[adj * w + xx]) {
-                    idt.setColour(cc[0]);
-                    idt.addVertex(new BlockVertexTinted(wx0, y1, wz1, u, v));
-                    idt.addVertex(new BlockVertexTinted(wx1, y1, wz1, u, v));
-                    idt.setColour(cc[2]);
-                    idt.addVertex(new BlockVertexTinted(wx1, y0, wz1, u, v));
-                    idt.addVertex(new BlockVertexTinted(wx0, y0, wz1, u, v));
-                }
-
-                // south
-                idt.setColour(cc[2]);
-                adj = yy - 1;
-                adj = adj < 0 ? h - 1 : adj;
-                if (!img[adj * w + xx]) {
-                    idt.addVertex(new BlockVertexTinted(wx0, y0, wz0, u, v));
-                    idt.addVertex(new BlockVertexTinted(wx1, y0, wz0, u, v));
-                    idt.setColour(cc[0]);
-                    idt.addVertex(new BlockVertexTinted(wx1, y1, wz0, u, v));
-                    idt.addVertex(new BlockVertexTinted(wx0, y1, wz0, u, v));
-                }
-
-                // east
-                idt.setColour(cc[1]);
-                adj = xx + 1;
-                adj = adj >= w ? 0 : adj;
-                if (!img[yy * w + adj]) {
-                    idt.addVertex(new BlockVertexTinted(wx1, y0, wz0, u, v));
-                    idt.addVertex(new BlockVertexTinted(wx1, y0, wz1, u, v));
-                    idt.setColour(cc[0]);
-                    idt.addVertex(new BlockVertexTinted(wx1, y1, wz1, u, v));
-                    idt.addVertex(new BlockVertexTinted(wx1, y1, wz0, u, v));
-                }
-
-                // west
-                idt.setColour(cc[1]);
-                adj = xx - 1;
-                adj = adj < 0 ? w - 1 : adj;
-                if (!img[yy * w + adj]) {
-                    idt.addVertex(new BlockVertexTinted(wx0, y0, wz1, u, v));
-                    idt.addVertex(new BlockVertexTinted(wx0, y0, wz0, u, v));
-                    idt.setColour(cc[0]);
-                    idt.addVertex(new BlockVertexTinted(wx0, y1, wz0, u, v));
-                    idt.addVertex(new BlockVertexTinted(wx0, y1, wz1, u, v));
-                }
+                xx++;
+                if (xx == w) xx = 0;
             }
+
+            yy++;
+            if (yy == h) yy = 0;
         }
     }
 
@@ -842,20 +831,12 @@ public sealed partial class WorldRenderer {
         // build all 4 layers into one buffer, then draw with offsets
         idt.begin(PrimitiveType.Quads);
 
-        // calc visible pixel range
-        int x0o = (int)float.Floor((x0 * (1 / cscale * 256)));
-        int x1o = (int)float.Ceiling((x1 * (1 / cscale * 256)));
-        int y0o = (int)float.Floor(((z0 + zScroll) * (1 / cscale * 256)));
-        int y1o = (int)float.Ceiling(((z1 + zScroll) * (1 / cscale * 256)));
+        int x0o = (int)float.Floor(x0 / cscale * 256);
+        int x1o = (int)float.Ceiling(x1 / cscale * 256);
+        int y0o = (int)float.Floor((z0 + zScroll) / cscale * 256);
+        int y1o = (int)float.Ceiling((z1 + zScroll) / cscale * 256);
 
-        int visiblePixels = (x1o - x0o) * (y1o - y0o);
-        const float totalPixels = 256 * 256;
-
-        //Console.Out.WriteLine($"Cloud visible pixels: {visiblePixels} / {totalPixels} {cloudMaxVerts}");
-
-        // scale cloudMaxVerts by visible area ratio
-        int estimatedVerts = (int)(((long)cloudMaxVerts * visiblePixels) / (double)totalPixels * 1.33f);
-        idt.reserve(estimatedVerts * 4);
+        idt.reserve(cloudVerts(x0o, x1o, y0o, y1o) * 4);
 
         Span<int> counts = stackalloc int[4];
         int li = 0;
