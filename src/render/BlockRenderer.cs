@@ -33,13 +33,14 @@ public partial class BlockRenderer {
     // in the future when we want multithreaded meshing, we can just allocate like 4-8 of these and it will still be in the ballpark of 10MB
     public static readonly List<BlockVertexPacked> chunkVertices = new(2048);
 
-    // YZX again
-    private static readonly uint[] neighbours =
-        GC.AllocateUninitializedArray<uint>(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX);
+    /**
+     * added +4 for SIMD overread, we should maybe use a magic constant?
+     */
+    private const int NEIGHBOURSIZE = Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX + 4;
 
-    private static readonly byte[]
-        neighbourLights =
-            GC.AllocateUninitializedArray<byte>(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX);
+    private static readonly uint[] neighbours = GC.AllocateUninitializedArray<uint>(NEIGHBOURSIZE);
+
+    private static readonly byte[] neighbourLights = GC.AllocateUninitializedArray<byte>(NEIGHBOURSIZE);
 
     // 3x3x3 local cache for smooth lighting optimisation
     public const int LOCALCACHESIZE = 3;
@@ -62,12 +63,12 @@ public partial class BlockRenderer {
     public bool AO;
 
     public struct RenderContext {
-        [InlineArray(27)]
+        [InlineArray(28)]
         public struct ArrayBlockCache {
             public uint block;
         }
 
-        [InlineArray(27)]
+        [InlineArray(28)]
         public struct ArrayLightCache {
             public byte light;
         }
@@ -200,9 +201,7 @@ public partial class BlockRenderer {
         return average2(lightValue, opacity);
     }
 
-    /**
-     * TODO there could be a 4x version of this, which does all 4 vertices at once for a face.... and average2 could have an average2x4 version too which does 128 bits at once and writes an entire opacity uint at once
-     */
+    /** Scalar fallback */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void getDirectionOffsetsAndData(RawDirection dir, byte lb, out FourBytes light, out FourBytes o) {
         Unsafe.SkipInit(out o);
@@ -1181,9 +1180,9 @@ public partial class BlockRenderer {
                 continue;
             }
 
-            model: ;
 
             // ripe bananafruit gets a golden yellow tint
+            // TODO WHAT THE FUCK IS THIS, time to remove...
             bool bananaTint = blockID == Block.BANANAFRUIT.id && (neighbourRef.getMetadata() & 1) == 0;
 
             // if you get the faces BEFORE checking it's a model, it will crash on custom blocks
@@ -1455,30 +1454,18 @@ public partial class BlockRenderer {
      * Fills the 3x3x3 local cache with blocks and light values.
      */
     public unsafe void fillCache(ref uint neighbourRef, ref byte lightRef) {
-        // it used to look like this:
-        // nba[0] = Unsafe.Add(ref neighbourRef, -1);
-        // nba[1] = Unsafe.Add(ref neighbourRef, +1);
-        // nba[2] = Unsafe.Add(ref neighbourRef, -Chunk.CHUNKSIZEEX);
-        // nba[3] = Unsafe.Add(ref neighbourRef, +Chunk.CHUNKSIZEEX);
-        // nba[4] = Unsafe.Add(ref neighbourRef, -Chunk.CHUNKSIZEEXSQ);
-        // nba[5] = Unsafe.Add(ref neighbourRef, +Chunk.CHUNKSIZEEXSQ);
+        ref uint bc = ref ctx.blockCache[0];
+        ref byte lc = ref ctx.lightCache[0];
 
-        // we need to fill the blocks into the cache.
-        // indices are -1, 0, 1 for x, y, z
-        for (int y = 0; y < LOCALCACHESIZE; y++) {
-            for (int z = 0; z < LOCALCACHESIZE; z++) {
-                for (int x = 0; x < LOCALCACHESIZE; x++) {
-                    // calculate the index in the cache
-                    int index = y * LOCALCACHESIZE_SQ + z * LOCALCACHESIZE + x;
-                    // calculate the neighbour index
-                    int nx = x - 1;
-                    int ny = y - 1;
-                    int nz = z - 1;
+        for (int ny = -1; ny <= 1; ny++) {
+            for (int nz = -1; nz <= 1; nz++) {
+                int src = ny * Chunk.CHUNKSIZEEXSQ + nz * Chunk.CHUNKSIZEEX - 1;
+                int dst = (ny + 1) * LOCALCACHESIZE_SQ + (nz + 1) * LOCALCACHESIZE;
 
-                    // get the block and light value from the neighbour array
-                    ctx.blockCache[index] = Unsafe.Add(ref neighbourRef, ny * Chunk.CHUNKSIZEEXSQ + nz * Chunk.CHUNKSIZEEX + nx);
-                    ctx.lightCache[index] = Unsafe.Add(ref lightRef, ny * Chunk.CHUNKSIZEEXSQ + nz * Chunk.CHUNKSIZEEX + nx);
-                }
+                Vector128.LoadUnsafe(ref Unsafe.Add(ref neighbourRef, src))
+                    .StoreUnsafe(ref Unsafe.Add(ref bc, dst));
+                Unsafe.WriteUnaligned(ref Unsafe.Add(ref lc, dst),
+                    Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref lightRef, src)));
             }
         }
     }

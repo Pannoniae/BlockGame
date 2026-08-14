@@ -5,6 +5,7 @@ using BlockGame.GL.vertexformats;
 using BlockGame.render;
 using BlockGame.util;
 using BlockGame.world.block;
+using BlockGame.world.chunk;
 
 namespace BlockGameTesting;
 
@@ -154,6 +155,48 @@ public class BlockRendererTest {
         Assert.That(Unsafe.Add(ref p, 9), Is.EqualTo(6f));
         Assert.That(Unsafe.Add(ref p, 10), Is.EqualTo(9f));
         Assert.That(Unsafe.Add(ref p, 11), Is.EqualTo(12f));
+    }
+
+    [Test]
+    public void fillCacheMatchesScalarGather() {
+        const int EX = Chunk.CHUNKSIZEEX;
+        const int EXSQ = Chunk.CHUNKSIZEEXSQ;
+
+        var blocks = new uint[EX * EX * EX + 4];
+        var lights = new byte[EX * EX * EX + 4];
+
+        var rnd = new XRandom(4242);
+        for (int i = 0; i < blocks.Length; i++) {
+            blocks[i] = (uint)rnd.NextInt64();
+            lights[i] = (byte)rnd.Next(256);
+        }
+
+        var br = new BlockRenderer();
+
+        ReadOnlySpan<int> coords = [0, 1, 7, 14, 15];
+
+        foreach (var x in coords) {
+            foreach (var y in coords) {
+                foreach (var z in coords) {
+                    int index = (y + 1) * EXSQ + (z + 1) * EX + (x + 1);
+                    br.fillCache(ref blocks[index], ref lights[index]);
+
+                    for (int cy = 0; cy < 3; cy++) {
+                        for (int cz = 0; cz < 3; cz++) {
+                            for (int cx = 0; cx < 3; cx++) {
+                                int ci = cy * 9 + cz * 3 + cx;
+                                int si = index + (cy - 1) * EXSQ + (cz - 1) * EX + (cx - 1);
+
+                                Assert.That(br.ctx.blockCache[ci], Is.EqualTo(blocks[si]),
+                                    $"block at cache {ci}, from ({x},{y},{z})");
+                                Assert.That(br.ctx.lightCache[ci], Is.EqualTo(lights[si]),
+                                    $"light at cache {ci}, from ({x},{y},{z})");
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
