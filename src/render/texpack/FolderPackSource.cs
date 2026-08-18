@@ -30,7 +30,9 @@ public class FolderPackSource : PackSource {
 
     public NBTCompound? loadMetadata() {
         var path = Path.Combine(basePath, "pack.snbt");
-        if (!File.Exists(path)) return null;
+        if (!File.Exists(path)) {
+            return null;
+        }
 
         try {
             return (NBTCompound)SNBT.readFromFile(path);

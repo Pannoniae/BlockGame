@@ -56,24 +56,5 @@ public static class Biomes {
         };
     }
 
-    // todo OOP the shit out of these functions later if it gets too messy
-
-    /** tree density multiplier for biome */
-    public static float getTreeDensity(BiomeType biome) {
-        return biome switch {
-            BiomeType.Taiga => 0.8f,
-            BiomeType.Jungle => 1.4f,
-            BiomeType.Forest => 1.0f,
-            BiomeType.Desert => 0.8f,
-            BiomeType.Beach => 1.0f,
-            BiomeType.Plains => 0.0f,
-            _ => 0f
-        };
-    }
-
-    /** can place cactus */
-    public static bool canPlaceCactus(BiomeType biome) {
-        return biome is BiomeType.Desert;
-    }
 }
 

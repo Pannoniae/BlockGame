@@ -3,8 +3,19 @@
 public class SimplexNoise {
     public long seed;
 
+    public const int MAXOCT = 16;
+    public readonly double[] ox = new double[MAXOCT];
+    public readonly double[] oy = new double[MAXOCT];
+    public readonly double[] oz = new double[MAXOCT];
+
     public SimplexNoise(long seed) {
         this.seed = seed;
+        for (int i = 0; i < MAXOCT; i++) {
+            var (x, y, z) = WorldgenUtil.getOffset((int)seed, i);
+            ox[i] = x;
+            oy[i] = y;
+            oz[i] = z;
+        }
     }
 
     public float noise3_XZBeforeY(double x, double y, double z) {

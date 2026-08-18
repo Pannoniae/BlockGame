@@ -45,7 +45,9 @@ public class ZipPackSource : PackSource {
 
     public NBTCompound? loadMetadata() {
         var entry = archive.GetEntry("pack.snbt");
-        if (entry == null) return null;
+        if (entry == null) {
+            return null;
+        }
 
         try {
             using var stream = entry.Open();
@@ -59,7 +61,9 @@ public class ZipPackSource : PackSource {
 
     public Image<Rgba32>? loadIcon() {
         var entry = archive.GetEntry("pack.png");
-        if (entry == null) return null;
+        if (entry == null) {
+            return null;
+        }
 
         try {
             using var stream = entry.Open();

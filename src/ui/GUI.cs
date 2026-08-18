@@ -166,7 +166,9 @@ public class GUI {
     }
 
     public void updateDrag(Vector2 mousePos, double dt) {
-        if (!draggingBG) return;
+        if (!draggingBG) {
+            return;
+        }
 
         var d = mousePos - dragPos;
         backgroundScrollOffset.Y -= d.Y;
@@ -1091,7 +1093,9 @@ public class GUI {
     }
 
     public void drawGUIBounds() {
-        if (!SHOW_GUI_BOUNDS) return;
+        if (!SHOW_GUI_BOUNDS) {
+            return;
+        }
 
         // show the virtual GUI coordinate space (minimum 360x270 starting from 0,0)
         const float minVirtualWidth = 360f;

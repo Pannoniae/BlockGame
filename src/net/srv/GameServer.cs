@@ -1,4 +1,5 @@
-﻿using System.Buffers.Binary;
+﻿using System.Buffers;
+using System.Buffers.Binary;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -36,13 +37,15 @@ public class GameServer : INetEventListener {
     public readonly bool devMode;
     public bool running;
     private bool stopping; // prevent double-call of stop()
-    public NetManager netManager;
+    public NetManager? netManager;
 
     public readonly Stopwatch sw = Stopwatch.StartNew();
 
     // todo migrate these to OUR collections
     public readonly Dictionary<int, ServerConnection> connections = new();
     public readonly Dictionary<NetPeer, ServerConnection> peerToConnection = new();
+
+    public MemServerConnection? memConn;
     public readonly Dictionary<string, string> userPasswords = new(); // username -> hashed password
     public readonly HashSet<string> ops = new(); // op usernames
 
@@ -142,20 +145,22 @@ public class GameServer : INetEventListener {
             port = properties.getInt("port", 31337);
         }
 
-        try {
-            netManager = new NetManager(this);
-            netManager.ChannelsCount = 4; // 0-3 for different packet priorities
-            netManager.UseNativeSockets = true;
-            netManager.Start(ip, ip6, port);
-        }
-        catch (Exception e) {
-            Log.error("FATAL: Failed to start network!");
-            Log.error(e);
-            throw; // crash the server, don't run in a broken state
-        }
+        if (isDedicated) {
+            try {
+                netManager = new NetManager(this);
+                netManager.ChannelsCount = 4; // 0-3 for different packet priorities
+                netManager.UseNativeSockets = true;
+                netManager.Start(ip, ip6, port);
+            }
+            catch (Exception e) {
+                Log.error("FATAL: Failed to start network!");
+                Log.error(e);
+                throw; // crash the server, don't run in a broken state
+            }
 
-        port = netManager.LocalPort;
-        Log.info($"Server listening on port {port}");
+            port = netManager.LocalPort;
+            Log.info($"Server listening on port {port}");
+        }
 
         if (isDedicated) {
             console = new ServerConsole(this);
@@ -304,7 +309,74 @@ public class GameServer : INetEventListener {
     private long lastLogTime = 0;
     private readonly ConcurrentQueue<Action> mainThreadActions = new();
 
+    private readonly double[] msptWindow = new double[60];
+    private int msptIdx;
+    private int msptCount;
+    private long lastStatsSend;
+    private int statsCtr;
+
     public void update() {
+        var tickStart = sw.Elapsed.TotalMilliseconds;
+        tick();
+        msptWindow[msptIdx] = sw.Elapsed.TotalMilliseconds - tickStart;
+        msptIdx = (msptIdx + 1) % msptWindow.Length;
+        msptCount = int.Min(msptCount + 1, msptWindow.Length);
+
+        statsCtr++;
+        if (statsCtr >= STATS_INTERVAL) {
+            sendStats(statsCtr);
+            statsCtr = 0;
+        }
+    }
+
+    private const int STATS_INTERVAL = 1;
+
+    private void sendStats(int since) {
+        if (connections.Count == 0) {
+            return;
+        }
+
+        var n = msptCount;
+        if (n == 0) {
+            return;
+        }
+
+        double sum = 0;
+        double peak = 0;
+        for (var i = 0; i < n; i++) {
+            sum += msptWindow[i];
+            peak = double.Max(peak, msptWindow[i]);
+        }
+        var mean = sum / n;
+
+        var count = int.Min(since, n);
+        var samples = new float[count];
+        for (var i = 0; i < count; i++) {
+            var idx = ((msptIdx - count + i) % msptWindow.Length + msptWindow.Length) % msptWindow.Length;
+            samples[i] = (float)msptWindow[idx];
+        }
+
+        var now = sw.ElapsedMilliseconds;
+        var elapsed = now - lastStatsSend;
+        var tps = elapsed > 0 ? since * 1000.0 / elapsed : 0;
+        lastStatsSend = now;
+
+        var packet = new ServerStatsPacket {
+            mspt = (float)mean,
+            peak = (float)peak,
+            tps = (float)double.Min(tps, 1000.0 / mspt),
+            chunks = world.chunks.Count,
+            queue = world.chunkLoadQueue.Count,
+            entities = world.entities.Count,
+            samples = samples
+        };
+
+        foreach (var conn in connections.Values) {
+            conn.send(packet, DeliveryMethod.Unreliable);
+        }
+    }
+
+    private void tick() {
         // 60 TPS game loop
         updateCounter++;
         // log TPS every 2 minutes
@@ -316,8 +388,10 @@ public class GameServer : INetEventListener {
             lastLogTime = sw.ElapsedMilliseconds;
         }
 
-        netManager.PollEvents();
+        netManager?.PollEvents();
         lanManager?.PollEvents();
+
+        updateMem();
 
         // process all main thread actions (usually commands)
         while (mainThreadActions.TryDequeue(out var action)) {
@@ -343,34 +417,12 @@ public class GameServer : INetEventListener {
             }
         }
 
-        // queue chunks for loading around all players
-        foreach (var conn in connections.Values) {
-            if (conn.player == null) {
-                Log.info("skipping?");
-                continue;
-            }
 
-            var playerChunk = new ChunkCoord(
-                (int)conn.player.position.X >> 4,
-                (int)conn.player.position.Z >> 4
-            );
-
-            // queue chunks around player for loading
-            int queueBefore = world.chunkLoadQueue.Count;
-            world.loadChunksAroundChunk(playerChunk, conn.renderDistance + 1, ChunkStatus.LIGHTED);
-            int queueAfter = world.chunkLoadQueue.Count;
-            if (queueAfter - queueBefore > 0) {
-                //Log.info($"Queued {queueAfter - queueBefore} chunks for {conn.username} at {playerChunk}, queue now: {queueAfter}");
-            }
-        }
+        sortChunks();
 
         // process chunk loading queue
         int loadedChunks = 0;
-        int queueSize = world.chunkLoadQueue.Count;
-        world.updateChunkloading(sw.ElapsedMilliseconds, loading: false, ref loadedChunks);
-        if (loadedChunks > 0 || world.chunkLoadQueue.Count > 0) {
-            //Log.info($"Loaded {loadedChunks} chunks, queue: {queueSize} -> {world.chunkLoadQueue.Count}");
-        }
+        world.updateChunkloading(loading: false, ref loadedChunks);
 
         // update world, entities, lighting, etc.
         if (!(paused && !isDedicated && connections.Count <= 1)) {
@@ -460,7 +512,10 @@ public class GameServer : INetEventListener {
 
         Log.info("Generating initial terrain");
         // load spawn chunks on dedicated server
+        world.setPlayerPosition(Vector3D.Zero);
+        world.playerRadius = 8;
         world.loadChunksAroundChunk(new ChunkCoord(0, 0), 8, ChunkStatus.LIGHTED);
+        world.sortChunks();
         progress(0.15f);
 
         // Initial chunk loading phase
@@ -469,8 +524,7 @@ public class GameServer : INetEventListener {
         Log.info("Loading chunks...");
 
         while (world.chunkLoadQueue.Count > 0) {
-            world.updateChunkloading(Game.permanentStopwatch.Elapsed.TotalMilliseconds, loading: true,
-                ref c);
+            world.updateChunkloading(loading: true, ref c);
 
             int currentChunks = world.chunkLoadQueue.Count;
             c = total - currentChunks;
@@ -526,7 +580,10 @@ public class GameServer : INetEventListener {
     public void send<T>(T packet, DeliveryMethod method, ServerConnection? exclude = null) where T : Packet {
         // broadcast to all connected clients
         foreach (var conn in connections.Values) {
-            if (conn == exclude) continue;
+            if (conn == exclude) {
+                continue;
+            }
+
             conn.send(packet, method);
         }
     }
@@ -535,8 +592,13 @@ public class GameServer : INetEventListener {
         // broadcast to clients near position
         double radiusSq = radius * radius;
         foreach (var conn in connections.Values) {
-            if (conn == exclude) continue;
-            if (conn.player == null) continue;
+            if (conn == exclude) {
+                continue;
+            }
+
+            if (conn.player == null) {
+                continue;
+            }
 
             double distSq = Vector3D.DistanceSquared(conn.player.position, pos);
             if (distSq <= radiusSq) {
@@ -756,6 +818,44 @@ public class GameServer : INetEventListener {
     }
 
 
+    public void acceptMem(MemPipe pipe) {
+        if (memConn != null) {
+            SkillIssueException.throwNew("integrated server already has a host connection");
+        }
+
+        Log.info("Host connected");
+        memConn = new MemServerConnection(pipe);
+    }
+
+    private void updateMem() {
+        if (memConn == null) {
+            return;
+        }
+
+        var pipe = memConn.pipe;
+        while (pipe.toServer.TryDequeue(out var frame)) {
+            try {
+                memConn.metrics.bytesReceived += frame.len;
+                memConn.metrics.packetsReceived++;
+                incomingPackets.Enqueue((PacketRegistry.decode(frame.buf.AsSpan(0, frame.len), out _), memConn));
+            }
+            catch (Exception e) {
+                Log.error("Error processing packet:");
+                Log.error(e);
+            }
+            finally {
+                ArrayPool<byte>.Shared.Return(frame.buf);
+            }
+        }
+
+        // the client hung up
+        if (!pipe.open) {
+            var conn = memConn;
+            memConn = null;
+            dropConnection(conn, "in-process client disconnected");
+        }
+    }
+
     public void OnConnectionRequest(ConnectionRequest request) {
         Log.info($"Connection request from {request.RemoteEndPoint}");
 
@@ -769,51 +869,54 @@ public class GameServer : INetEventListener {
         Log.info($"Player connected: {peer}");
         var conn = new ServerConnection(peer);
 
-        conn.isHost = !isDedicated && peerToConnection.Count == 0;
+        conn.isHost = false;
 
         peerToConnection[peer] = conn;
     }
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
 
-        var playerName = peerToConnection.TryGetValue(peer, out var c) && !string.IsNullOrEmpty(c.username) ? c.username : "Unknown";
-        Log.info($"{playerName} disconnected: {peer}, reason: {disconnectInfo.Reason}");
         if (peerToConnection.Remove(peer, out var conn)) {
-            connections.Remove(conn.entityID);
+            dropConnection(conn, disconnectInfo.Reason.ToString());
+        }
+    }
 
-            // broadcast leave message if player was authenticated
-            if (conn.authenticated && !string.IsNullOrEmpty(conn.username) && (isDedicated || connections.Count > 0)) {
-                send(
-                    new ChatMessagePacket { message = $"&e{conn.username} &cleft the game" },
-                    DeliveryMethod.ReliableOrdered
-                );
+    private void dropConnection(ServerConnection conn, string reason) {
+        Log.info($"{(string.IsNullOrEmpty(conn.username) ? "Unknown" : conn.username)} disconnected: {reason}");
+        connections.Remove(conn.entityID);
 
-                discord?.sendMessage($"**{conn.username}** left the game");
-                discord?.updatePlayerCountStatus();
+        // broadcast leave message if player was authenticated
+        if (conn.authenticated && !string.IsNullOrEmpty(conn.username) && (isDedicated || connections.Count > 0)) {
+            send(
+                new ChatMessagePacket { message = $"&e{conn.username} &cleft the game" },
+                DeliveryMethod.ReliableOrdered
+            );
 
-                // remove from player list
-                send(
-                    new PlayerListRemovePacket { entityID = conn.entityID },
-                    DeliveryMethod.ReliableOrdered
-                );
-            }
+            discord?.sendMessage($"**{conn.username}** left the game");
+            discord?.updatePlayerCountStatus();
 
-            // close any open invs
-            if (conn.player != null) {
-                // remove from viewer list before context reset
-                conn.player.currentCtx?.removeViewer(conn);
-                conn.player.closeInventory();
-            }
+            // remove from player list
+            send(
+                new PlayerListRemovePacket { entityID = conn.entityID },
+                DeliveryMethod.ReliableOrdered
+            );
+        }
 
-            // save player data before removing
-            if (conn.authenticated && conn.player != null) {
-                savePlayerData(conn);
-            }
+        // close any open invs
+        if (conn.player != null) {
+            // remove from viewer list before context reset
+            conn.player.currentCtx?.removeViewer(conn);
+            conn.player.closeInventory();
+        }
 
-            // remove player entity from world
-            if (conn.player != null) {
-                world.removeEntity(conn.player);
-            }
+        // save player data before removing
+        if (conn.authenticated && conn.player != null) {
+            savePlayerData(conn);
+        }
+
+        // remove player entity from world
+        if (conn.player != null) {
+            world.removeEntity(conn.player);
         }
     }
 
@@ -825,26 +928,13 @@ public class GameServer : INetEventListener {
 
             // get span directly from reader - no copy
             var span = reader.RawData.AsSpan(reader.Position, reader.AvailableBytes);
-            int totalLen = span.Length;
 
             // track metrics
-            conn.metrics.bytesReceived += totalLen;
+            conn.metrics.bytesReceived += span.Length;
             conn.metrics.packetsReceived++;
 
-            // read packet ID directly from span
-            int packetID = BinaryPrimitives.ReadInt32LittleEndian(span);
-            span = span[4..];
-
-            // create packet instance
-            var type = PacketRegistry.getType(packetID);
-            var packet = (Packet)Activator.CreateInstance(type)!;
-
-            // read from span
-            var buf = new PacketBuffer(span);
-            packet.read(buf);
-
             // queue for game thread processing
-            incomingPackets.Enqueue((packet, conn));
+            incomingPackets.Enqueue((PacketRegistry.decode(span, out _), conn));
         }
         catch (Exception e) {
             Log.error($"Error processing packet:");
@@ -874,7 +964,9 @@ public class GameServer : INetEventListener {
     /** broadcast ping updates to all clients */
     private void updatePlayerListPings() {
         foreach (var conn in connections.Values) {
-            if (!conn.authenticated) continue;
+            if (!conn.authenticated) {
+                continue;
+            }
 
             // broadcast this player's ping to all clients
             send(
@@ -939,6 +1031,8 @@ public class GameServer : INetEventListener {
     }
 
     /** autosave world data and modified chunks */
+    private const int MAX_CHUNKS_PER_AUTOSAVE = 50;
+
     private void autoSave() {
         if (world == null || !world.inited) {
             return;
@@ -950,13 +1044,16 @@ public class GameServer : INetEventListener {
         // save world metadata
         world.worldIO.saveWorldData(false);
 
-        // save modified chunks (async to prevent blocking)
+        var now = (ulong)Game.permanentStopwatch.ElapsedMilliseconds;
         int saved = 0;
+
         foreach (var chunk in world.chunks) {
-            // save chunks that have been modified and not recently saved
-            if (chunk.status >= ChunkStatus.LIGHTED &&
-                chunk.lastSaved + 20000 < (ulong)Game.permanentStopwatch.ElapsedMilliseconds) {
-                world.worldIO.saveChunk(world, chunk);
+            if (saved >= MAX_CHUNKS_PER_AUTOSAVE) {
+                break;
+            }
+
+            if (chunk.dirty && chunk.status >= ChunkStatus.LIGHTED && chunk.lastSaved + 20000 < now) {
+                world.worldIO.saveChunkAsync(world, chunk);
                 saved++;
             }
         }
@@ -966,18 +1063,75 @@ public class GameServer : INetEventListener {
         }
     }
 
-    /** unload chunks not needed by any player */
+    private readonly List<ChunkCoord> playerChunks = [];
+
+    public void unsortChunks() {
+        playerChunks.Clear();
+    }
+
+    private void sortChunks() {
+        var changed = false;
+        var i = 0;
+
+        foreach (var conn in connections.Values) {
+            if (conn.player == null) {
+                continue;
+            }
+
+            var pc = new ChunkCoord((int)conn.player.position.X >> 4, (int)conn.player.position.Z >> 4);
+            if (i >= playerChunks.Count) {
+                playerChunks.Add(pc);
+                changed = true;
+            }
+            else if (playerChunks[i] != pc) {
+                playerChunks[i] = pc;
+                changed = true;
+            }
+            i++;
+        }
+
+        // somebody left
+        if (playerChunks.Count > i) {
+            playerChunks.RemoveRange(i, playerChunks.Count - i);
+            changed = true;
+        }
+
+        if (!changed) {
+            return;
+        }
+
+        world.playerPositions.Clear();
+        var maxrd = 0;
+        foreach (var conn in connections.Values) {
+            if (conn.player == null) {
+                continue;
+            }
+
+            world.playerPositions.Add(conn.player.position);
+            maxrd = int.Max(maxrd, conn.renderDistance);
+
+            var pc = new ChunkCoord((int)conn.player.position.X >> 4, (int)conn.player.position.Z >> 4);
+            // +1: the edge chunks need a generated neighbour ring or their skylight is wrong
+            world.loadChunksAroundChunk(pc, conn.renderDistance + 1, ChunkStatus.LIGHTED);
+        }
+
+        world.playerRadius = maxrd + 1;
+
+        world.sortChunks();
+    }
+
     private void unloadUnusedChunks() {
         var toUnload = new List<ChunkCoord>();
+        // one past the generated ring
+        var keep = world.playerRadius + 2;
+        var keepSq = keep * keep;
 
-        // gather chunks that aren't loaded by any player
         foreach (var chunk in world.chunks) {
             var coord = chunk.coord;
-            bool needed = false;
+            var needed = false;
 
-            // check if any player needs this chunk
-            foreach (var conn in connections.Values) {
-                if (conn.loadedChunks.Contains(coord)) {
+            foreach (var pc in playerChunks) {
+                if (pc.distanceSq(coord) < keepSq) {
                     needed = true;
                     break;
                 }
@@ -988,11 +1142,11 @@ public class GameServer : INetEventListener {
             }
         }
 
-        // unload chunks
         if (toUnload.Count > 0) {
             Log.info($"Unloading {toUnload.Count} unused chunks");
             foreach (var coord in toUnload) {
                 world.unloadChunk(coord);
+                chunkTrackers.Remove(coord.toLong());
             }
         }
     }
@@ -1002,8 +1156,7 @@ public class GameServer : INetEventListener {
      * TODO fix? this is a mess
      */
     public static int getNewID() {
-        World.ec++;
-        return World.ec;
+        return World.nextID();
     }
 
     /** sync entity state changes (sneaking, on fire, flying, etc.) */
@@ -1078,7 +1231,9 @@ public class GameServer : INetEventListener {
     private void syncOpenFurnaces() {
         // for each connection viewing a furnace, send furnace sync
         foreach (var conn in connections.Values) {
-            if (conn.player?.currentCtx == null) continue;
+            if (conn.player?.currentCtx == null) {
+                continue;
+            }
 
             // check if viewing a furnace
             if (conn.player.currentInventoryID >= 0 && conn.player.currentCtx is FurnaceMenuContext furnaceCtx) {
@@ -1174,7 +1329,8 @@ public class GameServer : INetEventListener {
         }
 
         Log.info("Stopping network");
-        netManager.Stop();
+        memConn?.pipe.close();
+        netManager?.Stop();
         lanManager?.Stop();
         saveUsers();
 

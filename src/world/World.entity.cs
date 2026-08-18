@@ -13,18 +13,39 @@ namespace BlockGame.world;
 public partial class World {
     public readonly XUList<Entity> entities;
 
+    /**
+     * id -> entity
+     */
+    public readonly Dictionary<int, Entity> entitiesByID = [];
+
+    public Entity? getEntity(int id) {
+        return entitiesByID.GetValueOrDefault(id);
+    }
+
     public readonly Particles particles;
 
     /** This only exists on the a client side world!! */
     public Player player;
     public Vector3D spawn;
 
-    public static int ec = 1;
+    private static int ec = 1;
+
+    public static int nextID() => Interlocked.Increment(ref ec);
+
+    public static void incrID(int atLeast) {
+        int cur;
+        do {
+            cur = Volatile.Read(ref ec);
+            if (cur >= atLeast) {
+                return;
+            }
+        } while (Interlocked.CompareExchange(ref ec, atLeast, cur) != cur);
+    }
 
     public void addEntity(Entity entity) {
         // assign id if not already set!!
         if (entity.id == 0) {
-            entity.id = ec++;
+            entity.id = nextID();
         }
 
         // search for matching chunk
@@ -37,6 +58,7 @@ public partial class World {
         }
 
         entities.Add(entity);
+        entitiesByID[entity.id] = entity;
 
         // if player add to the players list
         if (entity is Player p) {
@@ -72,6 +94,10 @@ public partial class World {
     }
 
     private void doRemove(Entity entity) {
+        if (entitiesByID.TryGetValue(entity.id, out var mapped) && mapped == entity) {
+            entitiesByID.Remove(entity.id);
+        }
+
         if (entity.inWorld) {
             var success = getChunkMaybe(entity.subChunkCoord.toChunk(), out var chunk);
             if (success) {

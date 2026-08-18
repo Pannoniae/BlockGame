@@ -1,4 +1,4 @@
-﻿using System.Buffers;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using BlockGame.logic;
@@ -19,12 +19,10 @@ namespace BlockGame.world;
 
 public class WorldIO {
     public static readonly FixedArrayPool<byte> saveBlockPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
-    public static readonly FixedArrayPool<byte> saveLightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
 
     // palette building
     private static readonly XUList<string> paletteList = new(256);
     private static readonly XUList<byte> paletteMetadata = new(256);
-    private static readonly XUList<byte> lightPaletteList = new(256);
 
     // blocks can change at runtime though? maybe, idk, but don't assume that plz
 
@@ -260,7 +258,7 @@ public class WorldIO {
                 var y = nodeTag.getInt("y");
                 var z = nodeTag.getInt("z");
 
-                world.skyLightQueue.Enqueue(new LightNode(x, y, z, null));
+                world.skyLightQueue.Enqueue(new LightNode(x, y, z));
             }
         }
 
@@ -274,7 +272,7 @@ public class WorldIO {
                 var z = nodeTag.getInt("z");
                 var value = nodeTag.getByte("value");
 
-                world.skyLightRemovalQueue.Enqueue(new LightRemovalNode(x, y, z, value, null));
+                world.skyLightRemovalQueue.Enqueue(new LightRemovalNode(x, y, z, value));
             }
         }
 
@@ -287,7 +285,7 @@ public class WorldIO {
                 var y = nodeTag.getInt("y");
                 var z = nodeTag.getInt("z");
 
-                world.blockLightQueue.Enqueue(new LightNode(x, y, z, null));
+                world.blockLightQueue.Enqueue(new LightNode(x, y, z));
             }
         }
 
@@ -301,7 +299,7 @@ public class WorldIO {
                 var z = nodeTag.getInt("z");
                 var value = nodeTag.getByte("value");
 
-                world.blockLightRemovalQueue.Enqueue(new LightRemovalNode(x, y, z, value, null));
+                world.blockLightRemovalQueue.Enqueue(new LightRemovalNode(x, y, z, value));
             }
         }
 
@@ -324,14 +322,12 @@ public class WorldIO {
         chunk.lastSaved = (ulong)Game.permanentStopwatch.ElapsedMilliseconds;
         var nbt = serialiseChunkIntoNBT(chunk);
 
-        // use region format
-        var regionCoord = RegionManager.getRegionCoord(chunk.coord);
-        var localCoord = RegionManager.getLocalCoord(chunk.coord);
-        var region = regionManager.getRegion(regionCoord);
-
         // serialize NBT to byte array
         var chunkData = nbtToBytes(nbt);
-        region.writeChunk(localCoord.x, localCoord.z, chunkData);
+
+        if (regionManager.writeChunk(chunk.coord, chunkData)) {
+            chunk.dirty = false;
+        }
 
         // return pooled arrays
         returnPooledArrays(nbt);
@@ -346,7 +342,7 @@ public class WorldIO {
 
         chunk.lastSaved = (ulong)Game.permanentStopwatch.ElapsedMilliseconds;
         var nbt = serialiseChunkIntoNBT(chunk);
-        
+
         var chunkData = nbtToBytes(nbt);
         returnPooledArrays(nbt);
 
@@ -371,7 +367,10 @@ public class WorldIO {
     }
 
     public void Dispose() {
-        if (isDisposed) return;
+        if (isDisposed) {
+            return;
+        }
+
         isDisposed = true;
 
         if (!world.isMP) {
@@ -492,29 +491,7 @@ public class WorldIO {
                     paletteIndices[i] = (byte)nbtidx;
                 }
 
-                // build NBT light palette from internal light palette
-                var internalLightVerts = blockData.skillIssueLightVertices();
-                var internalLightRefs = blockData.skillIssueLightRefs();
-                var internalLightVertCount = blockData.skillIssueLightVertCount();
-
-                // todo we could move the allocation outside the loop and just resize it if it's bigger than the current one...
-                Span<int> lightIndexRemap = stackalloc int[internalLightVertCount];
-                lightPaletteList.Clear();
-
-                for (int i = 0; i < internalLightVertCount; i++) {
-                    if (internalLightRefs[i] > 0) {
-                        lightIndexRemap[i] = lightPaletteList.Count;
-                        lightPaletteList.Add(internalLightVerts[i]);
-                    }
-                }
-
-                // remap internal light indices to NBT indices
-                var lightIndices = saveLightPool.grab();
-                for (int i = 0; i < Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE; i++) {
-                    int idx = blockData.skillIssueLightIndexRaw(i);
-                    int nbtidx = lightIndexRemap[idx];
-                    lightIndices[i] = (byte)nbtidx;
-                }
+                blockData.skillIssueLightPlanes(out var skyPlane, out var blockPlane, out var uSky, out var uBlk);
 
                 // save palettes (parallel id+metadata lists)
                 var paletteCompound = new NBTCompound("palette");
@@ -522,9 +499,16 @@ public class WorldIO {
                 paletteCompound.addByteListUnsafe("meta", paletteMetadata);
                 section.addCompoundTag("palette", paletteCompound);
 
-                section.addByteListUnsafe("lightPalette", lightPaletteList);
                 section.addByteArray("blocks", paletteIndices);
-                section.addByteArray("lightIndices", lightIndices);
+                section.addByte("uniformSky", uSky);
+                section.addByte("uniformBlock", uBlk);
+                if (skyPlane != null) {
+                    section.addByteArray("skyPlane", skyPlane);
+                }
+
+                if (blockPlane != null) {
+                    section.addByteArray("blockPlane", blockPlane);
+                }
             }
             else {
                 section.addByte("inited", 0);
@@ -568,8 +552,6 @@ public class WorldIO {
         // save biome data
         chunkTag.addSByteArray("biomeTemp", chunk.biomeData.temp);
         chunkTag.addSByteArray("biomeHum", chunk.biomeData.hum);
-        chunkTag.addSByteArray("biomeAge", chunk.biomeData.age);
-        chunkTag.addSByteArray("biomeW", chunk.biomeData.w);
 
         return chunkTag;
     }
@@ -603,7 +585,7 @@ public class WorldIO {
                 if (entity != null) {
                     entity.read(data);
                     // update global entity ID counter to prevent duplicates
-                    World.ec = Math.Max(World.ec, entity.id + 1);
+                    World.incrID(entity.id + 1);
 
                     // add directly to chunk and world entity list
                     // (chunk not in world.chunks yet, so world.addEntity() would fail to add to chunk)
@@ -657,8 +639,6 @@ public class WorldIO {
         if (chunkTag.has("biomeTemp")) {
             chunk.biomeData.temp = chunkTag.getSByteArray("biomeTemp");
             chunk.biomeData.hum = chunkTag.getSByteArray("biomeHum");
-            chunk.biomeData.age = chunkTag.getSByteArray("biomeAge");
-            chunk.biomeData.w = chunkTag.getSByteArray("biomeW");
         }
 
         chunk.biomeData.setChunk(chunk);
@@ -690,7 +670,7 @@ public class WorldIO {
             if (section.has("palette")) {
                 var paletteTag = section.get("palette");
 
-                if (paletteTag is NBTCompound paletteCompound && section.has("lightPalette")) {
+                if (paletteTag is NBTCompound paletteCompound && (section.has("lightPalette") || section.has("uniformSky"))) {
                     // new format: direct palette loading (zero-alloc)
                     var idsTag = paletteCompound.getListTag<NBTString>("ids");
                     var metaTag = paletteCompound.getListTag<NBTByte>("meta");
@@ -706,17 +686,25 @@ public class WorldIO {
                         runtimePalette[j] = runtimeID == -1 ? 0 : ((uint)metadata << 24) | (uint)runtimeID;
                     }
 
-                    // load light palette (use PaletteBlockData's pool)
-                    var lightPaletteTag = section.getListTag<NBTByte>("lightPalette");
-                    var lightIndices = section.getByteArray("lightIndices");
-                    int lightPaletteSize = lightPaletteTag.count();
-                    byte[] lightPalette = PaletteBlockData.arrayPool.grab(lightPaletteSize);
-                    for (int j = 0; j < lightPaletteSize; j++) {
-                        lightPalette[j] = lightPaletteTag.get(j).data;
+                    if (section.has("uniformSky")) {
+                        // plane format
+                        blocks.loadFromPaletteWithPlanes(runtimePalette, paletteSize, paletteIndices,
+                            section.has("skyPlane") ? section.getByteArray("skyPlane") : null,
+                            section.has("blockPlane") ? section.getByteArray("blockPlane") : null,
+                            section.getByte("uniformSky"), section.getByte("uniformBlock"));
                     }
+                    else {
+                        // legacy: light palette + one index per cell
+                        var lightPaletteTag = section.getListTag<NBTByte>("lightPalette");
+                        var lightIndices = section.getByteArray("lightIndices");
+                        int lightPaletteSize = lightPaletteTag.count();
+                        byte[] lightPalette = PaletteBlockData.arrayPool.grab(lightPaletteSize);
+                        for (int j = 0; j < lightPaletteSize; j++) {
+                            lightPalette[j] = lightPaletteTag.get(j).data;
+                        }
 
-                    // direct load
-                    blocks.loadFromPalette(runtimePalette, paletteSize, paletteIndices, lightPalette, lightPaletteSize, lightIndices);
+                        blocks.loadFromPalette(runtimePalette, paletteSize, paletteIndices, lightPalette, lightPaletteSize, lightIndices);
+                    }
                 }
                 else {
                     // old formats: fallback to flat array method
@@ -788,6 +776,7 @@ public class WorldIO {
 
         chunk.status = (ChunkStatus)status;
         chunk.lastSaved = lastSaved;
+        chunk.dirty = false;
 
         loadChunkSections(chunk, nbt);
 
@@ -808,7 +797,7 @@ public class WorldIO {
                 if (entity != null) {
                     entity.read(data);
                     // update global entity ID counter to prevent duplicates
-                    World.ec = Math.Max(World.ec, entity.id + 1);
+                    World.incrID(entity.id + 1);
                     // calculate subchunk coord from pos
                     var pos = entity.position.toBlockPos();
                     int chunkX = pos.X >> 4;
@@ -859,8 +848,6 @@ public class WorldIO {
         if (nbt.has("biomeTemp")) {
             chunk.biomeData.temp = nbt.getSByteArray("biomeTemp");
             chunk.biomeData.hum = nbt.getSByteArray("biomeHum");
-            chunk.biomeData.age = nbt.getSByteArray("biomeAge");
-            chunk.biomeData.w = nbt.getSByteArray("biomeW");
         }
 
         chunk.biomeData.setChunk(chunk);
@@ -893,9 +880,7 @@ public class WorldIO {
 
         if (File.Exists(regionPath)) {
             // region file exists - check if chunk is actually in it
-            var localCoord = RegionManager.getLocalCoord(coord);
-            var region = world.worldIO.regionManager.getRegion(regionCoord);
-            if (region.hasChunk(localCoord.x, localCoord.z)) {
+            if (world.worldIO.regionManager.hasChunk(coord)) {
                 return true;
             }
         }
@@ -931,8 +916,7 @@ public class WorldIO {
 
         if (File.Exists(regionPath)) {
             // region file exists, try loading from it
-            var region = world.worldIO.regionManager.getRegion(regionCoord);
-            var chunkData = region.readChunk(localCoord.x, localCoord.z);
+            var chunkData = world.worldIO.regionManager.readChunk(coord);
 
             if (chunkData != null) {
                 // decompress and parse NBT
@@ -963,9 +947,9 @@ public class WorldIO {
         foreach (var section in sections.list) {
             if (section.getByte("inited") != 0) {
                 var blocks = section.getByteArray("blocks");
-                var lightIndices = section.getByteArray("lightIndices");
-                if (blocks != null) saveBlockPool.putBack(blocks);
-                if (lightIndices != null) saveLightPool.putBack(lightIndices);
+                if (blocks != null) {
+                    saveBlockPool.putBack(blocks);
+                }
             }
         }
     }
@@ -997,6 +981,8 @@ public sealed class ChunkSaveThread : IDisposable {
 
     private readonly ConcurrentQueue<ChunkSaveData> saveQueue = new();
 
+    private readonly SemaphoreSlim signal = new(0);
+
     public ChunkSaveThread(WorldIO io) {
         this.io = io;
         saveThread = new Thread(saveLoop) {
@@ -1014,21 +1000,19 @@ public sealed class ChunkSaveThread : IDisposable {
     private void saveLoop() {
         try {
             while (!io.shutdownEvent.WaitOne(0)) {
+                signal.Wait();
+
+                if (io.shutdownEvent.WaitOne(0)) {
+                    return;
+                }
+
                 if (saveQueue.TryDequeue(out var saveData)) {
-                    var regionCoord = RegionManager.getRegionCoord(saveData.coord);
-                    var localCoord = RegionManager.getLocalCoord(saveData.coord);
                     try {
-                        // write to region file
-                        var region = io.regionManager.getRegion(regionCoord);
-                        region.writeChunk(localCoord.x, localCoord.z, saveData.chunkData);
+                        io.regionManager.writeChunk(saveData.coord, saveData.chunkData);
                     }
                     catch (Exception ex) {
-                        Log.warn($"Failed to save chunk at region ({regionCoord.x},{regionCoord.z}) local ({localCoord.x},{localCoord.z}):", ex);
+                        Log.warn($"Failed to save chunk at {saveData.coord}:", ex);
                     }
-                }
-                else {
-                    // no chunks to save, wait a bit or until shutdown
-                    io.shutdownEvent.WaitOne(10);
                 }
             }
         }
@@ -1038,12 +1022,16 @@ public sealed class ChunkSaveThread : IDisposable {
     }
 
     public void Dispose() {
-        if (isDisposed) return;
+        if (isDisposed) {
+            return;
+        }
+
         isDisposed = true;
 
         // wait for the thread to finish
         // we first do this to ensure no new saves are added
         io.shutdownEvent.Set();
+        signal.Release();
         try {
             saveThread.Join(5000); // wait up to 5 seconds
         }
@@ -1053,11 +1041,8 @@ public sealed class ChunkSaveThread : IDisposable {
 
         // process remaining saves synchronously
         while (saveQueue.TryDequeue(out var saveData)) {
-            var regionCoord = RegionManager.getRegionCoord(saveData.coord);
-            var localCoord = RegionManager.getLocalCoord(saveData.coord);
             try {
-                var region = io.regionManager.getRegion(regionCoord);
-                region.writeChunk(localCoord.x, localCoord.z, saveData.chunkData);
+                io.regionManager.writeChunk(saveData.coord, saveData.chunkData);
             }
             catch (Exception ex) {
                 Log.error("Failed to save chunk during dispose", ex);
@@ -1067,6 +1052,7 @@ public sealed class ChunkSaveThread : IDisposable {
 
     public void add(ChunkSaveData chunk) {
         saveQueue.Enqueue(chunk);
+        signal.Release();
     }
 }
 
@@ -1078,6 +1064,8 @@ public sealed class ChunkLoadThread : IDisposable {
 
     private readonly ConcurrentQueue<ChunkLoadRequest> loadQueue = new();
     private readonly ConcurrentQueue<ChunkLoadResult> resultQueue = new();
+
+    private readonly SemaphoreSlim signal = new(0);
 
     public ChunkLoadThread(WorldIO io) {
         this.io = io;
@@ -1096,6 +1084,12 @@ public sealed class ChunkLoadThread : IDisposable {
     private void loadLoop() {
         try {
             while (!io.shutdownEvent.WaitOne(0)) {
+                signal.Wait();
+
+                if (io.shutdownEvent.WaitOne(0)) {
+                    return;
+                }
+
                 if (loadQueue.TryDequeue(out var loadRequest)) {
                     try {
                         // Background thread: File I/O + NBT parsing only
@@ -1109,10 +1103,6 @@ public sealed class ChunkLoadThread : IDisposable {
                         resultQueue.Enqueue(new ChunkLoadResult(loadRequest.coord, null, loadRequest.targetStatus, ex));
                     }
                 }
-                else {
-                    // no chunks to load, wait a bit or until shutdown
-                    io.shutdownEvent.WaitOne(10);
-                }
             }
         }
         catch (Exception ex) {
@@ -1121,11 +1111,15 @@ public sealed class ChunkLoadThread : IDisposable {
     }
 
     public void Dispose() {
-        if (isDisposed) return;
+        if (isDisposed) {
+            return;
+        }
+
         isDisposed = true;
 
         // wait for the thread to finish
         io.shutdownEvent.Set();
+        signal.Release();
         try {
             loadThread.Join(5000); // wait up to 5 seconds
         }
@@ -1144,6 +1138,7 @@ public sealed class ChunkLoadThread : IDisposable {
     public void queueLoad(ChunkLoadRequest request) {
         if (!isDisposed) {
             loadQueue.Enqueue(request);
+            signal.Release();
         }
     }
 

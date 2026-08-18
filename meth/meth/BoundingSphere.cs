@@ -77,33 +77,41 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
             }
         }
 
-        if (inside)
+        if (inside) {
             return ContainmentType.Contains;
+        }
 
         //check if the distance from sphere center to cube face < radius
         double dmin = 0;
 
-        if (Center.X < box.Min.X)
+        if (Center.X < box.Min.X) {
             dmin += (Center.X - box.Min.X) * (Center.X - box.Min.X);
+        }
 
-        else if (Center.X > box.Max.X)
+        else if (Center.X > box.Max.X) {
             dmin += (Center.X - box.Max.X) * (Center.X - box.Max.X);
+        }
 
-        if (Center.Y < box.Min.Y)
+        if (Center.Y < box.Min.Y) {
             dmin += (Center.Y - box.Min.Y) * (Center.Y - box.Min.Y);
+        }
 
-        else if (Center.Y > box.Max.Y)
+        else if (Center.Y > box.Max.Y) {
             dmin += (Center.Y - box.Max.Y) * (Center.Y - box.Max.Y);
+        }
 
-        if (Center.Z < box.Min.Z)
+        if (Center.Z < box.Min.Z) {
             dmin += (Center.Z - box.Min.Z) * (Center.Z - box.Min.Z);
+        }
 
-        else if (Center.Z > box.Max.Z)
+        else if (Center.Z > box.Max.Z) {
             dmin += (Center.Z - box.Max.Z) * (Center.Z - box.Max.Z);
+        }
 
-        if (dmin <= Radius * Radius) 
+        if (dmin <= Radius * Radius) {
             return ContainmentType.Intersects;
-            
+        }
+
         //else disjoint
         return ContainmentType.Disjoint;
     }
@@ -137,15 +145,17 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
                 break;
             }
         }
-        if (inside)
+        if (inside) {
             return ContainmentType.Contains;
+        }
 
         //check if the distance from sphere center to frustrum face < radius
         double dmin = 0;
         //TODO : calcul dmin
 
-        if (dmin <= Radius * Radius)
+        if (dmin <= Radius * Radius) {
             return ContainmentType.Intersects;
+        }
 
         //else disjoint
         return ContainmentType.Disjoint;
@@ -182,14 +192,17 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
     {
         float sqDistance = Vector3.DistanceSquared(sphere.Center, Center);
 
-        if (sqDistance > (sphere.Radius + Radius) * (sphere.Radius + Radius))
+        if (sqDistance > (sphere.Radius + Radius) * (sphere.Radius + Radius)) {
             result = ContainmentType.Disjoint;
+        }
 
-        else if (sqDistance <= (Radius - sphere.Radius) * (Radius - sphere.Radius))
+        else if (sqDistance <= (Radius - sphere.Radius) * (Radius - sphere.Radius)) {
             result = ContainmentType.Contains;
+        }
 
-        else
+        else {
             result = ContainmentType.Intersects;
+        }
     }
 
     /// <summary>
@@ -214,14 +227,17 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
         float sqRadius = Radius * Radius;
         float sqDistance = Vector3.DistanceSquared(point, Center);
             
-        if (sqDistance > sqRadius)
+        if (sqDistance > sqRadius) {
             result = ContainmentType.Disjoint;
+        }
 
-        else if (sqDistance < sqRadius)
+        else if (sqDistance < sqRadius) {
             result = ContainmentType.Contains;
+        }
 
-        else 
+        else {
             result = ContainmentType.Intersects;
+        }
     }
 
     #endregion
@@ -277,8 +293,9 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
     /// <returns>The new <see cref="BoundingSphere"/>.</returns>
     public static BoundingSphere CreateFromPoints(IEnumerable<Vector3> points)
     {
-        if (points == null )
+        if (points == null ) {
             throw new ArgumentNullException("points");
+        }
 
         // From "Real-Time Collision Detection" (Page 89)
 
@@ -295,22 +312,34 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
         {
             ++numPoints;
 
-            if (pt.X < minx.X) 
+            if (pt.X < minx.X) {
                 minx = pt;
-            if (pt.X > maxx.X) 
+            }
+
+            if (pt.X > maxx.X) {
                 maxx = pt;
-            if (pt.Y < miny.Y) 
+            }
+
+            if (pt.Y < miny.Y) {
                 miny = pt;
-            if (pt.Y > maxy.Y) 
+            }
+
+            if (pt.Y > maxy.Y) {
                 maxy = pt;
-            if (pt.Z < minz.Z) 
+            }
+
+            if (pt.Z < minz.Z) {
                 minz = pt;
-            if (pt.Z > maxz.Z) 
+            }
+
+            if (pt.Z > maxz.Z) {
                 maxz = pt;
+            }
         }
 
-        if (numPoints == 0)
+        if (numPoints == 0) {
             throw new ArgumentException("You should have at least one point in points.");
+        }
 
         var sqDistX = Vector3.DistanceSquared(maxx, minx);
         var sqDistY = Vector3.DistanceSquared(maxy, miny);
@@ -419,8 +448,9 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
     /// <returns><c>true</c> if the instances are equal; <c>false</c> otherwise.</returns>
     public override bool Equals(object obj)
     {
-        if (obj is BoundingSphere)
+        if (obj is BoundingSphere) {
             return Equals((BoundingSphere)obj);
+        }
 
         return false;
     }
@@ -523,12 +553,15 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
         // TODO: we might want to inline this for performance reasons
         var distance = Vector3.Dot(plane.Normal, Center);
         distance += plane.D;
-        if (distance > Radius)
+        if (distance > Radius) {
             result = PlaneIntersectionType.Front;
-        else if (distance < -Radius)
+        }
+        else if (distance < -Radius) {
             result = PlaneIntersectionType.Back;
-        else
+        }
+        else {
             result = PlaneIntersectionType.Intersecting;
+        }
     }
 
     /// <summary>

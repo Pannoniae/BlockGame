@@ -39,9 +39,12 @@ public class ItemEntity : Entity {
 
     // ============ LIFECYCLE HOOKS ============
 
-    protected override bool shouldContinueUpdate(double dt) {
-        // age the item
+    protected override void updateTimers(double dt) {
+        base.updateTimers(dt);
         age++;
+    }
+
+    protected override bool shouldContinueUpdate(double dt) {
         plotArmour--;
 
         if (age >= DESPAWN) {

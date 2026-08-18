@@ -148,7 +148,7 @@ public class Torch : Block {
         // only 50%!
 
         if (Game.clientRandom.NextSingle() > 0.5) {
-            Game.world.particles.add(new FlameParticle(world, particlePos));
+            world.particles.add(new FlameParticle(world, particlePos));
         }
     }
 

@@ -591,7 +591,6 @@ public class GameScreen : Screen {
         PaletteBlockData.arrayPoolU.clear();
         PaletteBlockData.arrayPoolUS.clear();
         WorldIO.saveBlockPool.clear();
-        WorldIO.saveLightPool.clear();
         HeightMap.heightPool.clear();
 
         // reload around player
@@ -1072,7 +1071,9 @@ public class GameScreen : Screen {
         // iterate through all entities
         foreach (var entity in world.entities) {
             var distance = (entity.position - playerPos).Length();
-            if (distance > renderRange) continue;
+            if (distance > renderRange) {
+                continue;
+            }
 
             // update the entity's AABB based on current position
             entity.aabb = entity.calcAABB(entity.position);
@@ -1104,7 +1105,9 @@ public class GameScreen : Screen {
         D.idc.begin(PrimitiveType.Lines);
 
         foreach (var entity in world.entities) {
-            if (entity is not Mob mob) continue;
+            if (entity is not Mob mob) {
+                continue;
+            }
 
             var d = (entity.position - playerPos).Length();
             if (d > renderRange) {

@@ -36,8 +36,9 @@ namespace Silk.NET.Input
 
         public static void ShouldLoadFirstPartyPlatforms(bool shouldLoad)
         {
-            if (_initializedFirstPartyPlatforms)
+            if (_initializedFirstPartyPlatforms) {
                 throw new InvalidOperationException("Input Platforms already loaded, cannot change first party loading");
+            }
 
             _initializedFirstPartyPlatforms = !shouldLoad;
         }

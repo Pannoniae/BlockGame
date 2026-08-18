@@ -27,8 +27,9 @@ public class BdfFont
 
         while (true)
         {
-            if (lines.Count == 0)
+            if (lines.Count == 0) {
                 break;
+            }
 
             var line = lines.Dequeue();
 
@@ -77,23 +78,26 @@ public class BdfFont
             }
             else if (line.StartsWith("ENCODING"))
             {
-                if (currentChar is null)
+                if (currentChar is null) {
                     throw new ArgumentException("ENCODING found before STARTCHAR");
+                }
 
                 currentChar.Encoding = int.Parse(line.Substring(9).Trim());
             }
             else if (line.StartsWith("DWIDTH"))
             {
-                if (currentChar is null)
+                if (currentChar is null) {
                     throw new ArgumentException("DWIDTH found before STARTCHAR");
+                }
 
                 var parts = line.Substring(7).Trim().Split(' ');
                 currentChar.XAdvance = int.Parse(parts[0]);
             }
             else if (line.StartsWith("BBX"))
             {
-                if (currentChar is null)
+                if (currentChar is null) {
                     throw new ArgumentException("BBX found before STARTCHAR");
+                }
 
                 var parts = line.Substring(4).Trim().Split(' ');
                 currentChar.Width = int.Parse(parts[0]);
@@ -104,8 +108,9 @@ public class BdfFont
             }
             else if (line.StartsWith("BITMAP"))
             {
-                if (currentChar is null)
+                if (currentChar is null) {
                     throw new ArgumentException("BITMAP found before STARTCHAR");
+                }
 
                 var bitmapLines = new List<string>();
                 while ((line = lines.Dequeue()) != null && !line.StartsWith("ENDCHAR"))

@@ -77,8 +77,9 @@ namespace TrippyGL.Fonts
             }
 
             // We trim extra elements off the packingRects array.
-            if (packingRects.Length != packingRectCount)
+            if (packingRects.Length != packingRectCount) {
                 Array.Resize(ref packingRects, packingRectCount);
+            }
 
             // We use RectanglePacker to find a bin for all the rectangles.
             RectanglePacker.Pack(packingRects, out PackingRectangle bounds);
@@ -123,8 +124,9 @@ namespace TrippyGL.Fonts
 
                     glyphSources[i].GetAdvances(out fontDatas[i].Advances);
 
-                    if (!glyphSources[i].TryGetKerning(out fontDatas[i].KerningOffsets))
+                    if (!glyphSources[i].TryGetKerning(out fontDatas[i].KerningOffsets)) {
                         fontDatas[i].KerningOffsets = null;
+                    }
                 }
 
                 // Done!

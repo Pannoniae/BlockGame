@@ -1,4 +1,4 @@
-using BlockGame.util;
+﻿using BlockGame.util;
 using BlockGame.world.chunk;
 using K4os.Compression.LZ4;
 
@@ -6,6 +6,10 @@ namespace BlockGame.net.packet;
 
 /** S→C: 0x10 - sends chunk data */
 public class ChunkDataPacket : Packet {
+    // maybe we should stop slopcoding constants in and centralise them
+    // BUT NOT TODAY
+    public const int LIGHT_PLANE_BYTES = Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE / 2;
+
     public ChunkCoord coord;
     public SubChunkData[] subChunks;
 
@@ -40,32 +44,26 @@ public class ChunkDataPacket : Packet {
 
             tempBuf.writeBool(sub.indices != null);
             if (sub.indices != null) {
-                tempBuf.writeInt(sub.indices.Length);
-                tempBuf.writeRawBytes(sub.indices);
+                tempBuf.writeInt(sub.count);
+                tempBuf.writeRawBytes(sub.indices, 0, sub.count);
             }
 
             tempBuf.writeInt(sub.count);
             tempBuf.writeInt(sub.vertCount);
             tempBuf.writeInt(sub.density);
 
-            // light data
-            tempBuf.writeInt(sub.lightVertices.Length);
-            tempBuf.writeRawBytes(sub.lightVertices);
+            tempBuf.writeByte(sub.skyValue);
+            tempBuf.writeByte(sub.blockValue);
 
-            tempBuf.writeInt(sub.lightRefs.Length);
-            foreach (var r in sub.lightRefs) {
-                tempBuf.writeUShort(r);
+            tempBuf.writeBool(sub.skyChannel != null);
+            if (sub.skyChannel != null) {
+                tempBuf.writeRawBytes(sub.skyChannel, 0, LIGHT_PLANE_BYTES);
             }
 
-            tempBuf.writeBool(sub.lightIndices != null);
-            if (sub.lightIndices != null) {
-                tempBuf.writeInt(sub.lightIndices.Length);
-                tempBuf.writeRawBytes(sub.lightIndices);
+            tempBuf.writeBool(sub.blockChannel != null);
+            if (sub.blockChannel != null) {
+                tempBuf.writeRawBytes(sub.blockChannel, 0, LIGHT_PLANE_BYTES);
             }
-
-            tempBuf.writeInt(sub.lightCount);
-            tempBuf.writeInt(sub.lightVertCount);
-            tempBuf.writeInt(sub.lightDensity);
 
             // metadata
             tempBuf.writeInt(sub.blockCount);
@@ -139,24 +137,16 @@ public class ChunkDataPacket : Packet {
             sub.density = tempBuf.readInt();
 
             // light data
-            int lightVerticesLen = tempBuf.readInt();
-            sub.lightVertices = tempBuf.readBytes(lightVerticesLen);
+            sub.skyValue = tempBuf.readByte();
+            sub.blockValue = tempBuf.readByte();
 
-            int lightRefsLen = tempBuf.readInt();
-            sub.lightRefs = new ushort[lightRefsLen];
-            for (int j = 0; j < lightRefsLen; j++) {
-                sub.lightRefs[j] = tempBuf.readUShort();
+            if (tempBuf.readBool()) {
+                sub.skyChannel = tempBuf.readBytes(LIGHT_PLANE_BYTES);
             }
 
-            bool hasLightIndices = tempBuf.readBool();
-            if (hasLightIndices) {
-                int lightIndicesLen = tempBuf.readInt();
-                sub.lightIndices = tempBuf.readBytes(lightIndicesLen);
+            if (tempBuf.readBool()) {
+                sub.blockChannel = tempBuf.readBytes(LIGHT_PLANE_BYTES);
             }
-
-            sub.lightCount = tempBuf.readInt();
-            sub.lightVertCount = tempBuf.readInt();
-            sub.lightDensity = tempBuf.readInt();
 
             // metadata
             sub.blockCount = tempBuf.readInt();
@@ -182,13 +172,10 @@ public class ChunkDataPacket : Packet {
         public int density;
 
         // light vertices
-        public byte[] lightVertices;
-        public byte[]? lightIndices;
-        public ushort[] lightRefs;
-        public int lightCount;
-        public int lightVertCount;
-        public int lightVertCapacity;
-        public int lightDensity;
+        public byte[]? skyChannel;
+        public byte[]? blockChannel;
+        public byte skyValue;
+        public byte blockValue;
 
         public int blockCount;
         public int translucentCount;

@@ -53,7 +53,9 @@ public class DemonEye : Hostile {
     }
 
     private void flyTowardsTarget(double dt) {
-        if (target == null) return;
+        if (target == null) {
+            return;
+        }
 
         var dir = target.position - position;
         dir.Y += 1.0;

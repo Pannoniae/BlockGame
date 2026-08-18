@@ -50,8 +50,9 @@ namespace Silk.NET.Windowing
             {
                 // Multiply both together and calculate a good enough value, a bias of 0.1 seems to work well.
                 float multiplied = ratio * i;
-                if (multiplied - (int) multiplied < 0.1f)
+                if (multiplied - (int) multiplied < 0.1f) {
                     return new Vector2D<int>((int) multiplied, i);
+                }
             }
 
             return res;

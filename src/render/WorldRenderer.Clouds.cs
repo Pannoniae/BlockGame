@@ -374,9 +374,14 @@ public sealed partial class WorldRenderer {
         var img = pixels;
 
         int xx0 = x0o % w;
-        if (xx0 < 0) xx0 += w;
+        if (xx0 < 0) {
+            xx0 += w;
+        }
+
         int yy = y0o % h;
-        if (yy < 0) yy += h;
+        if (yy < 0) {
+            yy += h;
+        }
 
         for (int ty = y0o; ty < y1o; ty++) {
             int row = yy * w;
@@ -435,11 +440,15 @@ public sealed partial class WorldRenderer {
                 }
 
                 xx++;
-                if (xx == w) xx = 0;
+                if (xx == w) {
+                    xx = 0;
+                }
             }
 
             yy++;
-            if (yy == h) yy = 0;
+            if (yy == h) {
+                yy = 0;
+            }
         }
     }
 
@@ -493,9 +502,14 @@ public sealed partial class WorldRenderer {
         var img = pixels;
 
         int xx0 = x0o % w;
-        if (xx0 < 0) xx0 += w;
+        if (xx0 < 0) {
+            xx0 += w;
+        }
+
         int yy = y0o % h;
-        if (yy < 0) yy += h;
+        if (yy < 0) {
+            yy += h;
+        }
 
         for (int ty = y0o; ty < y1o; ty++) {
             int row = yy * w;
@@ -551,11 +565,15 @@ public sealed partial class WorldRenderer {
                 }
 
                 xx++;
-                if (xx == w) xx = 0;
+                if (xx == w) {
+                    xx = 0;
+                }
             }
 
             yy++;
-            if (yy == h) yy = 0;
+            if (yy == h) {
+                yy = 0;
+            }
         }
     }
 

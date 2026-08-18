@@ -83,9 +83,14 @@ public class PlayerInventory : Inventory {
     }
 
     public ItemStack removeStack(int index, int count) {
-        if (index < 0 || index >= size()) return ItemStack.EMPTY;
+        if (index < 0 || index >= size()) {
+            return ItemStack.EMPTY;
+        }
+
         var stack = getStack(index);
-        if (stack == ItemStack.EMPTY || count <= 0) return ItemStack.EMPTY;
+        if (stack == ItemStack.EMPTY || count <= 0) {
+            return ItemStack.EMPTY;
+        }
 
         var removeAmount = Math.Min(count, stack.quantity);
         var removed = new ItemStack(stack.getItem(), removeAmount, stack.metadata);
@@ -99,7 +104,10 @@ public class PlayerInventory : Inventory {
     }
 
     public ItemStack clear(int index) {
-        if (index < 0 || index >= size()) return ItemStack.EMPTY;
+        if (index < 0 || index >= size()) {
+            return ItemStack.EMPTY;
+        }
+
         var stack = getStack(index);
         setStack(index, ItemStack.EMPTY);
         return stack;
@@ -118,9 +126,14 @@ public class PlayerInventory : Inventory {
     }
 
     public bool add(int index, int count) {
-        if (index < 0 || index >= size() || count <= 0) return false;
+        if (index < 0 || index >= size() || count <= 0) {
+            return false;
+        }
+
         var stack = getStack(index);
-        if (stack == ItemStack.EMPTY) return false;
+        if (stack == ItemStack.EMPTY) {
+            return false;
+        }
 
         stack.quantity += count;
         return true;

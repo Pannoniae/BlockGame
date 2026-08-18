@@ -10,8 +10,8 @@ public class MummyModel : HumanModel {
     public override void render(MatrixStack mat, Entity e, float apos, float aspeed, float scale, double interp) {
         Game.graphics.tex(0, Game.textures.mummy);
 
-        var interpRot = Vector3.Lerp(e.prevRotation, e.rotation, (float)interp);
-        var interpBodyRot = Vector3.Lerp(e.prevBodyRotation, e.bodyRotation, (float)interp);
+        var interpRot = e.interpRot(interp);
+        var interpBodyRot = e.interpBodyRot(interp);
 
         var headRotX = interpRot.X - interpBodyRot.X;
         var headRotY = interpRot.Y - interpBodyRot.Y;

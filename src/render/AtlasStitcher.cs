@@ -58,8 +58,9 @@ public static class AtlasStitcher {
                     );
 
                     // skip if this tile is inside a protected region
-                    if (isInProtectedRegion(tileRect, source.filepath, protectedRegions))
+                    if (isInProtectedRegion(tileRect, source.filepath, protectedRegions)) {
                         continue;
+                    }
 
                     // skip if tile is fully empty (all alpha == 0)
                     if (source.isTileEmpty(tx, ty)) {
@@ -183,8 +184,9 @@ public static class AtlasStitcher {
      */
     private static bool isInProtectedRegion(Rectangle tileRect, string sourceFile, List<ProtectedRegion> protectedRegions) {
         foreach (var pr in protectedRegions) {
-            if (pr.sourceFile != sourceFile)
+            if (pr.sourceFile != sourceFile) {
                 continue;
+            }
 
             // check if tileRect is inside or overlaps pr.srcRect
             if (tileRect.X >= pr.srcRect.X &&

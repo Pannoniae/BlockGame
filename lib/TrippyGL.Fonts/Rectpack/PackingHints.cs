@@ -67,18 +67,30 @@ namespace TrippyGL.Fonts.Rectpack
         public static void GetFlagsFrom(PackingHints packingHint, ref Span<PackingHints> span)
         {
             int index = 0;
-            if (packingHint.HasFlag(PackingHints.TryByArea))
+            if (packingHint.HasFlag(PackingHints.TryByArea)) {
                 span[index++] = PackingHints.TryByArea;
-            if (packingHint.HasFlag(PackingHints.TryByPerimeter))
+            }
+
+            if (packingHint.HasFlag(PackingHints.TryByPerimeter)) {
                 span[index++] = PackingHints.TryByPerimeter;
-            if (packingHint.HasFlag(PackingHints.TryByBiggerSide))
+            }
+
+            if (packingHint.HasFlag(PackingHints.TryByBiggerSide)) {
                 span[index++] = PackingHints.TryByBiggerSide;
-            if (packingHint.HasFlag(PackingHints.TryByWidth))
+            }
+
+            if (packingHint.HasFlag(PackingHints.TryByWidth)) {
                 span[index++] = PackingHints.TryByWidth;
-            if (packingHint.HasFlag(PackingHints.TryByHeight))
+            }
+
+            if (packingHint.HasFlag(PackingHints.TryByHeight)) {
                 span[index++] = PackingHints.TryByHeight;
-            if (packingHint.HasFlag(PackingHints.TryByPathologicalMultiplier))
+            }
+
+            if (packingHint.HasFlag(PackingHints.TryByPathologicalMultiplier)) {
                 span[index++] = PackingHints.TryByPathologicalMultiplier;
+            }
+
             span = span.Slice(0, index);
         }
 

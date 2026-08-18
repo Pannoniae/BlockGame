@@ -54,42 +54,54 @@ namespace TrippyGL.Fonts
         /// </summary>
         public void WriteToStream(BinaryWriter streamWriter)
         {
-            if (streamWriter == null)
+            if (streamWriter == null) {
                 throw new ArgumentNullException(nameof(streamWriter));
+            }
 
-            if (LastChar < FirstChar)
+            if (LastChar < FirstChar) {
                 throw new ArgumentException(nameof(LastChar) + " can't be lower than " + nameof(FirstChar) + ".");
+            }
 
-            if (!float.IsFinite(Size) || float.IsNegative(Size))
+            if (!float.IsFinite(Size) || float.IsNegative(Size)) {
                 throw new ArgumentException(nameof(Size) + " must be a finite positive value.");
+            }
 
-            if (!float.IsFinite(Ascender) || !float.IsFinite(Descender) || !float.IsFinite(LineGap))
+            if (!float.IsFinite(Ascender) || !float.IsFinite(Descender) || !float.IsFinite(LineGap)) {
                 throw new ArgumentException(nameof(Ascender) + ", " + nameof(Descender) + " and " + nameof(LineGap) + " must be finite values.");
+            }
 
-            if (Name != null && Name.Length > MaxFontNameLength)
+            if (Name != null && Name.Length > MaxFontNameLength) {
                 throw new Exception(nameof(Name) + " must be at most " + MaxFontNameLength + " characters long.");
+            }
 
-            if (Advances == null)
+            if (Advances == null) {
                 throw new ArgumentNullException(nameof(Advances));
+            }
 
-            if (RenderOffsets == null)
+            if (RenderOffsets == null) {
                 throw new ArgumentNullException(nameof(RenderOffsets));
+            }
 
-            if (SourceRectangles == null)
+            if (SourceRectangles == null) {
                 throw new ArgumentNullException(nameof(SourceRectangles));
+            }
 
             int charCount = CharCount;
-            if (Advances.Length != 1 && Advances.Length != charCount)
+            if (Advances.Length != 1 && Advances.Length != charCount) {
                 throw new ArgumentException("The length of the " + nameof(Advances) + " array must be either 1 (for monospace) or equal to " + nameof(CharCount));
+            }
 
-            if (RenderOffsets.Length != charCount)
+            if (RenderOffsets.Length != charCount) {
                 throw new ArgumentException("The length of the " + nameof(RenderOffsets) + " array must be equal to " + nameof(CharCount));
+            }
 
-            if (SourceRectangles.Length != charCount)
+            if (SourceRectangles.Length != charCount) {
                 throw new ArgumentException("The length of the " + nameof(SourceRectangles) + " array must be equal to " + nameof(CharCount));
+            }
 
-            if (KerningOffsets != null && (KerningOffsets.GetLength(0) != charCount || KerningOffsets.GetLength(1) != charCount))
+            if (KerningOffsets != null && (KerningOffsets.GetLength(0) != charCount || KerningOffsets.GetLength(1) != charCount)) {
                 throw new ArgumentException("The length on both dimentions of the " + nameof(KerningOffsets) + " array must be equal to " + nameof(CharCount));
+            }
 
             FontTypeByte typeByte = KerningOffsets == null ? (Advances.Length == 1 ? FontTypeByte.Monospace : FontTypeByte.Spaced) : FontTypeByte.SpacedWithKerning;
 
@@ -106,8 +118,9 @@ namespace TrippyGL.Fonts
             streamWriter.Write(LineGap);
             streamWriter.Write((byte)typeByte);
 
-            if (string.IsNullOrEmpty(Name))
+            if (string.IsNullOrEmpty(Name)) {
                 streamWriter.Write((ushort)0);
+            }
             else
             {
                 streamWriter.Write((ushort)Name.Length);
@@ -115,8 +128,9 @@ namespace TrippyGL.Fonts
                     streamWriter.Write(Name[i]);
             }
 
-            if (typeByte == FontTypeByte.Monospace)
+            if (typeByte == FontTypeByte.Monospace) {
                 streamWriter.Write(Advances[0]);
+            }
             else
             {
                 if (Advances.Length == 1)
@@ -161,8 +175,9 @@ namespace TrippyGL.Fonts
         /// </summary>
         public static TextureFontData FromStream(BinaryReader streamReader)
         {
-            if (streamReader == null)
+            if (streamReader == null) {
                 throw new ArgumentNullException(nameof(streamReader));
+            }
 
             streamReader.ReadInt32();
             streamReader.ReadInt32();
@@ -170,24 +185,29 @@ namespace TrippyGL.Fonts
             streamReader.ReadInt32();
 
             float size = streamReader.ReadSingle();
-            if (!float.IsFinite(size) || float.IsNegative(size))
+            if (!float.IsFinite(size) || float.IsNegative(size)) {
                 throw new FontLoadingException("Invalid Size: " + size + ".");
+            }
 
             int firstChar = streamReader.ReadInt32();
             int lastChar = streamReader.ReadInt32();
-            if (lastChar < firstChar)
+            if (lastChar < firstChar) {
                 throw new FontLoadingException("LastChar is lower than FirstChar.");
+            }
+
             int charCount = lastChar - firstChar + 1;
 
             float ascender = streamReader.ReadSingle();
             float descender = streamReader.ReadSingle();
             float lineGap = streamReader.ReadSingle();
-            if (!float.IsFinite(ascender) || !float.IsFinite(descender) || !float.IsFinite(lineGap))
+            if (!float.IsFinite(ascender) || !float.IsFinite(descender) || !float.IsFinite(lineGap)) {
                 throw new FontLoadingException("Ascender, Descender and LineGap must be finite values.");
+            }
 
             FontTypeByte typeByte = (FontTypeByte)streamReader.ReadByte();
-            if (typeByte > FontTypeByte.SpacedWithKerning)
+            if (typeByte > FontTypeByte.SpacedWithKerning) {
                 throw new FontLoadingException("Invalid " + nameof(FontTypeByte));
+            }
 
             ushort nameLength = streamReader.ReadUInt16();
             string? name = nameLength == 0 ? null : string.Create(nameLength, streamReader, (chars, sr) =>
@@ -202,8 +222,10 @@ namespace TrippyGL.Fonts
             if (typeByte == FontTypeByte.Monospace)
             {
                 float a = streamReader.ReadSingle();
-                if (!float.IsFinite(a))
+                if (!float.IsFinite(a)) {
                     throw new FontLoadingException("Advance values must be finite.");
+                }
+
                 advances[0] = a;
             }
             else
@@ -211,8 +233,10 @@ namespace TrippyGL.Fonts
                 for (int i = 0; i < advances.Length; i++)
                 {
                     float a = streamReader.ReadSingle();
-                    if (!float.IsFinite(a))
+                    if (!float.IsFinite(a)) {
                         throw new FontLoadingException("Advance values must be finite.");
+                    }
+
                     advances[i] = a;
                 }
 
@@ -224,8 +248,9 @@ namespace TrippyGL.Fonts
                         {
                             float x = streamReader.ReadSingle();
                             float y = streamReader.ReadSingle();
-                            if (!float.IsFinite(x) || !float.IsFinite(y))
+                            if (!float.IsFinite(x) || !float.IsFinite(y)) {
                                 throw new FontLoadingException("Kerning offsets must be finite.");
+                            }
 
                             kerningOffsets[i, c] = new Vector2(x, y);
                         }
@@ -246,8 +271,9 @@ namespace TrippyGL.Fonts
             {
                 float x = streamReader.ReadSingle();
                 float y = streamReader.ReadSingle();
-                if (!float.IsFinite(x) || !float.IsFinite(y))
+                if (!float.IsFinite(x) || !float.IsFinite(y)) {
                     throw new FontLoadingException("Render offsets must be finite.");
+                }
 
                 renderOffsets[i] = new Vector2(x, y);
             }

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace BlockGame.util;
 
@@ -48,12 +49,18 @@ public class XList<T> : IList<T> {
     T IList<T>.this[int index] {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
-            if ((uint)index >= (uint)cnt) ThrowIndexOutOfRange();
+            if ((uint)index >= (uint)cnt) {
+                ThrowIndexOutOfRange();
+            }
+
             return arr[index];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         set {
-            if ((uint)index >= (uint)cnt) ThrowIndexOutOfRange();
+            if ((uint)index >= (uint)cnt) {
+                ThrowIndexOutOfRange();
+            }
+
             arr[index] = value;
         }
     }
@@ -67,14 +74,14 @@ public class XList<T> : IList<T> {
         }
     }
 
-    /**
-     * Ref indexer - modify elements in-place without copying.
-     */
     public ref T this[int idx] {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
-            if ((uint)idx >= (uint)cnt) ThrowIndexOutOfRange();
-            return ref arr[idx];
+            if ((uint)idx >= (uint)cnt) {
+                ThrowIndexOutOfRange();
+            }
+
+            return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(arr), (nint)(uint)idx);
         }
     }
 
@@ -104,8 +111,14 @@ public class XList<T> : IList<T> {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Insert(int idx, T item) {
-        if ((uint)idx > (uint)cnt) ThrowIndexOutOfRange();
-        if (cnt == arr.Length) Grow();
+        if ((uint)idx > (uint)cnt) {
+            ThrowIndexOutOfRange();
+        }
+
+        if (cnt == arr.Length) {
+            Grow();
+        }
+
         if (idx < cnt) {
             Array.Copy(arr, idx, arr, idx + 1, cnt - idx);
         }
@@ -124,7 +137,10 @@ public class XList<T> : IList<T> {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RemoveAt(int idx) {
-        if ((uint)idx >= (uint)cnt) ThrowIndexOutOfRange();
+        if ((uint)idx >= (uint)cnt) {
+            ThrowIndexOutOfRange();
+        }
+
         cnt--;
         if (idx < cnt) {
             Array.Copy(arr, idx + 1, arr, idx, cnt - idx);
@@ -133,8 +149,14 @@ public class XList<T> : IList<T> {
     }
 
     public void RemoveRange(int idx, int count) {
-        if (idx < 0 || count < 0 || idx + count > cnt) ThrowIndexOutOfRange();
-        if (count == 0) return;
+        if (idx < 0 || count < 0 || idx + count > cnt) {
+            ThrowIndexOutOfRange();
+        }
+
+        if (count == 0) {
+            return;
+        }
+
         cnt -= count;
         if (idx < cnt) {
             Array.Copy(arr, idx + count, arr, idx, cnt - idx);
@@ -179,7 +201,10 @@ public class XList<T> : IList<T> {
     }
 
     public T[] ToArray() {
-        if (cnt == 0) return [];
+        if (cnt == 0) {
+            return [];
+        }
+
         var result = new T[cnt];
         Array.Copy(arr, result, cnt);
         return result;
@@ -227,7 +252,10 @@ public class XList<T> : IList<T> {
 
     private void GrowTo(int minCapacity) {
         int newSize = arr.Length == 0 ? 4 : arr.Length * 2;
-        if (newSize < minCapacity) newSize = minCapacity;
+        if (newSize < minCapacity) {
+            newSize = minCapacity;
+        }
+
         Array.Resize(ref arr, newSize);
     }
 

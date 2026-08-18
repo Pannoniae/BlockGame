@@ -33,7 +33,7 @@ public class Humanoid : Player {
 
     public override void update(double dt) {
         savePrevVars();
-        updateTimers(dt);
+        updateVisualTimers(dt);
 
         interpTick++;
         float t = Math.Clamp(interpTick / (float)CONSUME_INTERVAL, 0f, 1f);

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace BlockGame.util;
 
@@ -52,8 +53,11 @@ public class XUList<T> : IList<T> {
     public ref T this[int idx] {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
-            if ((uint)idx >= (uint)cnt) ThrowIndexOutOfRange();
-            return ref arr[idx];
+            if ((uint)idx >= (uint)cnt) {
+                ThrowIndexOutOfRange();
+            }
+
+            return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(arr), (nint)(uint)idx);
         }
     }
 
@@ -105,7 +109,10 @@ public class XUList<T> : IList<T> {
      */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RemoveAt(int idx) {
-        if ((uint)idx >= (uint)cnt) ThrowIndexOutOfRange();
+        if ((uint)idx >= (uint)cnt) {
+            ThrowIndexOutOfRange();
+        }
+
         cnt--;
         if (idx != cnt) {
             arr[idx] = arr[cnt];
@@ -124,7 +131,10 @@ public class XUList<T> : IList<T> {
      */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T RemoveLast() {
-        if (cnt == 0) ThrowIndexOutOfRange();
+        if (cnt == 0) {
+            ThrowIndexOutOfRange();
+        }
+
         T item = arr[--cnt];
         arr[cnt] = default!;
         return item;
@@ -135,7 +145,10 @@ public class XUList<T> : IList<T> {
      */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Pop() {
-        if (cnt == 0) ThrowIndexOutOfRange();
+        if (cnt == 0) {
+            ThrowIndexOutOfRange();
+        }
+
         arr[--cnt] = default!;
     }
 
@@ -168,7 +181,10 @@ public class XUList<T> : IList<T> {
     }
 
     public T[] ToArray() {
-        if (cnt == 0) return [];
+        if (cnt == 0) {
+            return [];
+        }
+
         var result = new T[cnt];
         Array.Copy(arr, result, cnt);
         return result;
@@ -216,7 +232,10 @@ public class XUList<T> : IList<T> {
 
     private void GrowTo(int minCapacity) {
         int newSize = arr.Length == 0 ? 4 : arr.Length * 2;
-        if (newSize < minCapacity) newSize = minCapacity;
+        if (newSize < minCapacity) {
+            newSize = minCapacity;
+        }
+
         Array.Resize(ref arr, newSize);
     }
 

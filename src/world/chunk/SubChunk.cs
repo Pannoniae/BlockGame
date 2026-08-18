@@ -30,8 +30,12 @@ public class SubChunk {
     /// </summary>
     public bool isEmpty => blocks.isEmpty();
 
-    /** Returns true if this subchunk has been meshed (has VAO data). Or if we have nothing to mesh. */
-    public bool isMeshed() => (vao != null || watervao != null) || isEmpty;
+    /**
+     * Has the mesher run on this section?
+     */
+    public bool meshed;
+
+    public bool isMeshed() => meshed;
 
     public int worldX => coord.x << 4;
     public int worldY => coord.y << 4;

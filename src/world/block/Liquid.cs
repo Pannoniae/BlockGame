@@ -117,7 +117,10 @@ public class Liquid : Block {
     }
 
     private static bool isLavaSource(World world, int x, int y, int z) {
-        if (world.getBlock(x, y, z) != LAVA.id) return false;
+        if (world.getBlock(x, y, z) != LAVA.id) {
+            return false;
+        }
+
         var data = world.getBlockMetadata(x, y, z);
         return getWaterLevel(data) == 0 && !isFalling(data);
     }
@@ -160,10 +163,21 @@ public class Liquid : Block {
             var w3 = getWater(world, x, y, z - 1, id, ref hasFalling);
             var w4 = getWater(world, x, y, z + 1, id, ref hasFalling);
 
-            if (w1 >= 0) bestLevel = Math.Min(bestLevel, w1);
-            if (w2 >= 0) bestLevel = Math.Min(bestLevel, w2);
-            if (w3 >= 0) bestLevel = Math.Min(bestLevel, w3);
-            if (w4 >= 0) bestLevel = Math.Min(bestLevel, w4);
+            if (w1 >= 0) {
+                bestLevel = Math.Min(bestLevel, w1);
+            }
+
+            if (w2 >= 0) {
+                bestLevel = Math.Min(bestLevel, w2);
+            }
+
+            if (w3 >= 0) {
+                bestLevel = Math.Min(bestLevel, w3);
+            }
+
+            if (w4 >= 0) {
+                bestLevel = Math.Min(bestLevel, w4);
+            }
 
             // no water neighbours found?
             if (bestLevel == 999) {
@@ -343,34 +357,40 @@ public class Liquid : Block {
      * however, this is only used by the rendering! otherwise falling water is treated as source which is no good.
      */
     public static int getRenderWater(World world, int x, int y, int z, ushort id) {
-        var block = world.getBlock(x, y, z);
-        if (block == id) {
-            var data = world.getBlockMetadata(x, y, z);
+        return renderWaterOf(world.getBlockRaw(x, y, z), id);
+    }
 
-            // if falling water, always full height
-            if (isFalling(data)) {
-                return 0;
-            }
-
-            // if source, full height
-            if (getWaterLevel(data) == 0) {
-                return 0;
-            }
-
-            return getWaterLevel(data);
+    public static int renderWaterOf(uint b, ushort id) {
+        if (b.getID() != id) {
+            return -1;
         }
 
-        return -1;
+        var data = b.getMetadata();
+
+        // if falling water, always full height
+        if (isFalling(data)) {
+            return 0;
+        }
+
+        // if source, full height
+        if (getWaterLevel(data) == 0) {
+            return 0;
+        }
+
+        return getWaterLevel(data);
     }
 
     public static float getRenderHeight(World world, int x, int y, int z, ushort id) {
+        return renderHeightOf(world.getBlockRaw(x, y, z), id);
+    }
+
+    public static float renderHeightOf(uint b, ushort id) {
         // if there's no water here, return 0
-        var block = world.getBlock(x, y, z);
-        if (block != id) {
+        if (b.getID() != id) {
             return 0f;
         }
 
-        return getHeight(world.getBlockMetadata(x, y, z));
+        return getHeight(b.getMetadata());
     }
 
     /**
@@ -424,9 +444,67 @@ public class Liquid : Block {
     }
 
     private static float sampleBlockHeight(World world, int x, int y, int z, ushort id, ref int samples) {
-        var block = world.getBlock(x, y, z);
+        return sampleHeightOf(world.getBlockRaw(x, y, z), id, ref samples);
+    }
+
+    public static float getRenderHeightCached(BlockRenderer br, int ox, int oz, ushort id) {
+        // if there's water above ANY of the 4 corner blocks, return full height
+        if (renderWaterOf(br.getBlockCached(0, 1, 0), id) >= 0 ||
+            renderWaterOf(br.getBlockCached(ox, 1, 0), id) >= 0 ||
+            renderWaterOf(br.getBlockCached(0, 1, oz), id) >= 0 ||
+            renderWaterOf(br.getBlockCached(ox, 1, oz), id) >= 0) {
+            return 1.0f;
+        }
+
+        float h = 0;
+        int samples = 0;
+
+        // sample the 4 blocks around this corner
+        h += sampleHeightOf(br.getBlockCached(0, 0, 0), id, ref samples);
+        h += sampleHeightOf(br.getBlockCached(ox, 0, 0), id, ref samples);
+        h += sampleHeightOf(br.getBlockCached(0, 0, oz), id, ref samples);
+        h += sampleHeightOf(br.getBlockCached(ox, 0, oz), id, ref samples);
+
+        if (samples == 0) {
+            return 1; // no water or air found, solid blocks only
+        }
+
+        return h / samples;
+    }
+
+    public Vector3 getFlowCached(BlockRenderer br) {
+        var metadata = br.getBlock().getMetadata();
+
+        // if full water, no flow!
+        if (metadata == 0) {
+            return Vector3.Zero;
+        }
+
+        var currentLevel = renderHeightOf(br.getBlockCached(0, 0, 0), id);
+        var flow = Vector3.Zero;
+
+        // Check horizontal neighbours for where to flow
+        foreach (var dir in Direction.directionsHorizontal) {
+            var neighbourLevel = renderHeightOf(br.getBlockCached(dir.X, 0, dir.Z), id);
+
+            // Flow TO higher level numbers (less water)
+            if (neighbourLevel > 0 && neighbourLevel > currentLevel) {
+                flow += new Vector3(dir.X, 0, dir.Z) * (currentLevel - neighbourLevel);
+            }
+        }
+
+        // if water above
+        if (isFalling(metadata) || br.getBlockCached(0, 1, 0).getID() == id) {
+            flow.Y -= 0.5f;
+        }
+
+        return flow.LengthSquared() > 0 ? Vector3.Normalize(flow) : Vector3.Zero;
+    }
+
+    private static float sampleHeightOf(uint b, ushort id, ref int samples) {
+        var block = b.getID();
         if (block == id) {
-            var data = world.getBlockMetadata(x, y, z);
+            var data = b.getMetadata();
             float height = getHeight(data);
 
             // weight by water amount
@@ -596,15 +674,14 @@ public class Liquid : Block {
         var metadata = block.getMetadata();
         var level = getWaterLevel(metadata);
         var falling = isFalling(metadata);
-        var world = br.world;
 
         // corner heights
-        var h00 = getRenderHeight(world, x, y, z, -1, -1, id); // sw
-        var h10 = getRenderHeight(world, x, y, z, 1, -1, id); // se
-        var h01 = getRenderHeight(world, x, y, z, -1, 1, id); // nw
-        var h11 = getRenderHeight(world, x, y, z, 1, 1, id); // ne
+        var h00 = getRenderHeightCached(br, -1, -1, id); // sw
+        var h10 = getRenderHeightCached(br, 1, -1, id); // se
+        var h01 = getRenderHeightCached(br, -1, 1, id); // nw
+        var h11 = getRenderHeightCached(br, 1, 1, id); // ne
 
-        var flow = getFlow(world, x, y, z);
+        var flow = getFlowCached(br);
         // todo if this shit ever gets slow / you notice it on the profiler, time to create a Meth version of atan2 which mostly calculates the right value most of the time (but its fast)
         var flowAngle = (flow.X != 0 || flow.Z != 0) ? MathF.Atan2(flow.Z, flow.X) : 0f;
         var flowCos = MathF.Cos(flowAngle);

@@ -23,7 +23,7 @@ public class RegionFileTests {
 
     [Test]
     public void TestBasicWriteRead() {
-        using var region = new RegionFile(testDir, 0, 0, new Lock());
+        using var region = new RegionFile(testDir, 0, 0);
 
         // write some test chunks
         byte[] chunk0 = [1, 2, 3, 4, 5];
@@ -50,14 +50,14 @@ public class RegionFileTests {
     [Test]
     public void TestPersistence() {
         // write and close
-        using (var region = new RegionFile(testDir, 0, 0, new Lock())) {
+        using (var region = new RegionFile(testDir, 0, 0)) {
             var chunk = "cXM"u8.ToArray();
             region.writeChunk(5, 10, chunk);
             region.flush();
         }
 
         // reopen and read
-        using (var region = new RegionFile(testDir, 0, 0, new Lock())) {
+        using (var region = new RegionFile(testDir, 0, 0)) {
             byte[]? read = region.readChunk(5, 10);
             Assert.That(read, Is.Not.Null);
             Assert.That(read, Is.EqualTo("cXM"u8.ToArray()));
@@ -66,7 +66,7 @@ public class RegionFileTests {
 
     [Test]
     public void TestOverwrite() {
-        using var region = new RegionFile(testDir, 0, 0, new Lock());
+        using var region = new RegionFile(testDir, 0, 0);
 
         byte[] chunk1 = [1, 2, 3, 4, 5];
         byte[] chunk2 = [10, 20]; // smaller
@@ -84,7 +84,7 @@ public class RegionFileTests {
 
     [Test]
     public void TestDefrag() {
-        using var region = new RegionFile(testDir, 0, 0, new Lock());
+        using var region = new RegionFile(testDir, 0, 0);
 
         // write large chunks
         byte[] largeChunk = new byte[10000];
@@ -122,18 +122,18 @@ public class RegionFileTests {
     public void TestRegionManager() {
         using var manager = new RegionManager(testDir);
 
-        // write to multiple regions
-        var r00 = manager.getRegion(new RegionCoord(0, 0));
-        var r01 = manager.getRegion(new RegionCoord(0, 1));
+        // chunk (0,0) is region (0,0); chunk (0,32) is region (0,1)
+        var c00 = new ChunkCoord(0, 0);
+        var c01 = new ChunkCoord(0, 32);
 
-        r00.writeChunk(0, 0, [1, 2, 3]);
-        r01.writeChunk(0, 0, [4, 5, 6]);
+        manager.writeChunk(c00, [1, 2, 3]);
+        manager.writeChunk(c01, [4, 5, 6]);
 
         manager.flushAll();
 
         // read back
-        byte[]? read00 = r00.readChunk(0, 0);
-        byte[]? read01 = r01.readChunk(0, 0);
+        byte[]? read00 = manager.readChunk(c00);
+        byte[]? read01 = manager.readChunk(c01);
 
         Assert.That(read00, Is.Not.Null);
         Assert.That(read01, Is.Not.Null);
@@ -178,7 +178,7 @@ public class RegionFileTests {
 
     [Test]
     public void TestDeleteChunk() {
-        using var region = new RegionFile(testDir, 0, 0, new Lock());
+        using var region = new RegionFile(testDir, 0, 0);
 
         byte[] chunk = [1, 2, 3];
         region.writeChunk(0, 0, chunk);
@@ -195,7 +195,7 @@ public class RegionFileTests {
 
     [Test]
     public void TestLargeChunk() {
-        using var region = new RegionFile(testDir, 0, 0, new Lock());
+        using var region = new RegionFile(testDir, 0, 0);
 
         // create a large chunk
         byte[] largeChunk = new byte[500_000]; // 500 KB

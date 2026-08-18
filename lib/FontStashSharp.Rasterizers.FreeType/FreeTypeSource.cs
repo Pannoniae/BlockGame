@@ -20,10 +20,11 @@ namespace FontStashSharp.Rasterizers.FreeType
 				FT_LibraryRec_* libraryRef;
 				err = FT.FT_Init_FreeType(&libraryRef);
 
-				if (err != FT_Error.FT_Err_Ok)
-					throw new FreeTypeException(err);
+				if (err != FT_Error.FT_Err_Ok) {
+                    throw new FreeTypeException(err);
+                }
 
-				_libraryHandle = libraryRef;
+                _libraryHandle = libraryRef;
 			}
 
 			_memoryHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
@@ -31,10 +32,11 @@ namespace FontStashSharp.Rasterizers.FreeType
 			FT_FaceRec_* faceRef;
 			err = FT.FT_New_Memory_Face(_libraryHandle, (byte*)_memoryHandle.AddrOfPinnedObject(), (IntPtr)data.Length, IntPtr.Zero, &faceRef);
 
-			if (err != FT_Error.FT_Err_Ok)
-				throw new FreeTypeException(err);
+			if (err != FT_Error.FT_Err_Ok) {
+                throw new FreeTypeException(err);
+            }
 
-			_faceHandle = faceRef;
+            _faceHandle = faceRef;
 		}
 
 		~FreeTypeSource()
@@ -50,9 +52,10 @@ namespace FontStashSharp.Rasterizers.FreeType
 				_faceHandle = default;
 			}
 
-			if (_memoryHandle.IsAllocated)
-				_memoryHandle.Free();
-		}
+			if (_memoryHandle.IsAllocated) {
+                _memoryHandle.Free();
+            }
+        }
 
 		public void Dispose()
 		{
@@ -89,16 +92,18 @@ namespace FontStashSharp.Rasterizers.FreeType
 		private void SetPixelSizes(float width, float height)
 		{
 			var err = FT.FT_Set_Pixel_Sizes(_faceHandle, (uint)width, (uint)height);
-			if (err != FT_Error.FT_Err_Ok)
-				throw new FreeTypeException(err);
-		}
+			if (err != FT_Error.FT_Err_Ok) {
+                throw new FreeTypeException(err);
+            }
+        }
 
 		private void LoadGlyph(int glyphId)
 		{
 			var err = FT.FT_Load_Glyph(_faceHandle, (uint)glyphId, FT_LOAD.FT_LOAD_DEFAULT | FT_LOAD.FT_LOAD_COLOR);
-			if (err != FT_Error.FT_Err_Ok)
-				throw new FreeTypeException(err);
-		}
+			if (err != FT_Error.FT_Err_Ok) {
+                throw new FreeTypeException(err);
+            }
+        }
 
 		private unsafe void GetCurrentGlyph(out FT_GlyphSlotRec_ glyph)
 		{

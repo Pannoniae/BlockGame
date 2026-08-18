@@ -135,7 +135,9 @@ public class Leaves : Block {
             var (x, y, z, dist) = queue.Dequeue();
 
             // reached max distance
-            if (dist >= DECAY_DIST) continue;
+            if (dist >= DECAY_DIST) {
+                continue;
+            }
 
             // check all 6 neighbours
             foreach (var dir in Direction.directions) {

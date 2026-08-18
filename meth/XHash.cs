@@ -106,7 +106,9 @@ public static class XHash {
      */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int hash(string str) {
-        if (str == null) return 0;
+        if (str == null) {
+            return 0;
+        }
 
         unchecked {
             uint hash = 2166136261u;

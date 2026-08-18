@@ -6,8 +6,8 @@ namespace BlockGame.world.worldgen.generator;
 
 public partial class SimpleWorldGenerator {
     
-    public void generate(ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
+    public void generate(Chunk chunk) {
+        var coord = chunk.coord;
         for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 var worldPos = World.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);

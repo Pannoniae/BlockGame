@@ -162,19 +162,29 @@ public abstract class NBTTag : IEquatable<NBTTag> {
     // BOILERPLATE
 
     public bool Equals(NBTTag? other) {
-        if (ReferenceEquals(null, other))
+        if (ReferenceEquals(null, other)) {
             return false;
-        if (ReferenceEquals(this, other))
+        }
+
+        if (ReferenceEquals(this, other)) {
             return true;
+        }
+
         return string.Equals(name, other.name, StringComparison.InvariantCulture) && id == other.id;
     }
     public override bool Equals(object? obj) {
-        if (ReferenceEquals(null, obj))
+        if (ReferenceEquals(null, obj)) {
             return false;
-        if (ReferenceEquals(this, obj))
+        }
+
+        if (ReferenceEquals(this, obj)) {
             return true;
-        if (obj.GetType() != GetType())
+        }
+
+        if (obj.GetType() != GetType()) {
             return false;
+        }
+
         return Equals((NBTTag)obj);
     }
     public override int GetHashCode() {

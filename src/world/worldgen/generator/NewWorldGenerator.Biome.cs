@@ -15,59 +15,33 @@ public partial class NewWorldGenerator {
     public const float DETAIL_STRENGTH = 0.05f;
 
     /** v4 density - same as v3 but generates biomes too */
-    private void getDensityBiomes(float[] buffer, ChunkCoord coord) {
+    private void getDensityBiomes(float[] buffer, Chunk chunk) {
+        var coord = chunk.coord;
         WorldgenUtil.getNoise3DRegion(tb, tn, coord, LOW_FREQ, LOW_FREQ * 2,
             LOW_FREQ, 8, 1 + Meth.rhoF * 2);
         WorldgenUtil.getNoise3DRegion(t2b, t2n, coord, HIGH_FREQ, HIGH_FREQ * 2,
-            HIGH_FREQ, 8, 2 + Meth.rhoF);
+            HIGH_FREQ, 5, 2 + Meth.rhoF);
 
         WorldgenUtil.getNoise3DRegion(sb, sn, coord, SELECTOR_FREQ, SELECTOR_FREQ / 2,
-            SELECTOR_FREQ, 6, 2f);
+            SELECTOR_FREQ, 5, 2f);
 
         WorldgenUtil.getNoise2DRegion(eb, esn, coord, ELEVATION_FREQ, ELEVATION_FREQ, 10, 2f);
         WorldgenUtil.getNoise2DRegion(fb, fsn, coord, FRACT_FREQ, FRACT_FREQ, 8, 2f - Meth.d2r);
-
-        // generate biome noise (5x33x5 grid - 16 blocks sampled every 4 = 5 points, 128 blocks = 33 points)
-        const int biomeNX = 5;
-        const int biomeNY = 33; // 0,4,8,...,124,128
-        const int biomeNZ = 5;
-
+        // note: do NOT change the falloff from 2! BiomeData.fe()'s normaliser only works for that.
+        chunk.biomeData.setChunk(chunk);
 
         int worldX = coord.x * Chunk.CHUNKSIZE;
         int worldZ = coord.z * Chunk.CHUNKSIZE;
 
-        for (int nx = 0; nx < biomeNX; nx++) {
-            int x = worldX + nx * 4;
+        for (int nz = 0; nz < WorldgenUtil.NOISE_SIZE_Z; nz++) {
+            int z = worldZ + nz * WorldgenUtil.NOISE_PER_Z;
 
-            for (int nz = 0; nz < biomeNZ; nz++) {
-                int z = worldZ + nz * 4;
+            for (int nx = 0; nx < WorldgenUtil.NOISE_SIZE_X; nx++) {
+                int x = worldX + nx * WorldgenUtil.NOISE_PER_X;
 
-                for (int ny = 0; ny < biomeNY; ny++) {
-                    int y = ny * 4;
-
-                    int idx = (ny * biomeNZ + nz) * biomeNX + nx;
-
-                    // note: do NOT change the falloff from 2! we're using the normaliser which only works for that. If you change this, recalculate the normaliser too! :D
-                    tempb[idx] = WorldgenUtil.getNoise3D(tempn, x * TEMP_FREQ, y * TEMP_FREQ, z * TEMP_FREQ, 4, 2f);
-                    humb[idx] = WorldgenUtil.getNoise3D(humn, x * HUM_FREQ, y * HUM_FREQ, z * HUM_FREQ, 4, 2f);
-                    ageb[idx] = WorldgenUtil.getNoise3D(agen, x * AGE_FREQ, y * AGE_FREQ, z * AGE_FREQ, 4, 2f);
-                    wb[idx] = WorldgenUtil.getNoise3D(wn, x * W_FREQ, y * W_FREQ, z * W_FREQ, 4, 2f);
-                }
-            }
-        }
-
-        // fill chunk biome data todo optimise this by batch-inserting!
-        var chunk = world.getChunk(coord);
-        chunk.biomeData.setChunk(chunk);
-        for (int by = 0; by < 32; by++) {
-            for (int bz = 0; bz < 4; bz++) {
-                for (int bx = 0; bx < 4; bx++) {
-                    var idx = (by * biomeNZ + bz) * biomeNX + bx;
-                    chunk.biomeData.setTemp(bx, by, bz, (sbyte)(tempb[idx] * 127));
-                    chunk.biomeData.setHum(bx, by, bz, (sbyte)(humb[idx] * 127));
-                    chunk.biomeData.setAge(bx, by, bz, (sbyte)(ageb[idx] * 127));
-                    chunk.biomeData.setW(bx, by, bz, (sbyte)(wb[idx] * 127));
-                }
+                var t = WorldgenUtil.getNoise3D(tempn, x * TEMP_FREQ, 0, z * TEMP_FREQ, 4, 2f);
+                var h = WorldgenUtil.getNoise3D(humn, x * HUM_FREQ, 0, z * HUM_FREQ, 4, 2f);
+                chunk.biomeData.set(nx, nz, (sbyte)(t * 127), (sbyte)(h * 127));
             }
         }
 
@@ -117,8 +91,7 @@ public partial class NewWorldGenerator {
     }
 
     /** v4 surface - uses biome data */
-    private void generateSurfaceBiomes(ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
+    private void generateSurfaceBiomes(Chunk chunk) {
 
         for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
             for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
@@ -129,9 +102,7 @@ public partial class NewWorldGenerator {
                     height--;
                 }
 
-                // get biome data at this column
-                var temp = chunk.biomeData.getTemp(x, height, z);
-                var hum = chunk.biomeData.getHum(x, height, z);
+                chunk.biomeData.sample(x, z, out var temp, out var hum);
 
                 // soil thickness
                 var amt = WorldgenUtil.getNoise2D(auxn, worldPos.X, worldPos.Z, 1, 1) + 4f;

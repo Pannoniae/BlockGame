@@ -12,7 +12,9 @@ public class CandyCarpetRecipe : Recipe {
         byte? carpetColor = null;
 
         foreach (var slot in grid.grid) {
-            if (isEmpty(slot)) continue;
+            if (isEmpty(slot)) {
+                continue;
+            }
 
             if (slot.id == Block.CANDY.item.id) {
                 totalCandies += slot.quantity;
@@ -48,7 +50,9 @@ public class CandyCarpetRecipe : Recipe {
         byte? carpetColor = null;
 
         foreach (var slot in grid.grid) {
-            if (isEmpty(slot)) continue;
+            if (isEmpty(slot)) {
+                continue;
+            }
 
             if (slot.id == Block.CANDY.item.id) {
                 totalCandies += slot.quantity;
@@ -94,7 +98,9 @@ public class CandyCarpetRecipe : Recipe {
 
         // determine what we're consuming
         foreach (var slot in grid.grid) {
-            if (isEmpty(slot)) continue;
+            if (isEmpty(slot)) {
+                continue;
+            }
 
             if (slot.id == Block.CANDY.item.id) {
                 toConsume = 1;
@@ -113,7 +119,9 @@ public class CandyCarpetRecipe : Recipe {
         int consumed = 0;
         for (int i = 0; i < grid.grid.Length && consumed < toConsume; i++) {
             var slot = grid.grid[i];
-            if (isEmpty(slot) || slot.id != targetId) continue;
+            if (isEmpty(slot) || slot.id != targetId) {
+                continue;
+            }
 
             Console.WriteLine($"[CandyCarpetRecipe.consumeIngredients] Slot {i}: qty={slot.quantity}, taking {Math.Min(slot.quantity, toConsume - consumed)}");
 

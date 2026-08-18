@@ -87,8 +87,10 @@ public class Settings {
     public int ssaa {
         get {
             // per-sample mode doesn't use traditional SSAA scaling
-            if (ssaaMode == 2) return 1;
-            
+            if (ssaaMode == 2) {
+                return 1;
+            }
+
             return ssaaScale;
         }
     }
@@ -127,10 +129,18 @@ public class Settings {
     public string getAAText() {
         var parts = new List<string>();
         
-        if (fxaaEnabled) parts.Add("FXAA");
-        if (msaaSamples > 1) parts.Add($"{msaaSamples}x MSAA");
-        if (ssaaScale > 1) parts.Add($"{ssaaScale}x SSAA");
-        
+        if (fxaaEnabled) {
+            parts.Add("FXAA");
+        }
+
+        if (msaaSamples > 1) {
+            parts.Add($"{msaaSamples}x MSAA");
+        }
+
+        if (ssaaScale > 1) {
+            parts.Add($"{ssaaScale}x SSAA");
+        }
+
         return parts.Count > 0 ? string.Join(" + ", parts) : "Off";
     }
 

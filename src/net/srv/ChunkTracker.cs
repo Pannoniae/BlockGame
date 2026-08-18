@@ -1,3 +1,4 @@
+﻿using System.Numerics;
 using BlockGame.net.packet;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
@@ -26,9 +27,19 @@ public class ChunkTracker {
 
     private const int MAX_INDIVIDUAL_CHANGES = 16;
 
+    private byte lightDirty;
+
     public ChunkTracker(ChunkCoord coord, GameServer server) {
         this.coord = coord;
         this.server = server;
+    }
+
+    public void dirtyLight(int y) {
+        if (subscribers.Count == 0) {
+            return;
+        }
+
+        lightDirty |= (byte)(1 << y);
     }
 
     /** mark a block as dirty (world coords) */
@@ -101,6 +112,8 @@ public class ChunkTracker {
 
     /** flush accumulated changes to all subscribers */
     public void flush() {
+        flushLight();
+
         if (dirtyBlocks.Count == 0) {
             return; // nothing to send
         }
@@ -171,6 +184,43 @@ public class ChunkTracker {
         // clear dirty state
         dirtyBlocks.Clear();
         hasDirtyBounds = false;
+    }
+
+    private void flushLight() {
+        if (lightDirty == 0) {
+            return;
+        }
+
+        var mask = lightDirty;
+        lightDirty = 0;
+
+        if (subscribers.Count == 0) {
+            return;
+        }
+
+        if (!server.world.getChunkMaybe(coord, out var chunk) || chunk == null || chunk.destroyed) {
+            return;
+        }
+
+        while (mask != 0) {
+            var y = BitOperations.TrailingZeroCount(mask);
+            mask &= (byte)(mask - 1);
+
+            chunk.blocks[y].skillIssueLightPlanes(out var sky, out var blk, out var uSky, out var uBlk);
+
+            var packet = new LightUpdatePacket {
+                coord = coord,
+                y = (byte)y,
+                uniformSky = uSky,
+                uniformBlock = uBlk,
+                skyPlane = sky,
+                blockPlane = blk
+            };
+
+            foreach (var conn in subscribers) {
+                conn.send(packet, DeliveryMethod.ReliableOrdered);
+            }
+        }
     }
 
     /** add a player subscription to this chunk */

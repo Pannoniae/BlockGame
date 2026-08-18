@@ -17,6 +17,9 @@ public partial class ClientMain {
     public static void Main(string[] args) {
         var devMode = args.Length > 0 && args[0] == "--dev";
 
+        // name the main thread
+        Thread.CurrentThread.Name = "Client Thread";
+
         #if DEBUG
         Log.init(minLevel: LogLevel.DEBUG);
         #else
@@ -118,7 +121,9 @@ public partial class ClientMain {
     private static bool isSudo() {
         if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS()) {
             // check EUID = 0 or SUDO_USER env var
-            if (Environment.GetEnvironmentVariable("SUDO_USER") != null) return true;
+            if (Environment.GetEnvironmentVariable("SUDO_USER") != null) {
+                return true;
+            }
 
             try {
                 return geteuid() == 0;

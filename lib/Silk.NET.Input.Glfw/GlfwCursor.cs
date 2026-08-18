@@ -216,12 +216,14 @@ namespace Silk.NET.Input.Glfw
 
         private unsafe Cursor* GetStandardCursor()
         {
-            if (_standardCursor == StandardCursor.Default)
+            if (_standardCursor == StandardCursor.Default) {
                 return null;
+            }
             else
             {
-                if (!_cursorShapes.ContainsKey(_standardCursor))
+                if (!_cursorShapes.ContainsKey(_standardCursor)) {
                     throw new InvalidOperationException("Glfw does not support the given standard cursor.");
+                }
 
                 return GlfwProvider.GLFW.Value.CreateStandardCursor(_cursorShapes[_standardCursor]);
             }
@@ -229,17 +231,20 @@ namespace Silk.NET.Input.Glfw
 
         private unsafe Cursor* CreateCustomCursor()
         {
-            if (_image.Pixels.IsEmpty || _image.Width <= 0 || _image.Height <= 0)
+            if (_image.Pixels.IsEmpty || _image.Width <= 0 || _image.Height <= 0) {
                 return null;
+            }
 
-            if (_image.Pixels.Length % BytesPerCursorPixel != 0)
+            if (_image.Pixels.Length % BytesPerCursorPixel != 0) {
                 throw new ArgumentOutOfRangeException
                     ($"Pixel data must provide a multiple of {BytesPerCursorPixel} bytes.");
+            }
 
             // the user might setup the values step-by-step, so use the
             // default cursor as long as the custom cursor state is not valid
-            if (_image.Width * _image.Height * BytesPerCursorPixel != _image.Pixels.Length)
+            if (_image.Width * _image.Height * BytesPerCursorPixel != _image.Pixels.Length) {
                 return null;
+            }
 
             fixed (byte* ptr = _image.Pixels.Span)
             {

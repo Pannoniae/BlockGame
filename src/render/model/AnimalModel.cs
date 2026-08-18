@@ -34,8 +34,8 @@ public class AnimalModel : EntityModel {
         Game.graphics.tex(0, Game.textures.get(e.tex));
 
         // calculate interpolated rotations
-        var interpRot = Vector3.Lerp(e.prevRotation, e.rotation, (float)interp);
-        var interpBodyRot = Vector3.Lerp(e.prevBodyRotation, e.bodyRotation, (float)interp);
+        var interpRot = e.interpRot(interp);
+        var interpBodyRot = e.interpBodyRot(interp);
 
         // calculate head rotation relative to body
         var headRotY = interpRot.Y - interpBodyRot.Y;

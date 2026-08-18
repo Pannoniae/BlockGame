@@ -842,7 +842,9 @@ public class Recipe {
                 }
                 else {
                     // outside pattern must be empty
-                    if (!isEmpty(slot)) return false;
+                    if (!isEmpty(slot)) {
+                        return false;
+                    }
                 }
             }
         }
@@ -896,9 +898,14 @@ public class Recipe {
             requiredItems[item.id] = requiredItems.GetValueOrDefault(item.id) + qty;
         }
 
-        if (gridItems.Count != requiredItems.Count) return false;
+        if (gridItems.Count != requiredItems.Count) {
+            return false;
+        }
+
         foreach (var (id, count) in requiredItems) {
-            if (gridItems.GetValueOrDefault(id) != count) return false;
+            if (gridItems.GetValueOrDefault(id) != count) {
+                return false;
+            }
         }
 
         return true;

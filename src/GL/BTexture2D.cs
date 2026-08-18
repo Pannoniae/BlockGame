@@ -283,15 +283,30 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
     }
 
     public bool Equals(BTexture2D? other) {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
+        if (other is null) {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other)) {
+            return true;
+        }
+
         return handle == other.handle;
     }
 
     public override bool Equals(object? obj) {
-        if (obj is null) return false;
-        if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != GetType()) return false;
+        if (obj is null) {
+            return false;
+        }
+
+        if (ReferenceEquals(this, obj)) {
+            return true;
+        }
+
+        if (obj.GetType() != GetType()) {
+            return false;
+        }
+
         return Equals((BTexture2D)obj);
     }
 

@@ -55,7 +55,9 @@ public class TextBox : GUIElement {
     }
 
     public override void onKeyDown(Key key, int scancode) {
-        if (!focused) return;
+        if (!focused) {
+            return;
+        }
 
         switch (key) {
             case Key.Backspace when cursorPos > 0:

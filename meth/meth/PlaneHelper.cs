@@ -184,11 +184,13 @@ public static class PlaneHelper
     {
         DotCoordinate(plane, ref point, out var distance);
 
-        if (distance > 0)
+        if (distance > 0) {
             return PlaneIntersectionType.Front;
+        }
 
-        if (distance < 0)
+        if (distance < 0) {
             return PlaneIntersectionType.Back;
+        }
 
         return PlaneIntersectionType.Intersecting;
     }

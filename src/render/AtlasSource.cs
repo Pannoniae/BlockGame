@@ -42,8 +42,9 @@ public class AtlasSource {
         if (!b) {
             for (int y = startY; y < startY + tileSize; y++) {
                 for (int x = startX; x < startX + tileSize; x++) {
-                    if (image[x, y].A > 0)
+                    if (image[x, y].A > 0) {
                         return false;
+                    }
                 }
             }
 
@@ -52,8 +53,9 @@ public class AtlasSource {
         var span = data.Span;
         for (int y = startY; y < startY + tileSize; y++) {
             for (int x = startX; x < startX + tileSize; x++) {
-                if (span[y * image.Width + x].A > 0)
+                if (span[y * image.Width + x].A > 0) {
                     return false;
+                }
             }
         }
         return true;

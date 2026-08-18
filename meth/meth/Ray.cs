@@ -56,8 +56,9 @@ public struct Ray : IEquatable<Ray>
 
         if (Math.Abs(Direction.X) < Epsilon)
         {
-            if (Position.X < box.Min.X || Position.X > box.Max.X)
+            if (Position.X < box.Min.X || Position.X > box.Max.X) {
                 return null;
+            }
         }
         else
         {
@@ -74,8 +75,9 @@ public struct Ray : IEquatable<Ray>
 
         if (Math.Abs(Direction.Y) < Epsilon)
         {
-            if (Position.Y < box.Min.Y || Position.Y > box.Max.Y)
+            if (Position.Y < box.Min.Y || Position.Y > box.Max.Y) {
                 return null;
+            }
         }
         else
         {
@@ -89,17 +91,24 @@ public struct Ray : IEquatable<Ray>
                 tMaxY = temp;
             }
 
-            if ((tMin.HasValue && tMin > tMaxY) || (tMax.HasValue && tMinY > tMax))
+            if ((tMin.HasValue && tMin > tMaxY) || (tMax.HasValue && tMinY > tMax)) {
                 return null;
+            }
 
-            if (!tMin.HasValue || tMinY > tMin) tMin = tMinY;
-            if (!tMax.HasValue || tMaxY < tMax) tMax = tMaxY;
+            if (!tMin.HasValue || tMinY > tMin) {
+                tMin = tMinY;
+            }
+
+            if (!tMax.HasValue || tMaxY < tMax) {
+                tMax = tMaxY;
+            }
         }
 
         if (Math.Abs(Direction.Z) < Epsilon)
         {
-            if (Position.Z < box.Min.Z || Position.Z > box.Max.Z)
+            if (Position.Z < box.Min.Z || Position.Z > box.Max.Z) {
                 return null;
+            }
         }
         else
         {
@@ -113,20 +122,30 @@ public struct Ray : IEquatable<Ray>
                 tMaxZ = temp;
             }
 
-            if ((tMin.HasValue && tMin > tMaxZ) || (tMax.HasValue && tMinZ > tMax))
+            if ((tMin.HasValue && tMin > tMaxZ) || (tMax.HasValue && tMinZ > tMax)) {
                 return null;
+            }
 
-            if (!tMin.HasValue || tMinZ > tMin) tMin = tMinZ;
-            if (!tMax.HasValue || tMaxZ < tMax) tMax = tMaxZ;
+            if (!tMin.HasValue || tMinZ > tMin) {
+                tMin = tMinZ;
+            }
+
+            if (!tMax.HasValue || tMaxZ < tMax) {
+                tMax = tMaxZ;
+            }
         }
 
         // having a positive tMin and a negative tMax means the ray is inside the box
         // we expect the intesection distance to be 0 in that case
-        if ((tMin.HasValue && tMin < 0) && tMax > 0) return 0;
+        if ((tMin.HasValue && tMin < 0) && tMax > 0) {
+            return 0;
+        }
 
         // a negative tMin means that the intersection point is behind the ray's origin
         // we discard these as not hitting the AABB
-        if (tMin < 0) return null;
+        if (tMin < 0) {
+            return null;
+        }
 
         return tMin;
     }

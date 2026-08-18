@@ -100,9 +100,14 @@ public class SignBlock : EntityBlock {
 
         // standing signs can go on any block with collision, except single slabs and stairs
         var below = world.getBlock(x, y - 1, z);
-        if (!collision[below]) return false;
-        if (blocks[below] is Slabs or Stairs && !Slabs.isDouble(world.getBlockRaw(x, y - 1, z).getMetadata()))
+        if (!collision[below]) {
             return false;
+        }
+
+        if (blocks[below] is Slabs or Stairs && !Slabs.isDouble(world.getBlockRaw(x, y - 1, z).getMetadata())) {
+            return false;
+        }
+
         return true;
     }
 

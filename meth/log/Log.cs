@@ -37,11 +37,15 @@ public static class Log {
     
     // simple init - no config objects
     public static void init(string logDir = "logs", LogLevel minLevel = LogLevel.INFO) {
-        if (initialized) return;
-        
+        if (initialized) {
+            return;
+        }
+
         lock (initLock) {
-            if (initialized) return;
-            
+            if (initialized) {
+                return;
+            }
+
             Log.minLevel = minLevel;
             consoleAppender = new ConsoleAppender();
             fileAppender = new FileAppender(logDir);
@@ -82,129 +86,189 @@ public static class Log {
     
     // basic logging
     public static void debug(string msg) {
-        if (isDebugEnabled()) log(LogLevel.DEBUG, null, msg);
+        if (isDebugEnabled()) {
+            log(LogLevel.DEBUG, null, msg);
+        }
     }
     
     public static void debug(string category, string msg) {
-        if (isDebugEnabled()) log(LogLevel.DEBUG, category, msg);
+        if (isDebugEnabled()) {
+            log(LogLevel.DEBUG, category, msg);
+        }
     }
     
     // generic object logging
     public static void debug<T>(T obj) {
-        if (isDebugEnabled()) log(LogLevel.DEBUG, null, obj?.ToString() ?? "null");
+        if (isDebugEnabled()) {
+            log(LogLevel.DEBUG, null, obj?.ToString() ?? "null");
+        }
     }
     
     public static void debug<T>(string category, T obj) {
-        if (isDebugEnabled()) log(LogLevel.DEBUG, category, obj?.ToString() ?? "null");
+        if (isDebugEnabled()) {
+            log(LogLevel.DEBUG, category, obj?.ToString() ?? "null");
+        }
     }
     
     public static void info(string msg) {
-        if (isInfoEnabled()) log(LogLevel.INFO, null, msg);
+        if (isInfoEnabled()) {
+            log(LogLevel.INFO, null, msg);
+        }
     }
     
     public static void info(string category, string msg) {
-        if (isInfoEnabled()) log(LogLevel.INFO, category, msg);
+        if (isInfoEnabled()) {
+            log(LogLevel.INFO, category, msg);
+        }
     }
     
     // generic object logging
     public static void info<T>(T obj) {
-        if (isInfoEnabled()) log(LogLevel.INFO, null, obj?.ToString() ?? "null");
+        if (isInfoEnabled()) {
+            log(LogLevel.INFO, null, obj?.ToString() ?? "null");
+        }
     }
     
     public static void info<T>(string category, T obj) {
-        if (isInfoEnabled()) log(LogLevel.INFO, category, obj?.ToString() ?? "null");
+        if (isInfoEnabled()) {
+            log(LogLevel.INFO, category, obj?.ToString() ?? "null");
+        }
     }
     
     public static void warn(string msg) {
-        if (isWarnEnabled()) log(LogLevel.WARNING, null, msg);
+        if (isWarnEnabled()) {
+            log(LogLevel.WARNING, null, msg);
+        }
     }
     
     public static void warn(string category, string msg) {
-        if (isWarnEnabled()) log(LogLevel.WARNING, category, msg);
+        if (isWarnEnabled()) {
+            log(LogLevel.WARNING, category, msg);
+        }
     }
     
     // generic object logging
     public static void warn<T>(T obj) {
-        if (isWarnEnabled()) log(LogLevel.WARNING, null, obj?.ToString() ?? "null");
+        if (isWarnEnabled()) {
+            log(LogLevel.WARNING, null, obj?.ToString() ?? "null");
+        }
     }
     
     public static void warn(Exception ex) {
-        if (isErrorEnabled()) log(LogLevel.WARNING, null, $"{ex}");
+        if (isErrorEnabled()) {
+            log(LogLevel.WARNING, null, $"{ex}");
+        }
     }
     
     public static void warn(string msg, Exception ex) {
-        if (isErrorEnabled()) log(LogLevel.WARNING, null, $"{msg}: {ex}");
+        if (isErrorEnabled()) {
+            log(LogLevel.WARNING, null, $"{msg}: {ex}");
+        }
     }
     
     public static void warn(Exception ex, string category, string msg) {
-        if (isErrorEnabled()) log(LogLevel.WARNING, category, $"{msg}: {ex}");
+        if (isErrorEnabled()) {
+            log(LogLevel.WARNING, category, $"{msg}: {ex}");
+        }
     }
     
     public static void error(string msg) {
-        if (isErrorEnabled()) log(LogLevel.ERROR, null, msg);
+        if (isErrorEnabled()) {
+            log(LogLevel.ERROR, null, msg);
+        }
     }
     
     public static void error(string category, string msg) {
-        if (isErrorEnabled()) log(LogLevel.ERROR, category, msg);
+        if (isErrorEnabled()) {
+            log(LogLevel.ERROR, category, msg);
+        }
     }
     
     // generic object logging
     public static void error<T>(T obj) {
-        if (isErrorEnabled()) log(LogLevel.ERROR, null, obj?.ToString() ?? "null");
+        if (isErrorEnabled()) {
+            log(LogLevel.ERROR, null, obj?.ToString() ?? "null");
+        }
     }
     
     public static void error(Exception ex) {
-        if (isErrorEnabled()) log(LogLevel.ERROR, null, $"{ex}");
+        if (isErrorEnabled()) {
+            log(LogLevel.ERROR, null, $"{ex}");
+        }
     }
     
     public static void error(string msg, Exception ex) {
-        if (isErrorEnabled()) log(LogLevel.ERROR, null, $"{msg}: {ex}");
+        if (isErrorEnabled()) {
+            log(LogLevel.ERROR, null, $"{msg}: {ex}");
+        }
     }
     
     public static void error(string category, string msg, Exception ex) {
-        if (isErrorEnabled()) log(LogLevel.ERROR, category, $"{msg}: {ex}");
+        if (isErrorEnabled()) {
+            log(LogLevel.ERROR, category, $"{msg}: {ex}");
+        }
     }
     
     // zero-alloc interpolated string logging
     
     public static void debug(ref DebugLogInterpolatedStringHandler handler) {
-        if (isDebugEnabled()) log(LogLevel.DEBUG, null, handler.GetFormattedText());
+        if (isDebugEnabled()) {
+            log(LogLevel.DEBUG, null, handler.GetFormattedText());
+        }
     }
     
     public static void debug(string category, ref DebugLogInterpolatedStringHandler handler) {
-        if (isDebugEnabled()) log(LogLevel.DEBUG, category, handler.GetFormattedText());
+        if (isDebugEnabled()) {
+            log(LogLevel.DEBUG, category, handler.GetFormattedText());
+        }
     }
     
     public static void info(ref InfoLogInterpolatedStringHandler handler) {
-        if (isInfoEnabled()) log(LogLevel.INFO, null, handler.GetFormattedText());
+        if (isInfoEnabled()) {
+            log(LogLevel.INFO, null, handler.GetFormattedText());
+        }
     }
     
     public static void info(string category, ref InfoLogInterpolatedStringHandler handler) {
-        if (isInfoEnabled()) log(LogLevel.INFO, category, handler.GetFormattedText());
+        if (isInfoEnabled()) {
+            log(LogLevel.INFO, category, handler.GetFormattedText());
+        }
     }
     
     public static void warn(ref WarnLogInterpolatedStringHandler handler) {
-        if (isWarnEnabled()) log(LogLevel.WARNING, null, handler.GetFormattedText());
+        if (isWarnEnabled()) {
+            log(LogLevel.WARNING, null, handler.GetFormattedText());
+        }
     }
     
     public static void warn(string category, ref WarnLogInterpolatedStringHandler handler) {
-        if (isWarnEnabled()) log(LogLevel.WARNING, category, handler.GetFormattedText());
+        if (isWarnEnabled()) {
+            log(LogLevel.WARNING, category, handler.GetFormattedText());
+        }
     }
     
     public static void error(ref ErrorLogInterpolatedStringHandler handler) {
-        if (isErrorEnabled()) log(LogLevel.ERROR, null, handler.GetFormattedText());
+        if (isErrorEnabled()) {
+            log(LogLevel.ERROR, null, handler.GetFormattedText());
+        }
     }
     
     public static void error(string category, ref ErrorLogInterpolatedStringHandler handler) {
-        if (isErrorEnabled()) log(LogLevel.ERROR, category, handler.GetFormattedText());
+        if (isErrorEnabled()) {
+            log(LogLevel.ERROR, category, handler.GetFormattedText());
+        }
     }
     
     public static void error(ref ErrorLogInterpolatedStringHandler handler, Exception ex) {
-        if (isErrorEnabled()) log(LogLevel.ERROR, null, $"{handler.GetFormattedText()}: {ex}");
+        if (isErrorEnabled()) {
+            log(LogLevel.ERROR, null, $"{handler.GetFormattedText()}: {ex}");
+        }
     }
     
     public static void error(string category, ref ErrorLogInterpolatedStringHandler handler, Exception ex) {
-        if (isErrorEnabled()) log(LogLevel.ERROR, category, $"{handler.GetFormattedText()}: {ex}");
+        if (isErrorEnabled()) {
+            log(LogLevel.ERROR, category, $"{handler.GetFormattedText()}: {ex}");
+        }
     }
     
     public static void log(LogLevel level, string category, [InterpolatedStringHandlerArgument("level")] ref LogInterpolatedStringHandler handler) {

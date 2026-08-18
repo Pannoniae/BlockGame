@@ -60,9 +60,11 @@ namespace FontStashSharp
 			float characterSpacing, float lineSpacing,
 			FontSystemEffect effect, int effectAmount)
 		{
-			if (source.IsNull) return Bounds.Empty;
+			if (source.IsNull) {
+                return Bounds.Empty;
+            }
 
-			int ascent, lineHeight;
+            int ascent, lineHeight;
 			PreDraw(source, effect, effectAmount, out ascent, out lineHeight);
 
 			var x = position.X;
@@ -79,10 +81,11 @@ namespace FontStashSharp
 			while (true)
 			{
 				int codepoint;
-				if (!source.GetNextCodepoint(out codepoint))
-					break;
+				if (!source.GetNextCodepoint(out codepoint)) {
+                    break;
+                }
 
-				if (codepoint == '\n')
+                if (codepoint == '\n')
 				{
 					x = startx;
 					y += lineHeight + lineSpacing;
@@ -103,20 +106,26 @@ namespace FontStashSharp
 				}
 
 				var x0 = x + glyph.RenderOffset.X;
-				if (x0 < minx)
-					minx = x0;
-				x += glyph.XAdvance;
-				if (x > maxx)
-					maxx = x;
+				if (x0 < minx) {
+                    minx = x0;
+                }
 
-				var y0 = y + glyph.RenderOffset.Y;
+                x += glyph.XAdvance;
+				if (x > maxx) {
+                    maxx = x;
+                }
+
+                var y0 = y + glyph.RenderOffset.Y;
 				var y1 = y0 + glyph.Size.Y;
-				if (y0 < miny)
-					miny = y0;
-				if (y1 > maxy)
-					maxy = y1;
+				if (y0 < miny) {
+                    miny = y0;
+                }
 
-				prevGlyph = glyph;
+                if (y1 > maxy) {
+                    maxy = y1;
+                }
+
+                prevGlyph = glyph;
 			}
 
 			return new Bounds(minx, miny, maxx, maxy);

@@ -106,9 +106,8 @@ public class LoadingMenu : Menu, ProgressUpdater {
             if (wasAuthenticated && Game.world != null && Game.player != null) {
 
                 // load world
-                var start = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
                 var ctr = 0;
-                Game.world.updateChunkloading(start, loading: true, ref ctr);
+                Game.world.updateChunkloading(loading: true, ref ctr);
                 Game.renderer.update(dt);
 
                 // count how many chunks we have in the required radius
@@ -230,8 +229,7 @@ public class LoadingMenu : Menu, ProgressUpdater {
         stage("Loading chunks");
 
         while (world.chunkLoadQueue.Count > 0) {
-            world.updateChunkloading(Game.permanentStopwatch.Elapsed.TotalMilliseconds, loading: true,
-                ref c);
+            world.updateChunkloading(loading: true, ref c);
 
             int currentChunks = world.chunkLoadQueue.Count;
             c = total - currentChunks;
@@ -266,9 +264,7 @@ public class LoadingMenu : Menu, ProgressUpdater {
         // light all chunks after lighting
         stage("Spreading dirt");
         world.loadAroundPlayer(ChunkStatus.MESHED);
-        
-        // mark all chunks dirty for remeshing since lighting was processed with noUpdate=true
-        // idk why this is necessary tho, the following section SHOULD mesh everything but idk
+
         int totalSubChunks = world.chunkList.Count * Chunk.CHUNKHEIGHT;
         c = 0;
         
@@ -292,8 +288,7 @@ public class LoadingMenu : Menu, ProgressUpdater {
         c = 0;
         
         while (world.chunkLoadQueue.Count > 0) {
-            world.updateChunkloading(Game.permanentStopwatch.Elapsed.TotalMilliseconds, loading: true,
-                ref c);
+            world.updateChunkloading(loading: true, ref c);
             
             int currentChunks = world.chunkLoadQueue.Count;
             c = total - currentChunks;

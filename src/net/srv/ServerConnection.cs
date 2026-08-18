@@ -10,7 +10,7 @@ using Molten.DoublePrecision;
 namespace BlockGame.net.srv;
 
 public class ServerConnection {
-    public readonly NetPeer peer;
+    public readonly NetPeer? peer;
     public string username;
     public bool authenticated = false;
 
@@ -42,32 +42,32 @@ public class ServerConnection {
     // network stats
     public readonly Metrics metrics = new();
 
-    public ServerConnection(NetPeer peer) {
+    public ServerConnection(NetPeer? peer) {
         handler = new ServerPacketHandler(this);
         this.peer = peer;
     }
 
-    public void send<T>(T packet, DeliveryMethod method) where T : Packet {
+    public virtual void send<T>(T packet, DeliveryMethod method) where T : Packet {
+        var bytes = serialise(packet);
+        peer!.Send(bytes, packet.channel, method);
+    }
+
+    protected Span<byte> serialise<T>(T packet) where T : Packet {
         var buf = PacketWriter.get();
-
-        // write packet ID first
-        int packetID = PacketRegistry.getID(packet.GetType());
-        buf.writeInt(packetID);
-
-        // write packet data
+        buf.writeInt(PacketRegistry.getID(packet.GetType()));
         packet.write(buf);
 
-        // send to peer with packet's channel
         var bytes = PacketWriter.getBytesUnsafe();
-        peer.Send(bytes, packet.channel, method);
 
-        // track metrics
         metrics.bytesSent += bytes.Length;
         metrics.packetsSent++;
+
+        return bytes;
     }
-    public void disconnect(string reason) {
+
+    public virtual void disconnect(string reason) {
         send(new DisconnectPacket { reason = reason }, DeliveryMethod.ReliableOrdered);
-        peer.Disconnect();
+        peer!.Disconnect();
     }
 
     // chunk loading
@@ -124,37 +124,69 @@ public class ServerConnection {
         }
     }
 
+
+    private readonly List<ChunkCoord> pending = [];
+    private readonly List<ChunkCoord> toUnload = [];
+
+    private ChunkCoord? lastChunk;
+
+    public void invalidateChunks() {
+        lastChunk = null;
+    }
+
+    /**
+     * Chunk packets are fat.
+     */
+    private const int MAX_SENDS_PER_TICK = 8;
+
+    /** ...but the first load is behind a loading screen with nothing else to do, so get it over with */
+    private const int INITIAL_SENDS_PER_TICK = 64;
+    private const int INITIAL_THRESHOLD = 256;
+
     public void updateLoadedChunks() {
         if (player == null) {
             return;
         }
-
-        // calculate which chunks should be loaded based on player position
         var playerChunk = new ChunkCoord(
             (int)player.position.X >> 4,
             (int)player.position.Z >> 4
         );
 
-        var shouldLoad = new HashSet<ChunkCoord>();
-
-        // gather chunks in render distance
-        for (int dx = -renderDistance; dx <= renderDistance; dx++) {
-            for (int dz = -renderDistance; dz <= renderDistance; dz++) {
-                var coord = new ChunkCoord(playerChunk.x + dx, playerChunk.z + dz);
-
-                // circle
-                if (coord.distanceSq(playerChunk) <= renderDistance * renderDistance) {
-                    shouldLoad.Add(coord);
-                }
-            }
+        // only recompute the wanted set when we actually moved to another chunk
+        if (lastChunk != playerChunk) {
+            lastChunk = playerChunk;
+            rebuildPending(playerChunk);
         }
 
-        //Console.Out.WriteLine($"[{username}] Player at {player.position}, chunk {playerChunk}, shouldLoad={shouldLoad.Count}, loadedChunks={loadedChunks.Count}");
+        // I'm not 100% we're ordering these right, might be checkerboarding?
+        var cap = loadedChunks.Count < INITIAL_THRESHOLD ? INITIAL_SENDS_PER_TICK : MAX_SENDS_PER_TICK;
+        var sent = 0;
+        var w = 0;
+        for (var r = 0; r < pending.Count; r++) {
+            var coord = pending[r];
 
-        // unload chunks no longer in range
-        var toUnload = new List<ChunkCoord>();
+            if (loadedChunks.Contains(coord)) {
+                continue; // already got it
+            }
+
+            if (sent < cap && sendChunk(coord)) {
+                loadedChunks.Add(coord);
+                sent++;
+                continue;
+            }
+
+            pending[w++] = coord;
+        }
+        pending.RemoveRange(w, pending.Count - w);
+    }
+
+    private void rebuildPending(ChunkCoord playerChunk) {
+        var rdSq = renderDistance * renderDistance;
+
+        // drop anything that fell out of range
+        toUnload.Clear();
         foreach (var coord in loadedChunks) {
-            if (!shouldLoad.Contains(coord)) {
+            if (coord.distanceSq(playerChunk) > rdSq) {
                 toUnload.Add(coord);
             }
         }
@@ -162,30 +194,29 @@ public class ServerConnection {
             unloadChunk(coord);
         }
 
-        // load new chunks
-        int sent = 0, failed = 0;
-        foreach (var coord in shouldLoad) {
-            if (!loadedChunks.Contains(coord)) {
-                // only mark as loaded if send succeeded
-                if (sendChunk(coord)) {
-                    loadedChunks.Add(coord);
-                    sent++;
-                } else {
-                    failed++;
+        pending.Clear();
+        for (var dx = -renderDistance; dx <= renderDistance; dx++) {
+            for (var dz = -renderDistance; dz <= renderDistance; dz++) {
+                var coord = new ChunkCoord(playerChunk.x + dx, playerChunk.z + dz);
+
+                // circle
+                if (coord.distanceSq(playerChunk) <= rdSq && !loadedChunks.Contains(coord)) {
+                    pending.Add(coord);
                 }
-                // if chunk not ready yet, it'll retry next tick
             }
         }
-        if (sent > 0 || failed > 0) {
-            Console.Out.WriteLine($"[{username}] Sent {sent} chunks, failed {failed}");
-        }
+
+        pending.Sort((a, b) => a.distanceSq(playerChunk).CompareTo(b.distanceSq(playerChunk)));
     }
 
     // determine if this client should receive updates for given position/entity
-    public bool isInRange(Vector3D pos) {
-        if (player == null) return false;
+    public bool isInRange(Vector3D pos, double margin = 0) {
+        if (player == null) {
+            return false;
+        }
+
         double distSq = Vector3D.DistanceSquared(player.position, pos);
-        double maxDist = renderDistance * 16.0;
+        double maxDist = renderDistance * 16.0 + margin;
         return distSq <= maxDist * maxDist;
     }
 

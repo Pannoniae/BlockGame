@@ -32,7 +32,7 @@ public partial class World {
 
 
     /** check if position is valid for spawning */
-    private bool spawnAt(int x, int y, int z, SpawnType type) {
+    private bool spawnAt(int x, int y, int z, SpawnType type, Vector3D pos) {
 
         bool needsLight = type == SpawnType.PASSIVE;
 
@@ -104,8 +104,8 @@ public partial class World {
             }
         }
         else if (type == SpawnType.JUNGLE) {
-            // jungle mobs spawn at any light level, but only when player is in jungle
-            if (getBiomeAtPlayer() != BiomeType.Jungle) {
+            // jungle mobs spawn at any light level, but only when the player is in jungle
+            if (getBiomeAt(pos) != BiomeType.Jungle) {
                 return false;
             }
         }
@@ -164,7 +164,7 @@ public partial class World {
 
                 // valid spawn pos?
 
-                if (!spawnAt(x, y, z, type)) {
+                if (!spawnAt(x, y, z, type, player.position)) {
                     continue;
                 }
 
@@ -204,7 +204,7 @@ public partial class World {
                         nz += random.Next(-4, 5);
                         ny += random.Next(-1, 2);
 
-                        if (!spawnAt(nx, ny, nz, type)) {
+                        if (!spawnAt(nx, ny, nz, type, player.position)) {
                             continue;
                         }
 
@@ -216,7 +216,10 @@ public partial class World {
 
                     var mob = Entities.create(this, mobType);
                     if (mob == null) {
-                        if (p == 0) Log.warn($"Failed to create mob of type ID {mobType} for spawning.");
+                        if (p == 0) {
+                            Log.warn($"Failed to create mob of type ID {mobType} for spawning.");
+                        }
+
                         continue;
                     }
 
@@ -271,8 +274,12 @@ public partial class World {
             // if hostile, 1/3 for cave, 1/3 for jungle
             if (type == SpawnType.HOSTILE) {
                 var r = random.Next(3);
-                if (r == 0) type = SpawnType.CAVE;
-                else if (r == 1) type = SpawnType.JUNGLE;
+                if (r == 0) {
+                    type = SpawnType.CAVE;
+                }
+                else if (r == 1) {
+                    type = SpawnType.JUNGLE;
+                }
             }
 
             // check caps

@@ -32,7 +32,10 @@ public class ItemSlot {
      * Returns the stack currently in this slot.
      */
     public virtual ItemStack getStack() {
-        if (inventory == null || index == -1) return ItemStack.EMPTY;
+        if (inventory == null || index == -1) {
+            return ItemStack.EMPTY;
+        }
+
         return inventory.getStack(index);
     }
 
@@ -55,7 +58,9 @@ public class ItemSlot {
      * Returns the taken items or ItemStack.EMPTY if none could be taken.
     */
     public virtual ItemStack take(int count) {
-        if (inventory == null) return ItemStack.EMPTY;
+        if (inventory == null) {
+            return ItemStack.EMPTY;
+        }
 
         var current = getStack();
         if (current == ItemStack.EMPTY || current.quantity == 0 || count <= 0) {
@@ -132,7 +137,9 @@ public class ItemSlot {
      * Returns the original contents of the slot.
      */
     public virtual ItemStack swap(ItemStack stack) {
-        if (inventory == null) return ItemStack.EMPTY;
+        if (inventory == null) {
+            return ItemStack.EMPTY;
+        }
 
         var current = getStack();
         if (stack != ItemStack.EMPTY && !accept(stack)) {

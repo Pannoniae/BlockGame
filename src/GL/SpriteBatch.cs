@@ -134,8 +134,9 @@ public sealed class SpriteBatch : IDisposable {
     public void Begin(BatcherBeginMode beginMode = BatcherBeginMode.Deferred) {
         ObjectDisposedException.ThrowIf(IsDisposed, nameof(SpriteBatch));
 
-        if (IsActive)
+        if (IsActive) {
             SkillIssueException.throwNew("This TextureBatcher has already begun.");
+        }
 
         batchItemCount = 0;
         BeginMode = beginMode;
@@ -143,8 +144,9 @@ public sealed class SpriteBatch : IDisposable {
     }
 
     public void End() {
-        if (!IsActive)
+        if (!IsActive) {
             SkillIssueException.throwNew("Begin() must be called before End().");
+        }
 
         // Flush any remaining items
         Flush(BeginMode is BatcherBeginMode.Immediate or BatcherBeginMode.OnTheFly);
@@ -160,8 +162,9 @@ public sealed class SpriteBatch : IDisposable {
 
     private bool EnsureBatchListCapacity(uint requiredCapacity) {
         uint currentCapacity = (uint)batchItems.Length;
-        if (currentCapacity == MaxBatchItemCapacity)
+        if (currentCapacity == MaxBatchItemCapacity) {
             return requiredCapacity <= currentCapacity;
+        }
 
         if (currentCapacity < requiredCapacity) {
             // Resize the batchItems array
@@ -187,11 +190,13 @@ public sealed class SpriteBatch : IDisposable {
         // Check that we have enough capacity for one more batch item
         if (!EnsureBatchListCapacity(batchItemCount + 1)) {
             // If the array can't be expanded further, try to flush
-            if (BeginMode is BatcherBeginMode.OnTheFly or BatcherBeginMode.Immediate)
+            if (BeginMode is BatcherBeginMode.OnTheFly or BatcherBeginMode.Immediate) {
                 Flush(true);
-            else
+            }
+            else {
                 SkillIssueException.throwNew(
                     "Too many TextureBatcher items. Try drawing less per Begin()-End() cycle or use OnTheFly or Immediate begin modes.");
+            }
         }
 
         // Return the next batch item
@@ -206,8 +211,9 @@ public sealed class SpriteBatch : IDisposable {
         ArgumentNullException.ThrowIfNull(texture);
 
         // Check if we need to flush before adding this item
-        if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
+        if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture) {
             Flush(true);
+        }
 
         ref SpriteBatchItem item = ref GetNextBatchItem();
         item.SetVertices(texture, vertexTL, vertexTR, vertexBR, vertexBL);
@@ -216,8 +222,9 @@ public sealed class SpriteBatch : IDisposable {
         SetItemSortKey(item);
 
         // Flush immediately if in Immediate mode
-        if (BeginMode == BatcherBeginMode.Immediate)
+        if (BeginMode == BatcherBeginMode.Immediate) {
             Flush(true);
+        }
     }
 
     public void DrawRaw(BTexture2D texture, VertexColorTexture vertexTL, VertexColorTexture vertexTR,
@@ -227,8 +234,9 @@ public sealed class SpriteBatch : IDisposable {
         ArgumentNullException.ThrowIfNull(texture);
 
         // Check if we need to flush before adding this item
-        if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
+        if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture) {
             Flush(true);
+        }
 
         ref SpriteBatchItem item = ref GetNextBatchItem();
 
@@ -244,8 +252,9 @@ public sealed class SpriteBatch : IDisposable {
         SetItemSortKey(item);
 
         // Flush immediately if in Immediate mode
-        if (BeginMode == BatcherBeginMode.Immediate)
+        if (BeginMode == BatcherBeginMode.Immediate) {
             Flush(true);
+        }
     }
 
     // Draw methods for different parameter combinations
@@ -255,8 +264,9 @@ public sealed class SpriteBatch : IDisposable {
         ArgumentNullException.ThrowIfNull(texture);
 
         // Check if we need to flush before adding this item
-        if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
+        if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture) {
             Flush(true);
+        }
 
         ref SpriteBatchItem item = ref GetNextBatchItem();
         item.SetValue(texture, position, source ?? new Rectangle(0, 0, (int)texture.width, (int)texture.height), color,
@@ -266,8 +276,9 @@ public sealed class SpriteBatch : IDisposable {
         SetItemSortKey(item);
 
         // Flush immediately if in Immediate mode
-        if (BeginMode == BatcherBeginMode.Immediate)
+        if (BeginMode == BatcherBeginMode.Immediate) {
             Flush(true);
+        }
     }
 
     public void Draw(BTexture2D texture, Vector2 position, Color color, float depth = 0) {
@@ -285,8 +296,9 @@ public sealed class SpriteBatch : IDisposable {
         ArgumentNullException.ThrowIfNull(texture);
 
         // Check if we need to flush before adding this item
-        if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
+        if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture) {
             Flush(true);
+        }
 
         ref SpriteBatchItem item = ref GetNextBatchItem();
         item.SetValue(texture, position,
@@ -297,8 +309,9 @@ public sealed class SpriteBatch : IDisposable {
         SetItemSortKey(item);
 
         // Flush immediately if in Immediate mode
-        if (BeginMode == BatcherBeginMode.Immediate)
+        if (BeginMode == BatcherBeginMode.Immediate) {
             Flush(true);
+        }
     }
 
     public void Draw(BTexture2D texture, Vector2 position, Rectangle? source, Color color, float scale,
@@ -313,8 +326,9 @@ public sealed class SpriteBatch : IDisposable {
         ArgumentNullException.ThrowIfNull(texture);
 
         // Check if we need to flush before adding this item
-        if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
+        if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture) {
             Flush(true);
+        }
 
         ref SpriteBatchItem item = ref GetNextBatchItem();
         item.SetValue(texture, position, ref worldMatrix,
@@ -325,8 +339,9 @@ public sealed class SpriteBatch : IDisposable {
         SetItemSortKey(item);
 
         // Flush immediately if in Immediate mode
-        if (BeginMode == BatcherBeginMode.Immediate)
+        if (BeginMode == BatcherBeginMode.Immediate) {
             Flush(true);
+        }
     }
 
     public void Draw(BTexture2D texture, RectangleF destination, Rectangle? source, Color color, float depth = 0) {
@@ -335,8 +350,9 @@ public sealed class SpriteBatch : IDisposable {
         ArgumentNullException.ThrowIfNull(texture);
 
         // Check if we need to flush before adding this item
-        if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
+        if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture) {
             Flush(true);
+        }
 
         ref SpriteBatchItem item = ref GetNextBatchItem();
         item.SetValue(texture, destination,
@@ -347,8 +363,9 @@ public sealed class SpriteBatch : IDisposable {
         SetItemSortKey(item);
 
         // Flush immediately if in Immediate mode
-        if (BeginMode == BatcherBeginMode.Immediate)
+        if (BeginMode == BatcherBeginMode.Immediate) {
             Flush(true);
+        }
     }
 
     public void Draw(BTexture2D texture, RectangleF destination, Color color, float depth = 0) {
@@ -365,8 +382,9 @@ public sealed class SpriteBatch : IDisposable {
         ArgumentNullException.ThrowIfNull(texture);
 
         // Check if we need to flush before adding this item
-        if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
+        if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture) {
             Flush(true);
+        }
 
         ref SpriteBatchItem item = ref GetNextBatchItem();
         item.SetValue(texture, transform,
@@ -377,8 +395,9 @@ public sealed class SpriteBatch : IDisposable {
         SetItemSortKey(item);
 
         // Flush immediately if in Immediate mode
-        if (BeginMode == BatcherBeginMode.Immediate)
+        if (BeginMode == BatcherBeginMode.Immediate) {
             Flush(true);
+        }
     }
 
     public void Draw(BTexture2D texture, Matrix3x2 transform, Rectangle? source, Color color, Vector2 origin,
@@ -388,8 +407,9 @@ public sealed class SpriteBatch : IDisposable {
         ArgumentNullException.ThrowIfNull(texture);
 
         // Check if we need to flush before adding this item
-        if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
+        if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture) {
             Flush(true);
+        }
 
         ref SpriteBatchItem item = ref GetNextBatchItem();
         item.SetValue(texture, transform,
@@ -400,8 +420,9 @@ public sealed class SpriteBatch : IDisposable {
         SetItemSortKey(item);
 
         // Flush immediately if in Immediate mode
-        if (BeginMode == BatcherBeginMode.Immediate)
+        if (BeginMode == BatcherBeginMode.Immediate) {
             Flush(true);
+        }
     }
 
     private void SetItemSortKey(SpriteBatchItem item) {
@@ -425,12 +446,14 @@ public sealed class SpriteBatch : IDisposable {
     }
 
     private void Flush(bool sameTextureEnsured) {
-        if (batchItemCount == 0)
+        if (batchItemCount == 0) {
             return;
+        }
 
         // Sort items if needed based on the BeginMode
-        if ((BeginMode & (BatcherBeginMode)1) == (BatcherBeginMode)1)
+        if ((BeginMode & (BatcherBeginMode)1) == (BatcherBeginMode)1) {
             Array.Sort(batchItems, 0, (int)batchItemCount);
+        }
 
         if (Game.hasNVDT && !NoScreenSpace) {
             nvFlush(sameTextureEnsured);
@@ -523,7 +546,9 @@ public sealed class SpriteBatch : IDisposable {
         // draw all non-tinted with NV path
         for (uint i = 0; i < batchItemCount; i++) {
             SpriteBatchItem item = batchItems[i];
-            if (item.VertexTL.Color != Color.White) continue;
+            if (item.VertexTL.Color != Color.White) {
+                continue;
+            }
 
             BTexture2D tex = item.Texture!;
             var sh = Game.height;
@@ -542,7 +567,9 @@ public sealed class SpriteBatch : IDisposable {
         // count tinted items
         uint tintedCount = 0;
         for (uint i = 0; i < batchItemCount; i++) {
-            if (batchItems[i].VertexTL.Color != Color.White) tintedCount++;
+            if (batchItems[i].VertexTL.Color != Color.White) {
+                tintedCount++;
+            }
         }
 
         // draw all tinted with shader path, batched by texture
@@ -555,7 +582,9 @@ public sealed class SpriteBatch : IDisposable {
             uint vertexIndex = 0;
             for (uint i = 0; i < batchItemCount; i++) {
                 SpriteBatchItem item = batchItems[i];
-                if (item.VertexTL.Color == Color.White) continue;
+                if (item.VertexTL.Color == Color.White) {
+                    continue;
+                }
 
                 vertices[vertexIndex++] = item.VertexTL;
                 vertices[vertexIndex++] = item.VertexBL;
@@ -583,7 +612,9 @@ public sealed class SpriteBatch : IDisposable {
                     itemIdx++;
                 }
 
-                if (itemIdx >= batchItemCount) break;
+                if (itemIdx >= batchItemCount) {
+                    break;
+                }
 
                 // found a tinted item - batch all consecutive tinted items with same texture
                 BTexture2D tex = batchItems[itemIdx].Texture!;
@@ -608,7 +639,9 @@ public sealed class SpriteBatch : IDisposable {
     private uint countWhiteItemsBefore(uint index) {
         uint count = 0;
         for (uint i = 0; i < index; i++) {
-            if (batchItems[i].VertexTL.Color == Color.White) count++;
+            if (batchItems[i].VertexTL.Color == Color.White) {
+                count++;
+            }
         }
 
         return count;
@@ -736,8 +769,9 @@ public sealed class SpriteBatch : IDisposable {
     }
 
     public void Dispose() {
-        if (IsDisposed)
+        if (IsDisposed) {
             return;
+        }
 
         GL.DeleteBuffer(vbo);
         GL.DeleteVertexArray(vao);

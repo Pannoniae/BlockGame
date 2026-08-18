@@ -198,7 +198,9 @@ public class Cube {
 
 
     public void xfrender(FastInstantDrawEntity ide, MatrixStack mat, float scale) {
-        if (!rendered) return;
+        if (!rendered) {
+            return;
+        }
 
         ref var c = ref cmat;
         c = Matrix4x4.Identity;

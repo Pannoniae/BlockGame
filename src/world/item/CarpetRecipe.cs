@@ -27,7 +27,9 @@ public class CarpetRecipe : Recipe {
             }
         }
 
-        if (metas.Count != 2) return ItemStack.EMPTY;
+        if (metas.Count != 2) {
+            return ItemStack.EMPTY;
+        }
 
         int resultColor = mixColours(metas[0], metas[1]);
 
@@ -56,7 +58,9 @@ public class CarpetRecipe : Recipe {
     private static int countCarpets(CraftingGridInventory grid) {
         int cnt = 0;
         foreach (var slot in grid.grid) {
-            if (!isEmpty(slot) && slot.id == Block.CARPET.item.id) cnt++;
+            if (!isEmpty(slot) && slot.id == Block.CARPET.item.id) {
+                cnt++;
+            }
         }
         return cnt;
     }
@@ -64,7 +68,9 @@ public class CarpetRecipe : Recipe {
     private static int countNonEmpty(CraftingGridInventory grid) {
         int cnt = 0;
         foreach (var slot in grid.grid) {
-            if (!isEmpty(slot)) cnt++;
+            if (!isEmpty(slot)) {
+                cnt++;
+            }
         }
         return cnt;
     }

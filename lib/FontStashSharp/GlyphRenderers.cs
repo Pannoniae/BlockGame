@@ -25,8 +25,10 @@ namespace FontStashSharp {
         private static void Blur(byte[] dst, int w, int h, int dstStride, int blur) {
             int alpha;
             float sigma;
-            if (blur < 1)
+            if (blur < 1) {
                 return;
+            }
+
             sigma = blur * 0.57735f;
             alpha = (int)((1 << 16) * (1.0f - Math.Exp(-2.3f / (sigma + 1.0f))));
             BlurRows(dst, w, h, dstStride, alpha);
@@ -136,8 +138,10 @@ namespace FontStashSharp {
                         continue;
                     }
 
-                    if (i >= top)
+                    if (i >= top) {
                         black = input[i - top];
+                    }
+
                     if (i < bottom) {
                         d = input[i + top];
                         black = ((255 - d) * black + 255 * d) / 255;

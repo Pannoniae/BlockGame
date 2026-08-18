@@ -6,7 +6,11 @@ namespace BlockGame.world.worldgen.generator;
 public interface WorldGenerator {
     public void setup(XRandom random, int seed);
 
-    public void generate(ChunkCoord coord);
+    /**
+     * Terrain for one chunk. Must only touch the chunk it's given - it may be a detached chunk on a worker thread
+     * that isn't in the level yet, so no world.getChunk / world.setBlock in here.
+     */
+    public void generate(Chunk chunk);
 
     public void surface(ChunkCoord coord);
 }

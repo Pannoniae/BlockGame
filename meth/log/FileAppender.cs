@@ -27,11 +27,15 @@ public class FileAppender : IDisposable {
     }
     
     public void append(LogEvent logEvent) {
-        if (disposed) return;
-        
+        if (disposed) {
+            return;
+        }
+
         lock (fileLock) {
-            if (disposed || writer == null) return;
-            
+            if (disposed || writer == null) {
+                return;
+            }
+
             try {
                 // format: [12:34:56] [Thread-5/INFO] [WorldGen]: Generating chunk at 0,0
                 var timeStr = logEvent.timestamp.ToString("HH:mm:ss");
@@ -56,10 +60,15 @@ public class FileAppender : IDisposable {
     }
     
     public void Dispose() {
-        if (disposed) return;
-        
+        if (disposed) {
+            return;
+        }
+
         lock (fileLock) {
-            if (disposed) return;
+            if (disposed) {
+                return;
+            }
+
             disposed = true;
             
             writer?.Flush(); // ensure final flush before closing
@@ -69,8 +78,10 @@ public class FileAppender : IDisposable {
     }
     
     private void rotateIfNeeded() {
-        if (!File.Exists(latestLogPath)) return;
-        
+        if (!File.Exists(latestLogPath)) {
+            return;
+        }
+
         // close current writer before rotation
         writer?.Dispose();
         writer = null;

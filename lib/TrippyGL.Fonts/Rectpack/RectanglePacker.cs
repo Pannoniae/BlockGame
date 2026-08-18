@@ -31,22 +31,26 @@ namespace TrippyGL.Fonts.Rectpack
         public static void Pack(PackingRectangle[] rectangles, out PackingRectangle bounds,
             PackingHints packingHint = PackingHints.FindBest, float acceptableDensity = 1, uint stepSize = 1)
         {
-            if (rectangles == null)
+            if (rectangles == null) {
                 throw new ArgumentNullException(nameof(rectangles));
+            }
 
-            if (stepSize == 0)
+            if (stepSize == 0) {
                 throw new ArgumentOutOfRangeException(nameof(stepSize), stepSize, nameof(stepSize) + " must be greater than 0.");
+            }
 
             bounds = default;
-            if (rectangles.Length == 0)
+            if (rectangles.Length == 0) {
                 return;
+            }
 
             // We separate the value in packingHint into the different options it specifies.
             Span<PackingHints> hints = stackalloc PackingHints[PackingHintExtensions.MaxHintCount];
             PackingHintExtensions.GetFlagsFrom(packingHint, ref hints);
 
-            if (hints.Length == 0)
+            if (hints.Length == 0) {
                 throw new ArgumentException("No valid packing hints specified.", nameof(packingHint));
+            }
 
             // We'll try uint.MaxValue as initial bin size. The packing algoritm already tries to
             // use as little space as possible, so this will be QUICKLY cut down closer to the
@@ -99,12 +103,14 @@ namespace TrippyGL.Fonts.Rectpack
                 }
             }
 
-            if (!hasSolution)
+            if (!hasSolution) {
                 throw new Exception("Failed to find a solution. (Do your rectangles have a size close to uint.MaxValue or is your stepSize too high?)");
+            }
 
             // The solution should be in the "rectangles" array passed as parameter.
-            if (currentBest != rectangles)
+            if (currentBest != rectangles) {
                 currentBest.CopyTo(rectangles, 0);
+            }
 
             // We return the list so it can be used in subsequent pack operations.
             ReturnList(emptySpaces);
@@ -180,8 +186,9 @@ namespace TrippyGL.Fonts.Rectpack
             for (int r = 0; r < unpacked.Length; r++)
             {
                 // We try to find a space for the rectangle. If we can't, then we return false.
-                if (!TryFindBestSpace(unpacked[r], emptySpaces, out int spaceIndex))
+                if (!TryFindBestSpace(unpacked[r], emptySpaces, out int spaceIndex)) {
                     return false;
+                }
 
                 PackingRectangle oldSpace = emptySpaces[spaceIndex];
                 packed[r] = unpacked[r];
@@ -232,7 +239,9 @@ namespace TrippyGL.Fonts.Rectpack
                     //emptySpaces.Add(new PackingRectangle(oldSpace.X + packed[r].Width, oldSpace.Y, freeWidth, oldSpace.Height));
                 }
                 else // The rectangle uses up the entire empty space.
+                {
                     emptySpaces.RemoveAt(spaceIndex);
+                }
             }
 
             return true;
@@ -264,8 +273,9 @@ namespace TrippyGL.Fonts.Rectpack
         /// <param name="preferredCapacity">If a list has to be created, this is used as initial capacity.</param>
         private static List<PackingRectangle> GetList(int preferredCapacity)
         {
-            if (oldListReference == null)
+            if (oldListReference == null) {
                 return new List<PackingRectangle>(preferredCapacity);
+            }
 
             lock (oldListReferenceLock)
             {
@@ -274,8 +284,9 @@ namespace TrippyGL.Fonts.Rectpack
                     oldListReference.SetTarget(null);
                     return list;
                 }
-                else
+                else {
                     return new List<PackingRectangle>(preferredCapacity);
+                }
             }
         }
 
@@ -285,14 +296,16 @@ namespace TrippyGL.Fonts.Rectpack
         /// </summary>
         private static void ReturnList(List<PackingRectangle> list)
         {
-            if (oldListReference == null)
+            if (oldListReference == null) {
                 oldListReference = new WeakReference<List<PackingRectangle>?>(list);
+            }
             else
             {
                 lock (oldListReferenceLock)
                 {
-                    if (!oldListReference.TryGetTarget(out List<PackingRectangle>? oldList) || oldList.Capacity < list.Capacity)
+                    if (!oldListReference.TryGetTarget(out List<PackingRectangle>? oldList) || oldList.Capacity < list.Capacity) {
                         oldListReference.SetTarget(list);
+                    }
                 }
             }
         }
@@ -320,10 +333,12 @@ namespace TrippyGL.Fonts.Rectpack
 
                 // If comparison is less than 0, rectangle should be inserted before list[middle].
                 // If comparison is greater than 0, rectangle should be after list[middle].
-                if (compared < 0)
+                if (compared < 0) {
                     max = middle - 1;
-                else
+                }
+                else {
                     min = middle + 1;
+                }
             }
 
             list.Insert(min, rectangle);
@@ -338,8 +353,9 @@ namespace TrippyGL.Fonts.Rectpack
         {
             // We update the sort key. If it doesn't differ, we do nothing.
             uint newSortKey = Math.Max(list[index].X, list[index].Y);
-            if (newSortKey == list[index].SortKey)
+            if (newSortKey == list[index].SortKey) {
                 return;
+            }
 
             int min = index;
             int max = list.Count - 1;
@@ -361,10 +377,12 @@ namespace TrippyGL.Fonts.Rectpack
 
                 // If comparison is less than 0, rectangle should be inserted before list[middle].
                 // If comparison is greater than 0, rectangle should be after list[middle].
-                if (compared < 0)
+                if (compared < 0) {
                     max = middle - 1;
-                else
+                }
+                else {
                     min = middle + 1;
+                }
             }
             min = Math.Min(min, list.Count - 1);
 
@@ -410,8 +428,10 @@ namespace TrippyGL.Fonts.Rectpack
         {
             for (int i = 0; i < rectangles.Length; i++)
                 for (int c = i + 1; c < rectangles.Length; c++)
-                    if (rectangles[c].Intersects(rectangles[i]))
+                    if (rectangles[c].Intersects(rectangles[i])) {
                         return true;
+                    }
+
             return false;
         }
     }

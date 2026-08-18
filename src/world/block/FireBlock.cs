@@ -35,7 +35,9 @@ public class FireBlock(string name) : Block(name) {
         for (int i = 0; i < attempts; i++) {
             var dir = Direction.directionsAll[world.random.Next(27)];
 
-            if (dir.X == 0 && dir.Y == 0 && dir.Z == 0) continue; // skip self
+            if (dir.X == 0 && dir.Y == 0 && dir.Z == 0) {
+                continue; // skip self
+            }
 
             int nx = x + dir.X;
             int ny = y + dir.Y;
@@ -88,7 +90,9 @@ public class FireBlock(string name) : Block(name) {
 
         // check if on top of hellstone/similar (infinite fire)
         ushort blockBelow = world.getBlock(x, y - 1, z);
-        if (blockBelow == HELLSTONE.id || blockBelow == HELLROCK.id) return true;
+        if (blockBelow == HELLSTONE.id || blockBelow == HELLROCK.id) {
+            return true;
+        }
 
         return false;
     }

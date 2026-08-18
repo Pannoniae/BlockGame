@@ -21,8 +21,9 @@ public class DiscordBridge : IDisposable {
         });
 
         client.MessageCreate += async message => {
-            if (message.Author.IsBot || message.ChannelId != channelId)
+            if (message.Author.IsBot || message.ChannelId != channelId) {
                 return;
+            }
 
             var msg = $"&d[Discord] &r<{message.Author.Username}> {message.Content}";
 
@@ -77,8 +78,9 @@ public class DiscordBridge : IDisposable {
 
 public class DiscordLogger : IGatewayLogger {
     void IGatewayLogger.Log<TState>(NetCord.Logging.LogLevel logLevel, TState state, Exception? exception, Func<TState, Exception?, string> formatter) {
-        if (!IsEnabled(logLevel))
+        if (!IsEnabled(logLevel)) {
             return;
+        }
 
         var msg = formatter(state, exception);
         Log.log(logLevel switch {

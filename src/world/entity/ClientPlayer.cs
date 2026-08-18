@@ -183,10 +183,14 @@ public class ClientPlayer : Player {
         // 5. check block validity
         var val = world.getBlockRaw(pos);
         var block = Block.get(val.getID());
-        if (block == null || block.id == 0) return;
+        if (block == null || block.id == 0) {
+            return;
+        }
 
         var hardness = Block.hardness[block.id];
-        if (hardness < 0) return;
+        if (hardness < 0) {
+            return;
+        }
 
         // 6. calculate break speed
         var heldItem = inventory.getSelected().getItem();
@@ -273,7 +277,9 @@ public class ClientPlayer : Player {
         breakStates.Set(pos, state);
 
         // multiplayer sync
-        if (!connected) return;
+        if (!connected) {
+            return;
+        }
 
         // check if we started breaking a new block
         if (!lastBreaking.HasValue || lastBreaking.Value != pos) {
@@ -527,25 +533,45 @@ public class ClientPlayer : Player {
 
     public virtual void placeBlock() {
         // chain of responsibility - first match wins
-        if (tryInteractWithEntity()) return;
-        if (tryInteractWithBlock()) return;
-        if (tryUseItemOnBlock()) return;
-        if (tryPlaceBlockItem()) return;
+        if (tryInteractWithEntity()) {
+            return;
+        }
+
+        if (tryInteractWithBlock()) {
+            return;
+        }
+
+        if (tryUseItemOnBlock()) {
+            return;
+        }
+
+        if (tryPlaceBlockItem()) {
+            return;
+        }
+
         tryUseItemInAir();
     }
 
     /** entity.interact() - cows, sheep, etc */
     private bool tryInteractWithEntity() {
-        if (!Game.raycast.hit || Game.raycast.type != Result.ENTITY) return false;
+        if (!Game.raycast.hit || Game.raycast.type != Result.ENTITY) {
+            return false;
+        }
 
         var entity = Game.raycast.entity;
-        if (entity == null) return false;
+        if (entity == null) {
+            return false;
+        }
 
         var stack = inventory.getSelected();
-        if (stack == ItemStack.EMPTY) return false;
+        if (stack == ItemStack.EMPTY) {
+            return false;
+        }
 
         // try entity interaction
-        if (!entity.interact(this, stack)) return false;
+        if (!entity.interact(this, stack)) {
+            return false;
+        }
 
         // entity handled it - swing animation
         setSwinging(true);
@@ -564,16 +590,22 @@ public class ClientPlayer : Player {
 
     /** block.onUse() - chests, furnaces, etc */
     private bool tryInteractWithBlock() {
-        if (!Game.raycast.hit || Game.raycast.type != Result.BLOCK) return false;
+        if (!Game.raycast.hit || Game.raycast.type != Result.BLOCK) {
+            return false;
+        }
 
         var pos = Game.raycast.block;
         var block = Block.get(world.getBlock(pos));
-        if (block == null || block == Block.AIR) return false;
+        if (block == null || block == Block.AIR) {
+            return false;
+        }
 
         var info = getPlacementInfo();
 
         // execute locally (opens UI, etc)
-        if (!block.onUse(world, pos.X, pos.Y, pos.Z, this)) return false;
+        if (!block.onUse(world, pos.X, pos.Y, pos.Z, this)) {
+            return false;
+        }
 
         // send to server
         if (!world.isServer) {
@@ -588,17 +620,23 @@ public class ClientPlayer : Player {
 
     /** item.useBlock() - doors, buckets, etc */
     private bool tryUseItemOnBlock() {
-        if (!Game.raycast.hit || Game.raycast.type != Result.BLOCK) return false;
+        if (!Game.raycast.hit || Game.raycast.type != Result.BLOCK) {
+            return false;
+        }
 
         var stack = inventory.getSelected();
-        if (stack == ItemStack.EMPTY) return false;
+        if (stack == ItemStack.EMPTY) {
+            return false;
+        }
 
         var pos = Game.raycast.previous;
         var info = getPlacementInfo();
 
         // try item's useBlock hook
         var result = stack.getItem().useBlock(stack, world, this, pos.X, pos.Y, pos.Z, info);
-        if (result == null) return false;
+        if (result == null) {
+            return false;
+        }
 
         // item handled it - update inventory locally
         inventory.setStack(inventory.selected, result);
@@ -617,10 +655,14 @@ public class ClientPlayer : Player {
 
     /** place block from item */
     private bool tryPlaceBlockItem() {
-        if (!Game.raycast.hit || Game.raycast.type != Result.BLOCK) return false;
+        if (!Game.raycast.hit || Game.raycast.type != Result.BLOCK) {
+            return false;
+        }
 
         var stack = inventory.getSelected();
-        if (stack == ItemStack.EMPTY || !stack.getItem().isBlock()) return false;
+        if (stack == ItemStack.EMPTY || !stack.getItem().isBlock()) {
+            return false;
+        }
 
         var pos = Game.raycast.previous;
         var block = Block.get(stack.getItem().getBlockID());
@@ -683,13 +725,17 @@ public class ClientPlayer : Player {
     private bool wouldCollideWithPlayer(Block block, Vector3I pos, byte metadata) {
         world.getAABBsCollision(AABBList, pos.X, pos.Y, pos.Z);
         foreach (var aabb in AABBList) {
-            if (AABB.isCollision(aabb, this.aabb)) return true;
+            if (AABB.isCollision(aabb, this.aabb)) {
+                return true;
+            }
         }
         return false;
     }
 
     private bool wouldCollideWithEntities(Block block, Vector3I pos, byte metadata) {
-        if (!Block.collision[block.id]) return false;
+        if (!Block.collision[block.id]) {
+            return false;
+        }
 
         block.getAABBs(world, pos.X, pos.Y, pos.Z, metadata, AABBList);
         var entities = new List<Entity>();
@@ -698,7 +744,9 @@ public class ClientPlayer : Player {
             entities.Clear();
             world.getEntitiesInBox(entities, aabb.min.toBlockPos(), aabb.max.toBlockPos() + 1);
             foreach (var entity in entities) {
-                if (entity.blocksPlacement && AABB.isCollision(aabb, entity.aabb)) return true;
+                if (entity.blocksPlacement && AABB.isCollision(aabb, entity.aabb)) {
+                    return true;
+                }
             }
         }
 

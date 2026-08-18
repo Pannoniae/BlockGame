@@ -25,12 +25,18 @@ public class Path {
     }
 
     public PathNode? getCurrent() {
-        if (isFinished()) return null;
+        if (isFinished()) {
+            return null;
+        }
+
         return nodes[current];
     }
 
     public PathNode? getNext() {
-        if (current + 1 >= nodes.Count) return null;
+        if (current + 1 >= nodes.Count) {
+            return null;
+        }
+
         return nodes[current + 1];
     }
 
@@ -41,14 +47,20 @@ public class Path {
     }
 
     public Vector3D? getTarget() {
-        if (isEmpty()) return null;
+        if (isEmpty()) {
+            return null;
+        }
+
         var node = nodes[^1];
         return new Vector3D(node.x + 0.5, node.y, node.z + 0.5);
     }
 
     public Vector3D? getCurrentTarget() {
         var node = getCurrent();
-        if (node == null) return null;
+        if (node == null) {
+            return null;
+        }
+
         return new Vector3D(node.x + 0.5, node.y, node.z + 0.5);
     }
 

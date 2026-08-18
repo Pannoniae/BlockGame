@@ -53,7 +53,10 @@ public class InventoryState {
 
     /** check if slot has changed */
     public bool isDirty(int slot) {
-        if (slot < 0 || slot >= dirtyFlags.Length) return false;
+        if (slot < 0 || slot >= dirtyFlags.Length) {
+            return false;
+        }
+
         return dirtyFlags[slot];
     }
 }

@@ -40,11 +40,19 @@ public class Chest : EntityBlock {
      * face matching metadata direction gets front, opposite gets back, others get side
      */
     public override UVPair getTexture(int faceIdx, int metadata) {
-        if (faceIdx >= 4) return uvs[faceIdx]; // top/bottom
+        if (faceIdx >= 4) {
+            return uvs[faceIdx]; // top/bottom
+        }
 
         int facing = metadata & 0b11;
-        if (faceIdx == facing) return uvs[2]; // front
-        if (faceIdx == (facing ^ 1)) return uvs[3]; // back
+        if (faceIdx == facing) {
+            return uvs[2]; // front
+        }
+
+        if (faceIdx == (facing ^ 1)) {
+            return uvs[3]; // back
+        }
+
         return uvs[0]; // side
     }
 

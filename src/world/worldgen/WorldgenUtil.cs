@@ -13,7 +13,8 @@ namespace BlockGame.world.worldgen;
 
 public static class WorldgenUtil {
 
-    public static readonly float[] interps = new float[Chunk.MAXINDEXCOL];
+    [ThreadStatic] private static float[]? interpsTS;
+    private static float[] interps => interpsTS ??= new float[Chunk.MAXINDEXCOL];
 
     public static void printNoiseResolution(float freq, int octaves, float falloff = 2f) {
         printNoiseResolution(freq, octaves, falloff, 1 / falloff);
@@ -85,9 +86,7 @@ public static class WorldgenUtil {
     public const int NOISE_SIZE_Y = (Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT) / NOISE_PER_Y + 1;
     public const int NOISE_SIZE_Z = (Chunk.CHUNKSIZE / NOISE_PER_Z) + 1;
 
-    public static void interpolate(World world, float[] buffer, ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
-
+    public static void interpolate(Chunk chunk, float[] buffer) {
         if (Avx512F.IsSupported) {
             interpolateAVX512(chunk, buffer);
         }
@@ -98,11 +97,11 @@ public static class WorldgenUtil {
             interpolateSSE(chunk, buffer);
         }
         else {
-            interpolateScalar(world, chunk, buffer);
+            interpolateScalar(chunk, buffer);
         }
     }
 
-    private static void interpolateScalar(World world, Chunk chunk, float[] buffer) {
+    private static void interpolateScalar(Chunk chunk, float[] buffer) {
         for (int y = 0; y < Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
             var y0 = y >> NOISE_PER_Y_SHIFT;
             var y1 = y0 + 1;
@@ -159,7 +158,7 @@ public static class WorldgenUtil {
                         if (y is < NewWorldGenerator.WATER_LEVEL and >= 40) {
                             // check if water should be ice (frozen)
                             if (y >= NewWorldGenerator.WATER_LEVEL - 1) {
-                                var temp = chunk.biomeData.getTemp(x, y, z);
+                                var temp = chunk.biomeData.getTemp(x, z);
                                 if (temp < -0.8f) {
                                     chunk.setBlockFast(x, y, z, Block.ICE.id);
                                     chunk.addToHeightMap(x, y, z);
@@ -324,7 +323,7 @@ public static class WorldgenUtil {
                 if (y is < NewWorldGenerator.WATER_LEVEL and >= 40) {
                     // check if water should be ice (frozen)
                     if (y >= NewWorldGenerator.WATER_LEVEL - 1) {
-                        var temp = chunk.biomeData.getTemp(x, y, z);
+                        var temp = chunk.biomeData.getTemp(x, z);
                         if (temp < -0.8f) {
                             chunk.setBlockFast(x, y, z, Block.ICE.id);
                             chunk.addToHeightMap(x, y, z);
@@ -420,7 +419,7 @@ public static class WorldgenUtil {
             else if (y is < NewWorldGenerator.WATER_LEVEL and >= 40) {
                 // frozen water at surface in cold biomes
                 if (y >= NewWorldGenerator.WATER_LEVEL - 1) {
-                    float temp = chunk.biomeData.getTemp(x, y, z);
+                    float temp = chunk.biomeData.getTemp(x, z);
                     if (temp < -0.8f) {
                         chunk.setBlockFast(x, y, z, Block.ICE.id);
                         chunk.addToHeightMap(x, y, z);
@@ -515,7 +514,7 @@ public static class WorldgenUtil {
             else if (y is < NewWorldGenerator.WATER_LEVEL and >= 40) {
                 // frozen water at surface in cold biomes
                 if (y >= NewWorldGenerator.WATER_LEVEL - 1) {
-                    float temp = chunk.biomeData.getTemp(x, y, z);
+                    float temp = chunk.biomeData.getTemp(x, z);
                     if (temp < -0.8f) {
                         chunk.setBlockFast(x, y, z, Block.ICE.id);
                         chunk.addToHeightMap(x, y, z);
@@ -626,7 +625,7 @@ public static class WorldgenUtil {
 
     /** generate deterministic octave offset from seed */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static (double x, double y, double z) getOffset(int seed, int octave) {
+    public static (double x, double y, double z) getOffset(int seed, int octave) {
         int hash = XHash.hash(seed ^ (octave * 1619));
         double x = ((hash & 0x3FF) - 512) * 2.0; // 10 bits, range ~-1024 to 1024
         hash >>= 10;
@@ -643,9 +642,8 @@ public static class WorldgenUtil {
         float gain = 1 / falloff;
 
         for (int i = 0; i < octaves; i++) {
-            var (ox, oy, _) = getOffset((int)noise.seed, i);
-            result += amplitude * noise.noise2((float)(x * frequency + ox),
-                (float)(y * frequency + oy));
+            result += amplitude * noise.noise2((float)(x * frequency + noise.ox[i]),
+                (float)(y * frequency + noise.oy[i]));
             frequency *= falloff;
             amplitude *= gain;
         }
@@ -677,10 +675,9 @@ public static class WorldgenUtil {
         var gain = 1 / falloff;
 
         for (int i = 0; i < octaves; i++) {
-            var (ox, oy, oz) = getOffset((int)noise.seed, i);
-            result += amplitude * noise.noise3_XZBeforeY((float)(x * frequency + ox),
-                (float)(y * frequency + oy),
-                (float)(z * frequency + oz));
+            result += amplitude * noise.noise3_XZBeforeY((float)(x * frequency + noise.ox[i]),
+                (float)(y * frequency + noise.oy[i]),
+                (float)(z * frequency + noise.oz[i]));
             frequency *= falloff;
             amplitude *= gain;
         }
@@ -706,13 +703,32 @@ public static class WorldgenUtil {
         return result;
     }
 
-    /// <summary>
-    /// Run getNoise3D on the entire chunk. This is more efficient in theory:tm:
-    /// The size determines the buffer's size and the scale determines the scale of the noise. (bigger = bigger terrain features)
-    /// </summary>
+    private const int NOISE_COUNT = NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z;
+    private const int NOISE_PAD = (NOISE_COUNT + 7) & ~7;
+
+    private static readonly float[] gridX = new float[NOISE_PAD];
+    private static readonly float[] gridY = new float[NOISE_PAD];
+    private static readonly float[] gridZ = new float[NOISE_PAD];
+
+    static WorldgenUtil() {
+        for (int i = 0; i < NOISE_COUNT; i++) {
+            gridX[i] = (i % NOISE_SIZE_X) * NOISE_PER_X;
+            gridZ[i] = (i / NOISE_SIZE_X % NOISE_SIZE_Z) * NOISE_PER_Z;
+            gridY[i] = (i / (NOISE_SIZE_X * NOISE_SIZE_Z)) * NOISE_PER_Y;
+        }
+    }
+
+    /**
+     * Run getNoise3D on the entire chunk. This is more efficient in theory:tm:
+     */
     public static void getNoise3DRegion(float[] buffer, SimplexNoise noise, ChunkCoord coord, double xScale, double yScale,
         double zScale, int octaves,
         float falloff) {
+        if (OpenSimplex2.simdSupported) {
+            getNoise3DRegionSimd(buffer, noise, coord, xScale, yScale, zScale, octaves, falloff);
+            return;
+        }
+
         // Precalculate world position offsets
         int worldX = coord.x * Chunk.CHUNKSIZE;
         int worldZ = coord.z * Chunk.CHUNKSIZE;
@@ -735,6 +751,53 @@ public static class WorldgenUtil {
                         falloff
                     );
                 }
+            }
+        }
+    }
+
+    private static unsafe void getNoise3DRegionSimd(float[] buffer, SimplexNoise noise, ChunkCoord coord, double xScale,
+        double yScale, double zScale, int octaves, float falloff) {
+        // fold the 64-bit seed; the SIMD hash is 32-bit
+        int seed = (int)noise.seed ^ (int)(noise.seed >> 32);
+        var wx = Vector256.Create((float)(coord.x * Chunk.CHUNKSIZE));
+        var wz = Vector256.Create((float)(coord.z * Chunk.CHUNKSIZE));
+
+        const int lastVec = NOISE_PAD - 8;
+        var tail = Vector256.LessThan(Vector256.Create(0, 1, 2, 3, 4, 5, 6, 7), Vector256.Create(NOISE_COUNT - lastVec)).AsSingle();
+
+        float frequency = 1f;
+        float amplitude = 1 / falloff;
+        float gain = 1 / falloff;
+
+        fixed (float* gx = gridX, gy = gridY, gz = gridZ, buf = buffer) {
+            for (int o = 0; o < octaves; o++) {
+                // (world + grid) * (scale * freq) + octave offset
+                var bx = Vector256.Create((float)(xScale * frequency));
+                var by = Vector256.Create((float)(yScale * frequency));
+                var bz = Vector256.Create((float)(zScale * frequency));
+                var ox = Vector256.Create((float)noise.ox[o]);
+                var oy = Vector256.Create((float)noise.oy[o]);
+                var oz = Vector256.Create((float)noise.oz[o]);
+                var amp = Vector256.Create(amplitude);
+
+                for (int i = 0; i < NOISE_PAD; i += 8) {
+                    var v = OpenSimplex2.noise3x8(seed,
+                        Fma.MultiplyAdd(Vector256.Load(gx + i) + wx, bx, ox),
+                        Fma.MultiplyAdd(Vector256.Load(gy + i), by, oy),
+                        Fma.MultiplyAdd(Vector256.Load(gz + i) + wz, bz, oz));
+
+                    if (i != lastVec) {
+                        var acc = o == 0 ? amp * v : Fma.MultiplyAdd(amp, v, Vector256.Load(buf + i));
+                        Vector256.Store(acc, buf + i);
+                    }
+                    else {
+                        var acc = o == 0 ? amp * v : Fma.MultiplyAdd(amp, v, Avx.MaskLoad(buf + i, tail));
+                        Avx.MaskStore(buf + i, tail, acc);
+                    }
+                }
+
+                frequency *= falloff;
+                amplitude *= gain;
             }
         }
     }
@@ -779,214 +842,6 @@ public static class WorldgenUtil {
                 }
             }
         }
-    }
-
-    public static void placeRainforestTree(World world, XRandom random, ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
-        var x = random.Next(0, Chunk.CHUNKSIZE);
-        var z = random.Next(0, Chunk.CHUNKSIZE);
-        var y = chunk.heightMap.get(x, z);
-
-        if (y > 120) {
-            return;
-        }
-
-        // must be on grass or snow grass
-        var surface = chunk.getBlock(x, y, z);
-        if (surface != Block.GRASS.id && surface != Block.SNOW_GRASS.id) {
-            return;
-        }
-
-        var xWorld = coord.x * Chunk.CHUNKSIZE + x;
-        var zWorld = coord.z * Chunk.CHUNKSIZE + z;
-
-        // choose tree tier: 60% small, 30% medium, 10% huge
-        var roll = random.NextSingle();
-        int checkHeight;
-
-        if (roll < 0.6f) {
-            // small tree
-            checkHeight = 7;
-        }
-        else if (roll < 0.9f) {
-            // medium tree
-            checkHeight = 16;
-        }
-        else {
-            // huge tree
-            checkHeight = 36;
-        }
-
-        const int checkRadius = 1;
-
-        // bounding box check
-        for (int yd = 1; yd < checkHeight; yd++) {
-            for (int zd = -checkRadius; zd <= checkRadius; zd++) {
-                for (int xd = -checkRadius; xd <= checkRadius; xd++) {
-                    if (world.getBlock(xWorld + xd, y + yd, zWorld + zd) != Block.AIR.id) {
-                        return;
-                    }
-                }
-            }
-        }
-
-        // place chosen tree type
-        if (roll < 0.6f) {
-            TreeGenerator.placeSmallMahogany(world, random, xWorld, y + 1, zWorld);
-        }
-        else if (roll < 0.9f) {
-            TreeGenerator.placeMediumMahogany(world, random, xWorld, y + 1, zWorld);
-        }
-        else {
-            TreeGenerator.placeHugeMahogany(world, random, xWorld, y + 1, zWorld);
-        }
-    }
-
-    public static void placeTree(World world, XRandom random, ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
-        var x = random.Next(0, Chunk.CHUNKSIZE);
-        var z = random.Next(0, Chunk.CHUNKSIZE);
-        var y = chunk.heightMap.get(x, z);
-
-        if (y > 120) {
-            return;
-        }
-
-        // must be on grass or snow grass
-        var surface = chunk.getBlock(x, y, z);
-        if (surface != Block.GRASS.id && surface != Block.SNOW_GRASS.id) {
-            return;
-        }
-
-        var xWorld = coord.x * Chunk.CHUNKSIZE + x;
-        var zWorld = coord.z * Chunk.CHUNKSIZE + z;
-
-        // if there's stuff in the bounding box, don't place a tree
-        for (int yd = 1; yd < 8; yd++) {
-            for (int zd = -2; zd <= 2; zd++) {
-                for (int xd = -2; xd <= 2; xd++) {
-                    if (world.getBlock(xWorld, y + yd, zWorld) != Block.AIR.id) {
-                        return;
-                    }
-                }
-            }
-        }
-
-        // 1/15 chance for fancy tree
-        if (random.Next(15) == 0) {
-            TreeGenerator.placeFancyTree(world, random, xWorld, y + 1, zWorld);
-        }
-        // 1 / 20 for maple
-        else if (random.Next(20) == 0) {
-            TreeGenerator.placeMapleTree(world, random, xWorld, y + 1, zWorld);
-        }
-        else {
-            TreeGenerator.placeOakTree(world, random, xWorld, y + 1, zWorld);
-        }
-    }
-
-    public static void placePineTree(World world, XRandom random, ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
-        var x = random.Next(0, Chunk.CHUNKSIZE);
-        var z = random.Next(0, Chunk.CHUNKSIZE);
-        var y = chunk.heightMap.get(x, z);
-
-        if (y > 120) {
-            return;
-        }
-
-        // must be on grass or snow grass
-        var surface = chunk.getBlock(x, y, z);
-        if (surface != Block.GRASS.id && surface != Block.SNOW_GRASS.id) {
-            return;
-        }
-
-        var xWorld = coord.x * Chunk.CHUNKSIZE + x;
-        var zWorld = coord.z * Chunk.CHUNKSIZE + z;
-
-        // if there's stuff in the bounding box, don't place a tree
-        for (int yd = 1; yd < 8; yd++) {
-            for (int zd = -2; zd <= 2; zd++) {
-                for (int xd = -2; xd <= 2; xd++) {
-                    if (world.getBlock(xWorld + xd, y + yd, zWorld + zd) != Block.AIR.id) {
-                        return;
-                    }
-                }
-            }
-        }
-
-        TreeGenerator.placePineTree(world, random, xWorld, y + 1, zWorld);
-    }
-
-    public static void placeCandyTree(World world, XRandom random, ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
-        var x = random.Next(0, Chunk.CHUNKSIZE);
-        var z = random.Next(0, Chunk.CHUNKSIZE);
-        var y = chunk.heightMap.get(x, z);
-
-        if (y > 120) {
-            return;
-        }
-
-        // must be on sand
-        var surface = chunk.getBlock(x, y, z);
-        if (surface != Block.GRASS.id && surface != Block.SNOW_GRASS.id) {
-            return;
-        }
-
-        var xWorld = coord.x * Chunk.CHUNKSIZE + x;
-        var zWorld = coord.z * Chunk.CHUNKSIZE + z;
-
-        // if there's stuff in the bounding box, don't place a tree
-        for (int yd = 1; yd < 8; yd++) {
-            for (int zd = -2; zd <= 2; zd++) {
-                for (int xd = -2; xd <= 2; xd++) {
-                    if (world.getBlock(xWorld, y + yd, zWorld) != Block.AIR.id) {
-                        return;
-                    }
-                }
-            }
-        }
-
-        TreeGenerator.placeCandyTree(world, random, xWorld, y + 1, zWorld);
-    }
-
-    public static void placePalmTree(World world, XRandom random, ChunkCoord coord, BiomeType biome) {
-        var chunk = world.getChunk(coord);
-        var x = random.Next(0, Chunk.CHUNKSIZE);
-        var z = random.Next(0, Chunk.CHUNKSIZE);
-        var y = chunk.heightMap.get(x, z);
-
-        if (y > 120) {
-            return;
-        }
-
-        // must be on sand
-        var surface = chunk.getBlock(x, y, z);
-        if (surface != Block.SAND.id) {
-            return;
-        }
-
-        var xWorld = coord.x * Chunk.CHUNKSIZE + x;
-        var zWorld = coord.z * Chunk.CHUNKSIZE + z;
-
-        // must be a beach, but is not generated there, so it's in the desert for now
-        if (biome != BiomeType.Desert) {
-            return;
-        }
-
-        // if there's stuff in the bounding box, don't place a tree
-        for (int yd = 1; yd < 8; yd++) {
-            for (int zd = -2; zd <= 2; zd++) {
-                for (int xd = -2; xd <= 2; xd++) {
-                    if (world.getBlock(xWorld + xd, y + yd, zWorld + zd) != Block.AIR.id) {
-                        return;
-                    }
-                }
-            }
-        }
-
-        TreeGenerator.placePalmTree(world, random, xWorld, y + 1, zWorld);
     }
 
     public static float getNoise(FastNoiseLite noise, double x, double z, int octaves, double gain) {

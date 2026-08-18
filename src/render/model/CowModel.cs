@@ -23,8 +23,8 @@ public class CowModel : AnimalModel {
         base.render(mat, e, apos, aspeed, scale, interp);
 
 
-        var interpRot = Vector3.Lerp(e.prevRotation, e.rotation, (float)interp);
-        var interpBodyRot = Vector3.Lerp(e.prevBodyRotation, e.bodyRotation, (float)interp);
+        var interpRot = e.interpRot(interp);
+        var interpBodyRot = e.interpBodyRot(interp);
         var headRotY = interpRot.Y - interpBodyRot.Y;
 
         hornYRight.rotation = new Vector3(0, headRotY, 0);

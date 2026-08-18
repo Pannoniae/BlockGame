@@ -19,7 +19,10 @@ public class Camera {
     private Entity? player;
 
     public Vector3D renderPosition(double interp) {
-        if (player is not Player p) return Vector3D.Zero;
+        if (player is not Player p) {
+            return Vector3D.Zero;
+        }
+
         var basePos = Vector3D.Lerp(p.prevPosition, p.position, interp);
         var trueEyeHeight = p.sneaking ? Player.sneakingEyeHeight : Player.eyeHeight;
         basePos.Y += trueEyeHeight;
@@ -33,7 +36,10 @@ public class Camera {
     }
 
     private Vector3D playerForward() {
-        if (player is not Player p) return Vector3D.UnitZ;
+        if (player is not Player p) {
+            return Vector3D.UnitZ;
+        }
+
         var yaw = p.rotation.Y;
         var pitch = p.rotation.X;
 
@@ -46,7 +52,9 @@ public class Camera {
     }
 
     private Vector3D clip(Vector3D pivot, Vector3D pos) {
-        if (player is not Player p) return pos;
+        if (player is not Player p) {
+            return pos;
+        }
 
         // Raycast from player eye position towards intended camera position
         var dir = Vector3D.Normalize(pos - pivot);
@@ -105,7 +113,9 @@ public class Camera {
     }
 
     public Vector3D forward(double interp) {
-        if (player is not Player p) return Vector3D.UnitZ;
+        if (player is not Player p) {
+            return Vector3D.UnitZ;
+        }
 
         // For front-facing camera, look at the player's eye position
         if (mode == CameraMode.ThirdPersonFront) {
@@ -208,7 +218,9 @@ public class Camera {
     }
     
     public void updatePosition(double dt) {
-        if (player is not Player p) return;
+        if (player is not Player p) {
+            return;
+        }
 
         // Update bob (ground movement)
         prevBob = bob;

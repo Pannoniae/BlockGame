@@ -128,11 +128,13 @@ public class BoundingFrustum : IEquatable<BoundingFrustum> {
     /// <param name="b"><see cref="BoundingFrustum"/> instance on the right of the equal sign.</param>
     /// <returns><c>true</c> if the instances are equal; <c>false</c> otherwise.</returns>
     public static bool operator ==(BoundingFrustum a, BoundingFrustum b) {
-        if (Equals(a, null))
+        if (Equals(a, null)) {
             return (Equals(b, null));
+        }
 
-        if (Equals(b, null))
+        if (Equals(b, null)) {
             return (Equals(a, null));
+        }
 
         return a._matrix == (b._matrix);
     }
@@ -234,7 +236,9 @@ public class BoundingFrustum : IEquatable<BoundingFrustum> {
     /// <returns>Result of testing for containment between this <see cref="BoundingFrustum"/> and specified <see cref="BoundingFrustum"/>.</returns>
     public ContainmentType Contains(BoundingFrustum frustum) {
         if (this == frustum) // We check to see if the two frustums are equal
+        {
             return ContainmentType.Contains; // If they are, there's no need to go any further.
+        }
 
         var intersects = false;
         for (var i = 0; i < PlaneCount; ++i) {
@@ -346,8 +350,13 @@ public class BoundingFrustum : IEquatable<BoundingFrustum> {
     /// </summary>
     /// <param name="corners">The array which values will be replaced to corner values of this instance. It must have size of <see cref="BoundingFrustum.CornerCount"/>.</param>
     public void GetCorners(Vector3[] corners) {
-        if (corners == null) throw new ArgumentNullException("corners");
-        if (corners.Length < CornerCount) throw new ArgumentOutOfRangeException("corners");
+        if (corners == null) {
+            throw new ArgumentNullException("corners");
+        }
+
+        if (corners.Length < CornerCount) {
+            throw new ArgumentOutOfRangeException("corners");
+        }
 
         _corners.CopyTo(corners, 0);
     }
@@ -432,8 +441,9 @@ public class BoundingFrustum : IEquatable<BoundingFrustum> {
     public void Intersects(ref Plane plane, out PlaneIntersectionType result) {
         result = plane.Intersects(ref _corners[0]);
         for (int i = 1; i < _corners.Length; i++)
-            if (plane.Intersects(ref _corners[i]) != result)
+            if (plane.Intersects(ref _corners[i]) != result) {
                 result = PlaneIntersectionType.Intersecting;
+            }
     }
 
     /// <summary>

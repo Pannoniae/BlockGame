@@ -3,7 +3,6 @@ using BlockGame.world.chunk;
 
 namespace BlockGame.world.region;
 
-/** Manages region files with LRU caching */
 public sealed class RegionManager : IDisposable {
     public const int MAX_CACHED_REGIONS = 32;
 
@@ -13,29 +12,85 @@ public sealed class RegionManager : IDisposable {
     private readonly XLongMap<LinkedListNode<RegionCoord>> lruNodes = [];
     private bool isDisposed;
 
-    // global lock protects cache, LRU, and all RegionFile operations
-    private readonly Lock globalLock = new();
+    /** covers cache, lruList, lruNodes and the refcounts. NEVER held across IO. */
+    private readonly Lock cacheLock = new();
 
     public RegionManager(string worldPath) {
         this.worldPath = worldPath;
     }
 
-    /** Get or create region file (with LRU eviction) */
-    public RegionFile getRegion(RegionCoord coord) {
-        lock (globalLock) {
-            // cache hit - move to front
+    // ---- abstract it so we don't actually hand out RegionFiles for people do bad things with ----
+
+    public bool writeChunk(ChunkCoord chunk, byte[] data) {
+        var local = getLocalCoord(chunk);
+        var region = pin(getRegionCoord(chunk));
+        try {
+            lock (region.@lock) {
+                return region.writeChunkUnsafe(local.x, local.z, data);
+            }
+        }
+        finally {
+            unpin(region);
+        }
+    }
+
+    public byte[]? readChunk(ChunkCoord chunk) {
+        var local = getLocalCoord(chunk);
+        var region = pin(getRegionCoord(chunk));
+        try {
+            lock (region.@lock) {
+                return region.readChunkUnsafe(local.x, local.z);
+            }
+        }
+        finally {
+            unpin(region);
+        }
+    }
+
+    public bool hasChunk(ChunkCoord chunk) {
+        var local = getLocalCoord(chunk);
+        var region = pin(getRegionCoord(chunk));
+        try {
+            lock (region.@lock) {
+                return region.hasChunkUnsafe(local.x, local.z);
+            }
+        }
+        finally {
+            unpin(region);
+        }
+    }
+
+    public void deleteChunk(ChunkCoord chunk) {
+        var local = getLocalCoord(chunk);
+        var region = pin(getRegionCoord(chunk));
+        try {
+            lock (region.@lock) {
+                region.deleteChunkUnsafe(local.x, local.z);
+            }
+        }
+        finally {
+            unpin(region);
+        }
+    }
+
+    // ---- cache ----
+
+    /** Get or create a region and pin it so it can't be evicted out from under the caller. */
+    private RegionFile pin(RegionCoord coord) {
+        lock (cacheLock) {
             if (cache.TryGetValue(coord.toLong(), out var region)) {
                 touch(coord);
+                region.refs++;
                 return region;
             }
 
-            // cache miss - load/create region
-            region = new RegionFile(worldPath, coord.x, coord.z, globalLock);
+            region = new RegionFile(worldPath, coord.x, coord.z);
             cache.Add(coord.toLong(), region);
 
-            // add to LRU front
             var node = lruList.AddFirst(coord);
             lruNodes.Add(coord.toLong(), node);
+
+            region.refs++;
 
             // evict oldest if cache is full
             if (cache.Count > MAX_CACHED_REGIONS) {
@@ -43,6 +98,12 @@ public sealed class RegionManager : IDisposable {
             }
 
             return region;
+        }
+    }
+
+    private void unpin(RegionFile region) {
+        lock (cacheLock) {
+            region.refs--;
         }
     }
 
@@ -54,24 +115,35 @@ public sealed class RegionManager : IDisposable {
         }
     }
 
-    /** Evict least recently used region */
+    /**
+     * Evict the least recently used UNPINNED region.
+     */
     private void evictOldest() {
-        if (lruList.Last == null) return;
+        var node = lruList.Last;
 
-        var oldest = lruList.Last.Value;
-        lruList.RemoveLast();
-        lruNodes.Remove(oldest.toLong());
+        while (node != null) {
+            var prev = node.Previous;
+            var coord = node.Value;
 
-        if (cache.TryGetValue(oldest.toLong(), out var region)) {
-            region.DisposeUnsafe(); // flushes before closing (lock already held)
-            cache.Remove(oldest.toLong());
+            if (cache.TryGetValue(coord.toLong(), out var region) && region.refs == 0) {
+                lruList.Remove(node);
+                lruNodes.Remove(coord.toLong());
+                cache.Remove(coord.toLong());
+
+                lock (region.@lock) {
+                    region.DisposeUnsafe();
+                }
+                return;
+            }
+
+            node = prev;
         }
     }
 
     /** Flush all dirty regions (autosave/world close) */
     public void flushAll() {
-        lock (globalLock) {
-            foreach (var region in cache) {
+        foreach (var region in snapshot()) {
+            lock (region.@lock) {
                 region.flushUnsafe();
             }
         }
@@ -79,14 +151,26 @@ public sealed class RegionManager : IDisposable {
 
     /** Close all regions (call on world close) */
     public void closeAll() {
-        lock (globalLock) {
-            foreach (var region in cache) {
+        foreach (var region in snapshot()) {
+            lock (region.@lock) {
                 region.DisposeUnsafe();
             }
+        }
 
+        lock (cacheLock) {
             cache.Clear();
             lruList.Clear();
             lruNodes.Clear();
+        }
+    }
+    private RegionFile[] snapshot() {
+        lock (cacheLock) {
+            var a = new RegionFile[cache.Count];
+            var i = 0;
+            foreach (var region in cache) {
+                a[i++] = region;
+            }
+            return a;
         }
     }
 
@@ -101,7 +185,10 @@ public sealed class RegionManager : IDisposable {
     }
 
     public void Dispose() {
-        if (isDisposed) return;
+        if (isDisposed) {
+            return;
+        }
+
         isDisposed = true;
 
         closeAll();

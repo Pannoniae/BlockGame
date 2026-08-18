@@ -79,6 +79,7 @@ public class SampleSemanticAnalyzer : DiagnosticAnalyzer {
         // Count validation is enough in most cases. Keep analyzers as simple as possible.
         if (invocationSyntax.ArgumentList.Arguments.Count != 1)
             return;
+        }
 
         // Traverse through the syntax tree, starting with the particular 'InvocationSyntax' to the desired node.
         var argumentSyntax = invocationSyntax.ArgumentList.Arguments.Single().Expression;
@@ -86,11 +87,13 @@ public class SampleSemanticAnalyzer : DiagnosticAnalyzer {
         // The 'ToString' method of 'Syntax' classes returns the corresponding part of the source code.
         var argument = argumentSyntax.ToString();
 
-        if (!int.TryParse(argument, out var actualSpeed))
+        if (!int.TryParse(argument, out var actualSpeed)) {
             return;
+        }
 
-        if (actualSpeed <= 299_792_458)
+        if (actualSpeed <= 299_792_458) {
             return;
+        }
 
         var diagnostic = Diagnostic.Create(Rule,
             // The highlighted area in the analyzed source code. Keep it as specific as possible.

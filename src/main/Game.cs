@@ -93,6 +93,13 @@ public partial class Game {
     public static GUI gui;
     public static BlockRenderer blockRenderer;
 
+    public static XJobPool jobs;
+
+    public static int frames;
+
+    public static double lastFrameTime;
+    public static double lastSwapTime;
+
     public static Textures textures;
     public static Metrics metrics;
     public static Profiler profiler;
@@ -348,6 +355,8 @@ public partial class Game {
         
         // Store profiling data for this frame after swap is complete
         var profileData = profiler.endFrame();
+
+        lastSwapTime = profileData.getTime(ProfileSectionName.Swap);
         
         // Only update if we're in the game screen to avoid profiling menus
         if (instance.currentScreen == Screen.GAME_SCREEN) {
@@ -863,6 +872,10 @@ public partial class Game {
         Menu.STARTUP_LOADING.updateProgress(0.5f, "Setting up renderer");
         //Thread.Sleep(1000);
         jankyFrame();
+
+        jobs = new XJobPool("Mesher", XJobPool.defaultWorkers());
+        Log.info($"Job pool: {jobs.workers} workers");
+
         renderer = new WorldRenderer();
         
         Menu.STARTUP_LOADING.updateProgress(0.7f, "the dev has L ratio");
@@ -1007,6 +1020,9 @@ public partial class Game {
             setWorld(null);
         }
 
+        // otherwise the next world's F3 shows the last one's numbers until the first packet lands
+        ClientPacketHandler.clearServerStats();
+
         // transition Net.mode appropriately:
         // MPC -> SP (back to main menu state)
         // SP -> SP (stay in main menu state)
@@ -1043,9 +1059,12 @@ public partial class Game {
         client ??= new ClientConnection();
         var cl = client;
 
+        var pipe = new MemPipe();
+        sv.runOnMainThread(() => sv.acceptMem(pipe));
+
         _ = Task.Run(() => {
             sv.ready.Wait();
-            cl.connect("127.0.0.1", sv.port, Settings.instance.playerName);
+            cl.connectMem(pipe, Settings.instance.playerName);
         });
     }
 
@@ -1290,6 +1309,10 @@ public partial class Game {
     /// </summary>
     /// <param name="dt">dt as fractions of a second. 1 = 1s</param> 
     private void mainLoop(double dt) {
+        // real frame delta before we cap it, maybe we should harmonise the two later? idk
+        frames++;
+        lastFrameTime = dt * 1000;
+
         dt = Math.Min(dt, maxTimestep);
         accumTime += dt;
         //var i = 0;
@@ -1569,6 +1592,8 @@ public partial class Game {
     }
 
     private void close() {
+        jobs?.Dispose();
+
         // remember if we were in MP before disconnect
         // integrated counts as MP
         bool wasMP = Net.mode.isMPC() || server != null;

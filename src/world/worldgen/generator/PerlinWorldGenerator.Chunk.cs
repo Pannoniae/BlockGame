@@ -57,19 +57,18 @@ public partial class PerlinWorldGenerator {
 
     public const float FOLIAGE_FREQUENCY = 1 / 169f;
 
-    public void generate(ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
+    public void generate(Chunk chunk) {
+        var coord = chunk.coord;
         getDensity(buffer, coord);
-        WorldgenUtil.interpolate(world, buffer, coord);
+        WorldgenUtil.interpolate(chunk, buffer);
         //Console.Out.WriteLine(coord);
-        generateSurface(coord);
+        generateSurface(chunk);
 
         chunk.status = ChunkStatus.GENERATED;
     }
 
 
     public void getDensity(float[] buffer, ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
         // get the noise
         WorldgenUtil.getNoise3DRegion(lowBuffer, lowNoise, coord, LOW_FREQUENCY, LOW_FREQUENCY * Y_DIVIDER,
             LOW_FREQUENCY, 12, 2f);
@@ -199,8 +198,7 @@ public partial class PerlinWorldGenerator {
         return density;
     }
 
-    public void generateSurface(ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
+    public void generateSurface(Chunk chunk) {
 
         for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
             for (int x = 0; x < Chunk.CHUNKSIZE; x++) {

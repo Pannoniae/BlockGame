@@ -145,8 +145,13 @@ public class XBiMap<K, V> : IEnumerable<XBiMap<K, V>.Pair> where K : notnull whe
         }
 
         // adjust count for fully removed entries
-        if (removedKey) count--;
-        if (removedValue) count--;
+        if (removedKey) {
+            count--;
+        }
+
+        if (removedValue) {
+            count--;
+        }
 
         // insert new mapping (will increment count)
         insert(key, value, true);

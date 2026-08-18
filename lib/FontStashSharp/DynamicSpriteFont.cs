@@ -138,10 +138,11 @@ namespace FontStashSharp
 				return null;
 			}
 
-			if (device == null || glyph.Texture != null)
-				return glyph;
+			if (device == null || glyph.Texture != null) {
+                return glyph;
+            }
 
-			FontSystem.RenderGlyphOnAtlas(device, glyph);
+            FontSystem.RenderGlyphOnAtlas(device, glyph);
 
 			return glyph;
 		}

@@ -101,7 +101,9 @@ public abstract class ProjectileEntity : Entity {
 
     // unified entity collision with owner grace period
     protected virtual void checkEntityCollision() {
-        if (!canCollideWithEntities) return;
+        if (!canCollideWithEntities) {
+            return;
+        }
 
         var entities = new List<Entity>();
         world.getEntitiesInBox(entities, aabb);

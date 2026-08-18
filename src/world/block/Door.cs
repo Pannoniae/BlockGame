@@ -43,7 +43,9 @@ public class Door : Block {
 
     public override void place(World world, int x, int y, int z, byte metadata, Placement info) {
         byte f = (byte)info.hfacing;
-        if (f > 3) f = 0;
+        if (f > 3) {
+            f = 0;
+        }
 
         bool hingeRight = true;
         int lx = x, lz = z, rx = x, rz = z;
@@ -61,7 +63,9 @@ public class Door : Block {
         if (hasLeft && hasPartner(world, lx, y, lz, f, hinge(lb.getMetadata()))) {
             hasLeft = false;
         }
-        if (hasLeft) hingeRight = true;
+        if (hasLeft) {
+            hingeRight = true;
+        }
 
         var rb = world.getBlockRaw(rx, y, rz);
         bool hasRight = rb.getID() == id && facing(rb.getMetadata()) == f;
@@ -69,7 +73,9 @@ public class Door : Block {
         if (hasRight && hasPartner(world, rx, y, rz, f, hinge(rb.getMetadata()))) {
             hasRight = false;
         }
-        if (hasRight) hingeRight = false;
+        if (hasRight) {
+            hingeRight = false;
+        }
 
         byte lower = (byte)(f | (hingeRight ? 0b10000 : 0));
         byte upper = (byte)(lower | 0b1000);
@@ -135,7 +141,9 @@ public class Door : Block {
                     case 3: px += nh ? 1 : -1; break;
                 }
                 // only toggle if partner is this door
-                if (px != x || pz != z) return true;
+                if (px != x || pz != z) {
+                    return true;
+                }
             }
 
             var nnl = (byte)(world.getBlockRaw(nx, ly, nz).getMetadata() ^ 0b100);
@@ -149,16 +157,21 @@ public class Door : Block {
 
     public override void onBreak(World world, int x, int y, int z, byte metadata) {
         int oy = upper(metadata) ? y - 1 : y + 1;
-        if (world.getBlock(x, oy, z) == id) world.setBlock(x, oy, z, 0);
+        if (world.getBlock(x, oy, z) == id) {
+            world.setBlock(x, oy, z, 0);
+        }
     }
 
     public override void update(World world, int x, int y, int z) {
         var m = world.getBlockRaw(x, y, z).getMetadata();
         if (upper(m)) {
-            if (world.getBlock(x, y - 1, z) != id) world.setBlock(x, y, z, 0);
-        } else {
-            if (!fullBlock[world.getBlock(x, y - 1, z)] || world.getBlock(x, y + 1, z) != id)
+            if (world.getBlock(x, y - 1, z) != id) {
                 world.setBlock(x, y, z, 0);
+            }
+        } else {
+            if (!fullBlock[world.getBlock(x, y - 1, z)] || world.getBlock(x, y + 1, z) != id) {
+                world.setBlock(x, y, z, 0);
+            }
         }
     }
 
@@ -244,7 +257,9 @@ public class Door : Block {
         // WEST face (x = x0) - broad when width runs along Z, otherwise a hinge/latch end edge
         if (x0 > 0f || !br.shouldCullFace(RawDirection.WEST)) {
             float uMin, uMax;
-            if (widthIsX) (uMin, uMax) = edgeU(x0);
+            if (widthIsX) {
+                (uMin, uMax) = edgeU(x0);
+            }
             else { uMin = uu(z1); uMax = uu(z0); }
             br.quad(vertices, x, y, z,
                 x0, 1f, z1, x0, 0f, z1, x0, 0f, z0, x0, 1f, z0,
@@ -254,7 +269,9 @@ public class Door : Block {
         // EAST face (x = x1)
         if (x1 < 1f || !br.shouldCullFace(RawDirection.EAST)) {
             float uMin, uMax;
-            if (widthIsX) (uMin, uMax) = edgeU(x1);
+            if (widthIsX) {
+                (uMin, uMax) = edgeU(x1);
+            }
             else { uMin = uu(z0); uMax = uu(z1); }
             br.quad(vertices, x, y, z,
                 x1, 1f, z0, x1, 0f, z0, x1, 0f, z1, x1, 1f, z1,
@@ -264,7 +281,9 @@ public class Door : Block {
         // SOUTH face (z = z0) - broad when width runs along X, otherwise an end edge
         if (z0 > 0f || !br.shouldCullFace(RawDirection.SOUTH)) {
             float uMin, uMax;
-            if (!widthIsX) (uMin, uMax) = edgeU(z0);
+            if (!widthIsX) {
+                (uMin, uMax) = edgeU(z0);
+            }
             else { uMin = uu(x0); uMax = uu(x1); }
             br.quad(vertices, x, y, z,
                 x0, 1f, z0, x0, 0f, z0, x1, 0f, z0, x1, 1f, z0,
@@ -274,7 +293,9 @@ public class Door : Block {
         // NORTH face (z = z1)
         if (z1 < 1f || !br.shouldCullFace(RawDirection.NORTH)) {
             float uMin, uMax;
-            if (!widthIsX) (uMin, uMax) = edgeU(z1);
+            if (!widthIsX) {
+                (uMin, uMax) = edgeU(z1);
+            }
             else { uMin = uu(x1); uMax = uu(x0); }
             br.quad(vertices, x, y, z,
                 x1, 1f, z1, x1, 0f, z1, x0, 0f, z1, x0, 1f, z1,

@@ -66,8 +66,9 @@ public class BTextureAtlas : BTexture2D {
      * Look up final UV for a tile from a source atlas
      */
     public UVPair uv(string sourcePath, int tx, int ty) {
-        if (tilePositions == null)
+        if (tilePositions == null) {
             throw new InvalidOperationException("Not a stitched atlas! Use the StitchResult constructor.");
+        }
 
         // Add textures/ prefix if not already present
         if (!sourcePath.StartsWith("textures/")) {
@@ -196,8 +197,9 @@ public class BTextureAtlas : BTexture2D {
 
         float totalAlpha = a0 + a1 + a2 + a3;
 
-        if (totalAlpha == 0)
+        if (totalAlpha == 0) {
             return new Rgba32(0, 0, 0, 0);
+        }
 
         // linearize RGB before averaging to avoid darkening mipmaps
         float r0 = srgbToLinear(c0.R / 255f), r1 = srgbToLinear(c1.R / 255f), r2 = srgbToLinear(c2.R / 255f), r3 = srgbToLinear(c3.R / 255f);
@@ -239,8 +241,13 @@ public class BTextureAtlas : BTexture2D {
             int height = imageHeight;
 
             for (lvl = 1; lvl <= maxLevel; lvl++) {
-                if (width > 1) width /= 2;
-                if (height > 1) height /= 2;
+                if (width > 1) {
+                    width /= 2;
+                }
+
+                if (height > 1) {
+                    height /= 2;
+                }
 
                 Span<Rgba32> mipmap = this.mipmap.AsSpan(0, width * height);
                 generateMipmap(0, 0, width, height, mipmap, prevMipmap);
@@ -273,8 +280,13 @@ public class BTextureAtlas : BTexture2D {
                 // no need to clear, we overwrite anyway!
                 //Array.Clear(mipmap);
                 for (lvl = 1; lvl <= maxLevel; lvl++) {
-                    if (width > 1) width /= 2;
-                    if (height > 1) height /= 2;
+                    if (width > 1) {
+                        width /= 2;
+                    }
+
+                    if (height > 1) {
+                        height /= 2;
+                    }
 
                     Span<Rgba32> mipmap = this.mipmap.AsSpan(0, width * height);
                     generateMipmap(0, 0, width, height, mipmap, prevMipmap);
@@ -399,8 +411,10 @@ public class BlockTextureAtlas : BTextureAtlas {
      * Get protected region rectangle (for DynamicTextures)
      */
     public Rectangle getRegion(string name) {
-        if (protectedRegions == null)
+        if (protectedRegions == null) {
             throw new InvalidOperationException("Not a stitched atlas!");
+        }
+
         return protectedRegions[name];
     }
 

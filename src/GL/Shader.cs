@@ -86,8 +86,10 @@ public partial class Shader : IDisposable {
     private static partial Regex includeRegex();
 
     public static void namedStringARB(string name, string content) {
-        if (!Game.hasShadingLanguageInclude) return;
-        
+        if (!Game.hasShadingLanguageInclude) {
+            return;
+        }
+
         if (!name.StartsWith('/')) {
             throw new ArgumentException("Named string path must start with '/'", nameof(name));
         }
@@ -119,8 +121,10 @@ public partial class Shader : IDisposable {
     }
     
     public static void deleteNamedStringARB(string name) {
-        if (!Game.hasShadingLanguageInclude) return;
-        
+        if (!Game.hasShadingLanguageInclude) {
+            return;
+        }
+
         if (!name.StartsWith('/')) {
             throw new ArgumentException("Named string path must start with '/'", nameof(name));
         }
@@ -146,13 +150,17 @@ public partial class Shader : IDisposable {
     }
     
     public static void initializeIncludeFiles() {
-        if (!Game.hasShadingLanguageInclude) return;
-        
+        if (!Game.hasShadingLanguageInclude) {
+            return;
+        }
+
         var searchDirectories = new[] { Assets.getPath("shaders") };
         
         foreach (var dir in searchDirectories) {
-            if (!Directory.Exists(dir)) continue;
-            
+            if (!Directory.Exists(dir)) {
+                continue;
+            }
+
             var incFiles = Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories);
             
             foreach (var filePath in incFiles) {

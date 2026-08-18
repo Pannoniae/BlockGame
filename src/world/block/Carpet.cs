@@ -97,7 +97,9 @@ public class Carpet : Block {
     }
 
     public override void getDrop(List<ItemStack> drops, World world, int x, int y, int z, byte metadata, bool canBreak) {
-        if (!canBreak) return;
+        if (!canBreak) {
+            return;
+        }
 
         // extract color and create carpet with FLOOR orientation
         byte color = getColor(metadata);

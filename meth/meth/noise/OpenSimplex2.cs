@@ -4,7 +4,7 @@
 
 using System.Runtime.CompilerServices;
 
-public static class OpenSimplex2 {
+public static partial class OpenSimplex2 {
     private const long PRIME_X = 0x5205402B9270C86FL;
     private const long PRIME_Y = 0x598CD327003817B5L;
     private const long PRIME_Z = 0x5BCC226E9FA0BACBL;

@@ -1,4 +1,6 @@
-﻿using BlockGame.logic;
+using System.Numerics;
+using System.Diagnostics;
+using BlockGame.logic;
 using BlockGame.main;
 using BlockGame.render;
 using BlockGame.ui;
@@ -9,6 +11,7 @@ using BlockGame.world.block;
 using BlockGame.world.chunk;
 using BlockGame.world.entity;
 using BlockGame.world.item.inventory;
+using BlockGame.world.worldgen;
 using BlockGame.world.worldgen.generator;
 using Molten;
 using Molten.DoublePrecision;
@@ -27,20 +30,27 @@ public enum Side : byte {
 
 public partial class World : IDisposable {
     public const int WORLDSIZE = 12;
+
+    // todo optimise the chunkload radius...
+    public const int POPULATE_REACH = 2;
     public const int REGIONSIZE = 16;
     public const int WORLDHEIGHT = Chunk.CHUNKHEIGHT * Chunk.CHUNKSIZE;
 
     // try to keep 120 FPS at least
-    public const double MAX_CHUNKLOAD_FRAMETIME = 1000 / 360.0;
-    public const double MAX_MESHLOAD_FRAMETIME = 1000 / 480.0;
-    public const double MAX_MESHING_FRAMETIME = 1000 / 360.0;
+    public const double MAX_CHUNKLOAD_FRAMETIME = 1000 / 120.0;
+    //public const double MAX_MESHLOAD_FRAMETIME = 1000 / 480.0;
+    public const double MAX_MESHLOAD_FRAMETIME = 1000 / 120.0;
+    // since we've got the integrated server, we can afford to spend more time meshing because the server is doing the ticks;)
 
 
     // when loading the world, we can load chunks faster because fuck cares about a loading screen?
     public const double MAX_CHUNKLOAD_FRAMETIME_FAST = 1000 / 10.0;
 
+    // headless side: most of a 60TPS tick, but leave room for entities, packets and the tracker flush
+    public const double MAX_CHUNKLOAD_TICKTIME = 10.0;
+
     // this applies to the queues *separately* so it's lower
-    public const double MAX_LIGHT_FRAMETIME = 1000 / 480.0;
+    public const double MAX_LIGHT_FRAMETIME = 1000 / 60.0;
     public const int SPAWNCHUNKS_SIZE = 1;
     public const int MAX_TICKING_DISTANCE = 128;
 
@@ -62,13 +72,19 @@ public partial class World : IDisposable {
 
 
     // Queues
-    public List<ChunkLoadTicket> chunkLoadQueue = [];
-    //public HashSet<ChunkLoadTicket> chunkLoadQueueSet = new();
+    public readonly List<ChunkLoadTicket> chunkLoadQueue = [];
+    private readonly HashSet<ChunkLoadTicket> chunkLoadQueueSet = [];
+
+    public readonly List<Vector3D> playerPositions = [];
+
+    public int playerRadius = 8;
 
     public readonly XUList<BlockUpdate> blockUpdateQueue = [];
 
 
     public readonly List<TickAction> actionQueue = [];
+
+    public readonly List<Chunk> lightDirtyChunks = [];
 
     public readonly Queue<LightNode> skyLightQueue = [];
     public readonly Queue<LightRemovalNode> skyLightRemovalQueue = [];
@@ -80,13 +96,6 @@ public partial class World : IDisposable {
     public bool isLoading;
 
     public readonly XUList<Player> players = [];
-
-    /**
-     * Tracking for stuck queue detection (used for shuffling the chunkload queue only when stuck)
-     */
-    private int lastQueueSize = -1;
-
-    private int stuckIterations = 0;
 
     /**
      * True if the world has actually been initialised, false if the init method hasn't been called yet.
@@ -122,6 +131,8 @@ public partial class World : IDisposable {
     public XRandom random;
     private TimerAction saveWorld;
     public NBTCompound toBeLoadedNBT;
+
+    public NBTCompound? legacyPlayerNBT;
 
     [ThreadStatic] private static List<AABB>? _listAABB;
     private static List<AABB> listAABB => _listAABB ??= [];
@@ -215,6 +226,10 @@ public partial class World : IDisposable {
                 if (true || isServer) {
                     // load lighting queues (after chunks are loaded)
                     WorldIO.loadLightingQueues(this, tag);
+                }
+
+                if (tag.has("player")) {
+                    legacyPlayerNBT = tag.getCompoundTag("player");
                 }
 
                 // zero out toBeLoadedNBT to free memory
@@ -386,6 +401,33 @@ public partial class World : IDisposable {
         }
     }
 
+    public void updatePendingLight() {
+        if (lightDirtyChunks.Count == 0) {
+            return;
+        }
+
+        foreach (Chunk c in lightDirtyChunks) {
+            var mask = c.lightDirty;
+            c.lightDirty = 0;
+
+            if (c.destroyed) {
+                continue;
+            }
+
+            while (mask != 0) {
+                var sy = BitOperations.TrailingZeroCount(mask);
+                mask &= (byte)(mask - 1);
+
+                var coord = new SubChunkCoord(c.coord.x, sy, c.coord.z);
+                foreach (var l in listeners) {
+                    l.onLightDirty(coord);
+                }
+            }
+        }
+
+        lightDirtyChunks.Clear();
+    }
+
     public void addChunk(ChunkCoord coord, Chunk chunk) {
         chunks.Set(coord.toLong(), chunk);
         chunkList.Add(chunk);
@@ -481,20 +523,18 @@ public partial class World : IDisposable {
     }
 
     public void sortChunks() {
-        // sort queue based on position
-        // don't reorder across statuses though
+        if (playerPositions.Count == 0) {
+            return;
+        }
 
         // note: removal is faster from the end so we sort by the reverse - closest entries are at the end of the list
-        if (side == Side.BOTH) {
-            chunkLoadQueue.Sort(new ChunkTicketComparerReverse(player.position.toBlockPos()));
-        }
+        chunkLoadQueue.Sort(new ChunkTicketComparerReverse(playerPositions));
+        genCovered = 0;
     }
 
-    public void sortChunksRandom() {
-        // randomise the chunk load queue so chunks can load in a more random order
-        // this helps with not getting deadlocked
-        var rnd = new XRandom();
-        chunkLoadQueue = chunkLoadQueue.OrderBy(_ => rnd.Next()).ToList();
+    public void setPlayerPosition(Vector3D pos) {
+        playerPositions.Clear();
+        playerPositions.Add(pos);
     }
 
     public void loadAroundPlayer() {
@@ -526,9 +566,8 @@ public partial class World : IDisposable {
     /// Chunkloading and friends.
     /// </summary>
     public void renderUpdate(double dt) {
-        var start = Game.permanentStopwatch.ElapsedMilliseconds;
         var ctr = 0;
-        updateChunkloading(start, loading: false, ref ctr);
+        updateChunkloading(loading: false, ref ctr);
 
         particles.update(dt);
     }
@@ -574,21 +613,18 @@ public partial class World : IDisposable {
             addToChunkLoadQueue(result.Value.coord, result.Value.targetStatus);
 
             // check time AFTER processing - break if we've exceeded budget
-            if (Game.permanentStopwatch.ElapsedMilliseconds - startTime >= limit) {
+            if (Game.permanentStopwatch.Elapsed.TotalMilliseconds - startTime >= limit) {
                 break;
             }
         }
     }
 
-    /** This is separate so this can be called from the outside without updating the whole (still nonexistent) world. */
-    public void updateChunkloading(double startTime, bool loading, ref int loadedChunks) {
+    public void updateChunkloading(bool loading, ref int loadedChunks) {
+        var startTime = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
+
         // process async chunk load results first
         if (isServer) {
             processAsyncChunkLoads(startTime, loading, ref loadedChunks);
-        }
-        // if MPC, skip to meshing directly
-        else if (false) {
-            goto mesh;
         }
 
         // if is loading, don't throttle
@@ -596,34 +632,25 @@ public partial class World : IDisposable {
         // ONLY IF THERE ARE CHUNKS
         // otherwise don't wait for nothing
         // yes I was an idiot
-        // dedicated server has no rendering, use 80% of tick budget for chunk loading
-        var limit = !isClient ? double.MaxValue
-            : loading ? MAX_CHUNKLOAD_FRAMETIME_FAST
+        var limit = loading ? (!isClient ? double.MaxValue : MAX_CHUNKLOAD_FRAMETIME_FAST)
+            : !isClient ? MAX_CHUNKLOAD_TICKTIME
             : MAX_CHUNKLOAD_FRAMETIME;
         while (chunkLoadQueue.Count > 0) {
             // check time BEFORE loading - break if we've already used our budget
-            if (Game.permanentStopwatch.ElapsedMilliseconds - startTime >= limit) {
+            if (Game.permanentStopwatch.Elapsed.TotalMilliseconds - startTime >= limit) {
                 break;
             }
 
-            // check if queue is stuck and shuffle only when needed
-            var currentQueueSize = chunkLoadQueue.Count;
-            if (lastQueueSize == currentQueueSize) {
-                stuckIterations++;
-                // only shuffle if stuck for a while (queue size not changing)
-                if (stuckIterations > 20) {
-                    sortChunksRandom();
-                    stuckIterations = 0;
-                }
-            }
-            else {
-                // queue is making progress, reset stuck counter
-                stuckIterations = 0;
-                lastQueueSize = currentQueueSize;
+            // generate what the next few tickets are going to need, on the workers, before loadChunk asks for it
+            if (isServer) {
+                pregen();
             }
 
             var ticket = chunkLoadQueue[^1];
             chunkLoadQueue.RemoveAt(chunkLoadQueue.Count - 1);
+            chunkLoadQueueSet.Remove(ticket);
+            genCovered--;
+            genExpected--;
 
             // check if chunk is still relevant before loading it
             if (isChunkRelevant(ticket.chunkCoord)) {
@@ -631,7 +658,7 @@ public partial class World : IDisposable {
                 loadedChunks++;
 
                 // check time AFTER loading - break if we've exceeded budget
-                if (Game.permanentStopwatch.ElapsedMilliseconds - startTime >= limit) {
+                if (Game.permanentStopwatch.Elapsed.TotalMilliseconds - startTime >= limit) {
                     break;
                 }
             }
@@ -641,69 +668,6 @@ public partial class World : IDisposable {
         if (chunkLoadQueue.Count == 0) {
             isLoading = false;
         }
-
-        if (true || !loading) {
-            // don't bother meshing if we're not loading
-            return;
-        }
-
-        mesh: ;
-
-        // meshing (client only)
-        if (isClient) {
-            // if we're loading, we can also mesh chunks
-            // empty the meshing queue
-            while (Game.renderer.meshingQueue.TryDequeue(out var sectionCoord)) {
-
-                // if this chunk doesn't exist anymore (because we unloaded it)
-                // then don't mesh! otherwise we'll fucking crash
-                if (!isChunkSectionInWorld(sectionCoord)) {
-                    continue;
-                }
-
-                var section = getSubChunk(sectionCoord);
-                Game.blockRenderer.meshChunk(section);
-
-                // set chunk status to meshed (only after ALL subchunks are meshed)
-                var chunk = getChunk(new ChunkCoord(sectionCoord.x, sectionCoord.z));
-                if (chunk.status < ChunkStatus.MESHED) {
-                    // don't set MESHED unless chunk has been properly lighted
-                    if (chunk.status < ChunkStatus.LIGHTED) {
-                        // chunk not ready for meshing, skip
-                        continue;
-                    }
-
-                    // check if ALL subchunks in this chunk are now meshed
-                    bool allMeshed = true;
-                    for (int i = 0; i < Chunk.CHUNKHEIGHT; i++) {
-                        if (!chunk.subChunks[i].isMeshed()) {
-                            allMeshed = false;
-                            // requeue for next time
-                            Game.renderer.chunksToMesh.Add(new SubChunkCoord(sectionCoord.x, i, sectionCoord.z));
-                            break;
-                        }
-                    }
-
-                    if (allMeshed) {
-                        chunk.status = ChunkStatus.MESHED;
-                    }
-                }
-
-                // check time AFTER meshing - break if we've exceeded budget
-                if (Game.permanentStopwatch.ElapsedMilliseconds - startTime >= MAX_MESHING_FRAMETIME) {
-                    break;
-                }
-            }
-        }
-
-        // debug
-        /*Console.Out.WriteLine("---BEGIN---");
-        foreach (var chunk in chunkLoadQueue) {
-            Console.Out.WriteLine(chunk.level);
-        }
-        Console.Out.WriteLine("---END---");*/
-        //Console.Out.WriteLine(Game.permanentStopwatch.ElapsedMilliseconds - start);
-        //Console.Out.WriteLine($"{ctr} chunks loaded");
     }
 
     public void update(double dt) {
@@ -737,29 +701,50 @@ public partial class World : IDisposable {
         SuperluminalPerf.BeginEvent("light");
         //if (isServer) {
         processSkyLightRemovalQueue();
-        processSkyLightQueue();
+        if (skyLightRemovalQueue.Count == 0) {
+            processSkyLightQueue();
+        }
+
         processBlockLightRemovalQueue();
-        processBlockLightQueue();
+        if (blockLightRemovalQueue.Count == 0) {
+            processBlockLightQueue();
+        }
         //}
         SuperluminalPerf.EndEvent();
 
         if (isServer) {
             // random block updates!
             foreach (var chunk in chunks.Pairs) {
-                // distance check
-                bool shouldTick = !isClient || Vector2I.DistanceSquared(chunk.Value.centrePos,
-                        new Vector2I((int)player.position.X, (int)player.position.Z)) <
-                    MAX_TICKING_DISTANCE * MAX_TICKING_DISTANCE;
+                if (playerPositions.Count == 0) {
+                    break;
+                }
+                var c = chunk.Value;
+                var cp = c.centrePos;
+                var shouldTick = false;
+                foreach (Vector3D ap in playerPositions) {
+                    var dx = cp.X - ap.X;
+                    var dz = cp.Y - ap.Z;
+                    if (dx * dx + dz * dz < MAX_TICKING_DISTANCE * MAX_TICKING_DISTANCE) {
+                        shouldTick = true;
+                        break;
+                    }
+                }
+                if (!shouldTick) {
+                    continue;
+                }
 
-                if (shouldTick) {
-                    for (int i = 0; i < numTicks * Chunk.CHUNKHEIGHT; i++) {
+                var coord = new ChunkCoord(chunk.Key);
+                for (var s = 0; s < Chunk.CHUNKHEIGHT; s++) {
+                    if (!c.blocks[s].hasRandomTickingBlocks()) {
+                        continue;
+                    }
+                    for (var i = 0; i < numTicks; i++) {
                         // I pray this is random
-                        var coord = random.Next(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
-                        var s = random.Next(Chunk.CHUNKHEIGHT);
-                        var x = (coord >> 8);
-                        var y = ((coord >> 4) & 0xF) + s * Chunk.CHUNKSIZE;
-                        var z = coord & 0xF;
-                        tick(this, new ChunkCoord(chunk.Key), chunk.Value, random, x, y, z);
+                        var pos = random.Next(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
+                        var x = pos >> 8;
+                        var y = ((pos >> 4) & 0xF) + s * Chunk.CHUNKSIZE;
+                        var z = pos & 0xF;
+                        tick(this, coord, c, random, x, y, z);
                     }
                 }
             }
@@ -772,6 +757,8 @@ public partial class World : IDisposable {
         }
 
         updateEntities(dt);
+
+        updatePendingLight();
     }
 
     public void processSkyLightQueue() {
@@ -780,24 +767,13 @@ public partial class World : IDisposable {
         //SuperluminalPerf.EndEvent();
     }
 
-    public void processSkyLightQueueNoUpdate() {
-        processLightQueue(skyLightQueue, true, true);
-    }
-
-    public void processSkyLightQueueLoading() {
-        // this is used when loading the world, so we don't remesh the chunks, we only process one at a time!
-        processLightQueueOne(skyLightQueue, true, true);
-    }
-
     public void processSkyLightQueueLoading(int count) {
-        // this is used when loading the world, so we don't remesh the chunks, we only process one at a time!
-
         for (int i = 0; i < count; i++) {
             if (skyLightQueue.Count == 0) {
                 break; // no more nodes to process
             }
 
-            processLightQueueOne(skyLightQueue, true, true);
+            processLightQueueOne(skyLightQueue, true);
         }
     }
 
@@ -886,40 +862,82 @@ public partial class World : IDisposable {
     }
 
 
-    /**
-     * If noUpdate, we're loading, don't bother invalidating chunks, they'll get remeshed *anyway*
-     */
-    public void processLightQueue(Queue<LightNode> queue, bool isSkylight, bool noUpdate = false) {
-        var start = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
-        while (queue.Count > 0 && Game.permanentStopwatch.Elapsed.TotalMilliseconds - start < MAX_LIGHT_FRAMETIME) {
-            processLightQueueOne(queue, isSkylight, noUpdate);
+    private const int LIGHT_TIME_CHECK_INTERVAL = 64;
+
+    private static readonly long LIGHT_BUDGET_TICKS = (long)(MAX_LIGHT_FRAMETIME * Stopwatch.Frequency / 1000.0);
+
+    private bool lightSync;
+
+    public void processLightQueue(Queue<LightNode> queue, bool isSkylight) {
+        if (lightSync) {
+            return;
+        }
+
+        lightSync = true;
+        try {
+            var start = Stopwatch.GetTimestamp();
+            while (queue.Count > 0) {
+                var n = int.Min(queue.Count, LIGHT_TIME_CHECK_INTERVAL);
+                for (int i = 0; i < n; i++) {
+                    processLightQueueOne(queue, isSkylight);
+                }
+
+                if (Stopwatch.GetTimestamp() - start >= LIGHT_BUDGET_TICKS) {
+                    break;
+                }
+            }
+        }
+        finally {
+            lightSync = false;
         }
     }
 
+    public void processSkyLightQueueFully() {
+        if (lightSync) {
+            return;
+        }
+
+        lightSync = true;
+        try {
+            while (skyLightQueue.Count > 0) {
+                processLightQueueOne(skyLightQueue, true);
+            }
+        }
+        finally {
+            lightSync = false;
+        }
+    }
+
+    private readonly Chunk?[] lightChunkCache = new Chunk?[4];
+
+    private Chunk? resolveChunk(int wx, int wz) {
+        var cx = wx >> 4;
+        var cz = wz >> 4;
+        var slot = (cx ^ cz) & 3;
+
+        var cached = lightChunkCache[slot];
+        if (cached != null && !cached.destroyed && cached.coord.x == cx && cached.coord.z == cz) {
+            return cached;
+        }
+
+        if (!chunks.TryGetValue(new ChunkCoord(cx, cz).toLong(), out var chunk) || chunk.destroyed) {
+            return null;
+        }
+
+        lightChunkCache[slot] = chunk;
+        return chunk;
+    }
 
     //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void processLightQueueOne(Queue<LightNode> queue, bool isSkylight, bool noUpdate) {
+    public void processLightQueueOne(Queue<LightNode> queue, bool isSkylight) {
         var node = queue.Dequeue();
 
-        // world coords -> chunk coords
-        var chunkCoord = new ChunkCoord(node.x >> 4, node.z >> 4);
         var relX = node.x & 15;
         var relZ = node.z & 15;
         var relY = node.y;
 
-        // load chunk if null
-        var chunk = node.chunk;
-        // don't load in MP!!
-        if (isServer && (chunk == null || chunk.destroyed)) {
-            if (!chunks.TryGetValue(chunkCoord.toLong(), out chunk)) {
-                // force-load chunk synchronously
-                loadChunk(chunkCoord, ChunkStatus.LIGHTED, true);
-                chunk = chunks[chunkCoord.toLong()];
-            }
-        }
-
-        // if multiplayer client and chunk is null, just don't bother
-        if (!isServer && (chunk == null || chunk.destroyed)) {
+        var chunk = resolveChunk(node.x, node.z);
+        if (chunk == null) {
             return;
         }
 
@@ -941,7 +959,8 @@ public partial class World : IDisposable {
             }
 
             // if neighbour is opaque, don't bother either
-            if (Block.isFullBlock(neighbourChunk.getBlock(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z))) {
+            var neighbourBlockId = neighbourChunk.getBlock(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z);
+            if (Block.isFullBlock(neighbourBlockId)) {
                 continue;
             }
 
@@ -951,44 +970,53 @@ public partial class World : IDisposable {
                 : (byte)(neighbourLevel >> 4);
             var isDown = isSkylight && level == 15 && neighbourLevel != 15 && dir == Direction.DOWN;
 
-            if (neighbourLevel + 2 <= level || isDown) {
-                var neighbourBlockId = neighbourChunk.getBlock(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z);
-                var absorption = Block.lightAbsorption[neighbourBlockId];
+            var absorption = Block.lightAbsorption[neighbourBlockId];
 
-                // apply absorption, or if no absorption: down=no decrease, sideways=decrease by 1
-                var decrease = absorption > 0 ? absorption : (isDown ? 0 : 1);
-                byte newLevel = (byte)Math.Max(0, level - decrease);
+            // apply absorption, or if no absorption: down=no decrease, sideways=decrease by 1
+            var decrease = absorption > 0 ? absorption : (isDown ? 0 : 1);
+            byte newLevel = (byte)Math.Max(0, level - decrease);
+
+            if (newLevel > neighbourLevel) {
                 if (isSkylight) {
-                    if (noUpdate) {
-                        neighbourChunk.setSkyLightDumb(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z, newLevel);
-                    }
-                    else {
-                        neighbourChunk.setSkyLight(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z,
-                            newLevel);
-                    }
+                    neighbourChunk.setSkyLight(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z, newLevel);
                 }
                 else {
-                    if (noUpdate) {
-                        neighbourChunk.setBlockLightDumb(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z, newLevel);
-                    }
-                    else {
-                        neighbourChunk.setBlockLight(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z,
-                            newLevel);
-                    }
+                    neighbourChunk.setBlockLight(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z, newLevel);
                 }
 
                 // convert back to world coords for queue
                 int worldNX = (neighbourChunk.coord.x << 4) + neighbourRelPos.X;
                 int worldNZ = (neighbourChunk.coord.z << 4) + neighbourRelPos.Z;
-                queue.Enqueue(new LightNode(worldNX, neighbourRelPos.Y, worldNZ, neighbourChunk));
+                queue.Enqueue(new LightNode(worldNX, neighbourRelPos.Y, worldNZ));
             }
         }
     }
 
     public void processLightRemovalQueue(Queue<LightRemovalNode> queue, Queue<LightNode> addQueue, bool isSkylight) {
-        var start = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
-        while (queue.Count > 0 && Game.permanentStopwatch.Elapsed.TotalMilliseconds - start < MAX_LIGHT_FRAMETIME) {
-            processLightRemovalQueueOne(queue, addQueue, isSkylight);
+        if (lightSync) {
+            return;
+        }
+
+        lightSync = true;
+        try {
+            drainRemoval(queue, addQueue, isSkylight);
+        }
+        finally {
+            lightSync = false;
+        }
+    }
+
+    private void drainRemoval(Queue<LightRemovalNode> queue, Queue<LightNode> addQueue, bool isSkylight) {
+        var start = Stopwatch.GetTimestamp();
+        while (queue.Count > 0) {
+            var n = int.Min(queue.Count, LIGHT_TIME_CHECK_INTERVAL);
+            for (int i = 0; i < n; i++) {
+                processLightRemovalQueueOne(queue, addQueue, isSkylight);
+            }
+
+            if (Stopwatch.GetTimestamp() - start >= LIGHT_BUDGET_TICKS) {
+                break;
+            }
         }
     }
 
@@ -997,24 +1025,13 @@ public partial class World : IDisposable {
 
         var level = node.value;
 
-        // world coords -> chunk coords
-        var chunkCoord = new ChunkCoord(node.x >> 4, node.z >> 4);
         var relX = node.x & 15;
         var relZ = node.z & 15;
         var relY = node.y;
 
-        // load chunk if null
-        var chunk = node.chunk;
-        if (isServer && (chunk == null || chunk.destroyed)) {
-            if (!chunks.TryGetValue(chunkCoord.toLong(), out chunk)) {
-                // force-load chunk synchronously
-                loadChunk(chunkCoord, ChunkStatus.LIGHTED, true);
-                chunk = chunks[chunkCoord.toLong()];
-            }
-        }
 
-        // if multiplayer client and chunk is null, just don't bother
-        if (!isServer && (chunk == null || chunk.destroyed)) {
+        var chunk = resolveChunk(node.x, node.z);
+        if (chunk == null) {
             return;
         }
 
@@ -1041,8 +1058,7 @@ public partial class World : IDisposable {
                 // convert to world coords for queue
                 int worldNX = (neighbourChunk.coord.x << 4) + neighbourRelPos.X;
                 int worldNZ = (neighbourChunk.coord.z << 4) + neighbourRelPos.Z;
-                queue.Enqueue(new LightRemovalNode(worldNX, neighbourRelPos.Y, worldNZ, neighbourLevel,
-                    neighbourChunk));
+                queue.Enqueue(new LightRemovalNode(worldNX, neighbourRelPos.Y, worldNZ, neighbourLevel));
             }
             else if (neighbourLevel >= level) {
                 // Add it to the update queue, so it can propagate to fill in the gaps
@@ -1050,7 +1066,7 @@ public partial class World : IDisposable {
                 // the lightRemovalBfsQueue is empty.
                 int worldNX = (neighbourChunk.coord.x << 4) + neighbourRelPos.X;
                 int worldNZ = (neighbourChunk.coord.z << 4) + neighbourRelPos.Z;
-                addQueue.Enqueue(new LightNode(worldNX, neighbourRelPos.Y, worldNZ, neighbourChunk));
+                addQueue.Enqueue(new LightNode(worldNX, neighbourRelPos.Y, worldNZ));
             }
         }
     }
@@ -1079,7 +1095,7 @@ public partial class World : IDisposable {
         }
 
         var ticket = new ChunkLoadTicket(chunkCoord, level);
-        if (!chunkLoadQueue.Contains(ticket)) {
+        if (chunkLoadQueueSet.Add(ticket)) {
             chunkLoadQueue.Add(ticket);
             /*if (!isClient) {
                 Log.info($"Queued chunk {chunkCoord} for loading (current status: {(chunk != null ? chunk.status.ToString() : "not loaded")}, target: {level})");
@@ -1104,10 +1120,11 @@ public partial class World : IDisposable {
         }
 
         // populated needs generated around it
-        for (int x = chunkCoord.x - renderDistance - 1; x <= chunkCoord.x + renderDistance + 1; x++) {
-            for (int z = chunkCoord.z - renderDistance - 1; z <= chunkCoord.z + renderDistance + 1; z++) {
+        const int pr = POPULATE_REACH;
+        for (int x = chunkCoord.x - renderDistance - pr; x <= chunkCoord.x + renderDistance + pr; x++) {
+            for (int z = chunkCoord.z - renderDistance - pr; z <= chunkCoord.z + renderDistance + pr; z++) {
                 var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= (renderDistance + 1) * (renderDistance + 1)) {
+                if (coord.distanceSq(chunkCoord) <= (renderDistance + pr) * (renderDistance + pr)) {
                     addToChunkLoadQueue(coord, ChunkStatus.POPULATED);
                 }
             }
@@ -1313,21 +1330,17 @@ public partial class World : IDisposable {
     /// <summary>
     /// Check if all neighbours around a chunk have reached the specified status
     /// </summary>
-    private bool areNeighboursReady(ChunkCoord chunkCoord, ChunkStatus requiredStatus) {
-        var neighbours = new[] {
-            new ChunkCoord(chunkCoord.x - 1, chunkCoord.z),
-            new ChunkCoord(chunkCoord.x + 1, chunkCoord.z),
-            new ChunkCoord(chunkCoord.x, chunkCoord.z - 1),
-            new ChunkCoord(chunkCoord.x, chunkCoord.z + 1),
-            new ChunkCoord(chunkCoord.x - 1, chunkCoord.z - 1),
-            new ChunkCoord(chunkCoord.x - 1, chunkCoord.z + 1),
-            new ChunkCoord(chunkCoord.x + 1, chunkCoord.z - 1),
-            new ChunkCoord(chunkCoord.x + 1, chunkCoord.z + 1)
-        };
+    private bool areNeighboursReady(ChunkCoord chunkCoord, ChunkStatus requiredStatus, int radius = 1) {
+        for (var dx = -radius; dx <= radius; dx++) {
+            for (var dz = -radius; dz <= radius; dz++) {
+                if (dx == 0 && dz == 0) {
+                    continue;
+                }
 
-        foreach (var neighbour in neighbours) {
-            if (!chunks.TryGetValue(neighbour.toLong(), out var neighbourChunk) || neighbourChunk.status < requiredStatus) {
-                return false;
+                var n = new ChunkCoord(chunkCoord.x + dx, chunkCoord.z + dz);
+                if (!chunks.TryGetValue(n.toLong(), out var nc) || nc.status < requiredStatus) {
+                    return false;
+                }
             }
         }
 
@@ -1356,37 +1369,148 @@ public partial class World : IDisposable {
         }
     }
 
-    private void loadNeighbours(ChunkCoord chunkCoord, ChunkStatus requiredStatus) {
-        Span<ChunkCoord> neighbours = [
-            new(chunkCoord.x - 1, chunkCoord.z),
-            new(chunkCoord.x + 1, chunkCoord.z),
-            new(chunkCoord.x, chunkCoord.z - 1),
-            new(chunkCoord.x, chunkCoord.z + 1),
-            new(chunkCoord.x - 1, chunkCoord.z - 1),
-            new(chunkCoord.x - 1, chunkCoord.z + 1),
-            new(chunkCoord.x + 1, chunkCoord.z - 1),
-            new(chunkCoord.x + 1, chunkCoord.z + 1)
-        ];
+    private void loadNeighbours(ChunkCoord chunkCoord, ChunkStatus requiredStatus, int radius = 1) {
+        for (var dx = -radius; dx <= radius; dx++) {
+            for (var dz = -radius; dz <= radius; dz++) {
+                if (dx == 0 && dz == 0) {
+                    continue;
+                }
 
-        foreach (var neighbour in neighbours) {
-            if (!chunks.TryGetValue(neighbour.toLong(), out var neighbourChunk) || neighbourChunk.status < requiredStatus) {
-                loadChunk(neighbour, requiredStatus, true);
+                var n = new ChunkCoord(chunkCoord.x + dx, chunkCoord.z + dz);
+                if (!chunks.TryGetValue(n.toLong(), out var nc) || nc.status < requiredStatus) {
+                    loadChunk(n, requiredStatus, true);
+                }
             }
         }
     }
 
-    /// <summary>
-    /// Check if a chunk is still within loading distance of the player
-    /// </summary>
     private bool isChunkRelevant(ChunkCoord chunkCoord) {
-        // server: all chunks are relevant
-        if (!isClient) {
+        if (playerPositions.Count == 0) {
+            // nothing to be relevant *to*
             return true;
         }
 
-        var playerChunk = player.getChunk();
-        var maxDistance = Settings.instance.renderDistance + 2; // bit more buffer than unload distance
-        return playerChunk.distanceSq(chunkCoord) < maxDistance * maxDistance;
+        // bit more buffer than the unload distance so we don't thrash the boundary
+        var maxDistance = playerRadius + 2;
+        var maxSq = maxDistance * maxDistance;
+
+        foreach (Vector3D a in playerPositions) {
+            var ac = new ChunkCoord((int)a.X >> 4, (int)a.Z >> 4);
+            if (ac.distanceSq(chunkCoord) < maxSq) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // ---- batched terrain generation ----
+
+    // overengineering???
+    private GenJob[]? genJobs;
+    private readonly List<ChunkCoord> genList = [];
+    private readonly HashSet<long> genSet = [];
+
+    private readonly HashSet<long> genOnDisk = [];
+
+    private const int PREGEN_TICKETS = 32;
+
+    private int genCovered;
+    private int genExpected;
+
+    private void pregen() {
+        // still covered, and nobody appended/sorted under us
+        if (genCovered > 0 && chunkLoadQueue.Count == genExpected) {
+            return;
+        }
+        genJobs ??= makeGenJobs();
+        if (genOnDisk.Count > 1 << 16) {
+            genOnDisk.Clear();
+        }
+        var cap = genJobs.Length;
+
+        while (true) {
+            genList.Clear();
+            genSet.Clear();
+
+            // ---- scan ----
+            var covered = 0;
+            for (var t = chunkLoadQueue.Count - 1; t >= 0 && covered < PREGEN_TICKETS; t--) {
+                var ticket = chunkLoadQueue[t];
+                if (!isChunkRelevant(ticket.chunkCoord)) {
+                    covered++;
+                    continue;
+                }
+
+                var r = ticket.level switch {
+                    >= ChunkStatus.LIGHTED => 2 * POPULATE_REACH,
+                    >= ChunkStatus.POPULATED => POPULATE_REACH,
+                    _ => 0
+                };
+                var full = true;
+                for (var dx = -r; dx <= r && full; dx++) {
+                    for (var dz = -r; dz <= r; dz++) {
+                        if (genList.Count >= cap) {
+                            full = false;
+                            break;
+                        }
+                        var c = new ChunkCoord(ticket.chunkCoord.x + dx, ticket.chunkCoord.z + dz);
+                        var key = c.toLong();
+                        // present at any status - EMPTY means an async disk load owns it, leave it alone
+                        if (chunks.ContainsKey(key) || !genSet.Add(key) || genOnDisk.Contains(key)) {
+                            continue;
+                        }
+                        if (WorldIO.chunkFileExists(this, c)) {
+                            genOnDisk.Add(key);
+                            continue;
+                        }
+                        genList.Add(c);
+                    }
+                }
+                if (!full) {
+                    break;
+                }
+                covered++;
+            }
+            genCovered = covered;
+            genExpected = chunkLoadQueue.Count;
+
+            var n = genList.Count;
+            if (n == 0) {
+                return;
+            }
+
+            // ---- generate ----
+            for (var i = 0; i < n; i++) {
+                genJobs[i].chunk = new Chunk(this, genList[i].x, genList[i].z);
+            }
+
+            GenJob.pool.run(genJobs, n);
+
+            // ---- publish ----
+            var failed = false;
+            for (var i = 0; i < n; i++) {
+                var job = genJobs[i];
+                if (job.error == null) {
+                    addChunk(genList[i], job.chunk!);
+                }
+                else {
+                    failed = true;
+                }
+                job.chunk = null;
+            }
+
+            if (covered > 0 || failed) {
+                return;
+            }
+        }
+    }
+
+    private GenJob[] makeGenJobs() {
+        var jobs = new GenJob[int.Max(GenJob.pool.workers, 1) * 4];
+        for (var i = 0; i < jobs.Length; i++) {
+            jobs[i] = new GenJob(this);
+        }
+        return jobs;
     }
 
     /// <summary>
@@ -1487,15 +1611,15 @@ public partial class World : IDisposable {
             }
 
             nosend = true; // suppress network updates during terrain generation
-            generator.generate(chunkCoord);
+            chunk ??= chunks[chunkCoord.toLong()];
+            generator.generate(chunk);
             chunk.recalc();
             nosend = oldNosend; // restore
         }
 
         if (status >= ChunkStatus.POPULATED &&
             (!hasChunk || (hasChunk && chunks[chunkCoord.toLong()].status < ChunkStatus.POPULATED))) {
-            // check if neighbours are ready, if not defer this chunk
-            if (!areNeighboursReady(chunkCoord, ChunkStatus.GENERATED)) {
+            if (!areNeighboursReady(chunkCoord, ChunkStatus.GENERATED, POPULATE_REACH)) {
                 // queue neighbours for loading and defer this chunk
 
                 // DISABLE ASYNC, lighting should happen immediately too!
@@ -1506,7 +1630,7 @@ public partial class World : IDisposable {
                     return;
                 }
                 else {
-                    loadNeighbours(chunkCoord, ChunkStatus.GENERATED);
+                    loadNeighbours(chunkCoord, ChunkStatus.GENERATED, POPULATE_REACH);
                 }
             }
 
@@ -1517,9 +1641,8 @@ public partial class World : IDisposable {
 
         if (status >= ChunkStatus.LIGHTED &&
             (!hasChunk || (hasChunk && chunks[chunkCoord.toLong()].status < ChunkStatus.LIGHTED))) {
-            // ensure neighbours are at least GENERATED so skylight can propagate into them
-            if (!areNeighboursReady(chunkCoord, ChunkStatus.GENERATED)) {
-                loadNeighbours(chunkCoord, ChunkStatus.GENERATED);
+            if (!areNeighboursReady(chunkCoord, ChunkStatus.POPULATED, POPULATE_REACH)) {
+                loadNeighbours(chunkCoord, ChunkStatus.POPULATED, POPULATE_REACH);
             }
 
             chunks[chunkCoord.toLong()].lightChunk();

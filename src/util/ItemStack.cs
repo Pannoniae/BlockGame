@@ -93,7 +93,10 @@ public class ItemStack : Persistent {
             return this; // creative: no consumption
         }
         int newQty = quantity - amount;
-        if (newQty <= 0) return EMPTY;
+        if (newQty <= 0) {
+            return EMPTY;
+        }
+
         return new ItemStack(getItem(), newQty, metadata);
     }
 

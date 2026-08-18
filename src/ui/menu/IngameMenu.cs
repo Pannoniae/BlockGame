@@ -37,6 +37,9 @@ public class IngameMenu : Menu, IDisposable {
     // for top right corner debug shit
     private Utf16ValueStringBuilder debugStrG;
 
+    // integrated/remote server stats, bottom right
+    private Utf16ValueStringBuilder debugStrS;
+
     // Frametime graph data
     private const int FRAMETIME_HISTORY_SIZE = 400;
     private readonly XRingBuffer<float> frametimeHistory = new XRingBuffer<float>(FRAMETIME_HISTORY_SIZE);
@@ -58,6 +61,8 @@ public class IngameMenu : Menu, IDisposable {
         debugStr = ZString.CreateStringBuilder();
         debugStrG.Dispose();
         debugStrG = ZString.CreateStringBuilder();
+        debugStrS.Dispose();
+        debugStrS = ZString.CreateStringBuilder();
         // then add the GUI
         var version = Text.createText(this, "version", new Vector2I(2, 2), Constants.VERSION);
         version.shadowed = true;
@@ -154,12 +159,84 @@ public class IngameMenu : Menu, IDisposable {
         }
     }
 
+    private void DrawServerGraph() {
+        var stats = ClientPacketHandler.serverStats;
+        if (stats == null) {
+            return;
+        }
+
+        var gui = Game.gui;
+        const int HISTORY = ClientPacketHandler.SERVER_MSPT_HISTORY;
+
+        // don't overlap the client graph
+        int width = int.Min(GRAPH_WIDTH, Game.width - GRAPH_WIDTH - GRAPH_PADDING * 3);
+        if (width < 120) {
+            return;
+        }
+
+        int graphX = Game.width - width - GRAPH_PADDING;
+        int graphY = Game.height - GRAPH_HEIGHT - GRAPH_PADDING;
+
+        gui.tb.Draw(gui.colourTexture,
+            new RectangleF(graphX, graphY, width, GRAPH_HEIGHT),
+            new Color(0, 0, 0, 180));
+
+        const float MAX_FRAMETIMEI = 1 / 33.3f;
+
+        float tpsLineY = graphY + (16.67f * MAX_FRAMETIMEI) * GRAPH_HEIGHT;
+
+        gui.tb.Draw(gui.colourTexture,
+            new RectangleF(graphX, tpsLineY, width, 1),
+            new Color(0, 255, 0, 150));
+
+        gui.drawStringThin("60 TPS",
+            new Vector2(graphX + 5, tpsLineY - 12),
+            new Color(0, 255, 0));
+
+        // no title!
+        var hist = ClientPacketHandler.serverMspt;
+        var start = ClientPacketHandler.serverMsptIdx;
+        float barWidth = width / (float)HISTORY;
+
+        for (int i = 0; i < HISTORY; i++) {
+            int idx = (start + i) % HISTORY;
+            float mspt = hist[idx];
+
+            if (mspt <= 0) {
+                continue;
+            }
+
+            float x = graphX + i * width / (float)HISTORY;
+            float barHeight = mspt * MAX_FRAMETIMEI * GRAPH_HEIGHT;
+            float y = graphY + GRAPH_HEIGHT - barHeight;
+
+            gui.tb.Draw(gui.colourTexture,
+                new RectangleF(x, y, barWidth, barHeight),
+                perfColour(mspt));
+        }
+    }
+
+    /** todo merge it in? */
+    private static Color perfColour(float ms) {
+        const float BUDGET = 16.6f;
+        const float DOUBLE = 33.3f;
+
+        if (ms < BUDGET) {
+            return new Color(1 * (ms / BUDGET), 1f, 0f);
+        }
+        if (ms < DOUBLE) {
+            return new Color(1f, 1 * (1 - (ms - BUDGET) / (DOUBLE - BUDGET)), 0f);
+        }
+        return new Color(1f, 0f, 0f);
+    }
+
     private void DrawSimpleBars(GUI gui, int graphX, int graphY, float barWidth, float maxFrametime) {
         for (int i = 0; i < FRAMETIME_HISTORY_SIZE; i++) {
             int idx = (frametimeHistoryIndex + i) % FRAMETIME_HISTORY_SIZE;
 
-            if (frametimeHistory[idx] <= 0)
+            if (frametimeHistory[idx] <= 0) {
                 continue;
+            }
 
             // Cap at MAX_FRAMETIME ms
             float frametime = frametimeHistory[idx];
@@ -171,35 +248,10 @@ public class IngameMenu : Menu, IDisposable {
             float barHeight = (frametime * maxFrametime) * GRAPH_HEIGHT;
             float y = graphY + GRAPH_HEIGHT - barHeight;
 
-            // Determine colour based on performance
-            Color barColour;
-            const float SIXTY_FPS = 16.6f;
-            const float THIRTY_FPS = 33.3f;
-
-            if (frametime < SIXTY_FPS) {
-                float t = frametime / SIXTY_FPS; // 0 to 1
-                barColour = new Color(
-                    1 * t,
-                    1,
-                    0
-                );
-            }
-            else if (frametime < THIRTY_FPS) {
-                float t = (frametime - SIXTY_FPS) / (THIRTY_FPS - SIXTY_FPS); // 0 to 1
-                barColour = new Color(
-                    1,
-                    1 * (1 - t),
-                    0
-                );
-            }
-            else {
-                barColour = new Color(1f, 0, 0);
-            }
-
             // Draw bar
             gui.tb.Draw(gui.colourTexture,
                 new RectangleF(x, y, barWidth, barHeight),
-                barColour);
+                perfColour(frametime));
         }
     }
 
@@ -211,8 +263,9 @@ public class IngameMenu : Menu, IDisposable {
             int idx = (frametimeHistoryIndex + i) % FRAMETIME_HISTORY_SIZE;
             var profile = profileHistory[idx];
 
-            if (profile.total <= 0)
+            if (profile.total <= 0) {
                 continue;
+            }
 
             float x = graphX + (i * GRAPH_WIDTH / (float)FRAMETIME_HISTORY_SIZE);
             float currentY = graphY + GRAPH_HEIGHT;
@@ -224,8 +277,9 @@ public class IngameMenu : Menu, IDisposable {
                 //if (sectionTime <= 0) continue;
 
                 // if it's less than 1px, also skip!
-                if ((sectionTime * maxFrametime) * (GRAPH_HEIGHT * SEGMENTED_HEIGHT_MULTIPLIER) < 1f)
+                if ((sectionTime * maxFrametime) * (GRAPH_HEIGHT * SEGMENTED_HEIGHT_MULTIPLIER) < 1f) {
                     continue;
+                }
 
                 float segmentHeight = (sectionTime * maxFrametime) * (GRAPH_HEIGHT * SEGMENTED_HEIGHT_MULTIPLIER);
                 currentY -= segmentHeight;
@@ -288,11 +342,24 @@ public class IngameMenu : Menu, IDisposable {
                 new Vector2(ver.bounds.Left, ver.bounds.Bottom), Color.White);
             Game.gui.drawRString(rendererText,
                 new Vector2(Game.width - 2, 2), TextHorizontalAlignment.Right, Color.White);
+
+            // server stats=
+            if (debugStrS.Length > 0) {
+                var sp = debugStrS.AsSpan();
+                var sz = Game.gui.measureStringThin(sp);
+                Game.gui.drawStringThin(sp,
+                    new Vector2(Game.width - sz.X - 4, Game.height - GRAPH_HEIGHT - GRAPH_PADDING - sz.Y - 4),
+                    Color.White);
+            }
         }
 
         // Draw frametime graph if enabled
         if (frametimeGraphEnabled) {
             DrawFrametimeGraph();
+
+            if (screen.debugScreen && !screen.fpsOnly) {
+                DrawServerGraph();
+            }
         }
 
 
@@ -317,6 +384,7 @@ public class IngameMenu : Menu, IDisposable {
     public void Dispose() {
         debugStr.Dispose();
         debugStrG.Dispose();
+        debugStrS.Dispose();
     }
 
     public void updateDebugTextMethod() {
@@ -361,6 +429,7 @@ public class IngameMenu : Menu, IDisposable {
 
             debugStr.Clear();
             debugStrG.Clear();
+            debugStrS.Clear();
 
             // calculate facing
             var facing = cameraFacing(c.forward());

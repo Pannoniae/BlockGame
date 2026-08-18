@@ -66,9 +66,15 @@ public class DyeItem : Item {
         if (delta != 0) {
             s = l > 0.5f ? delta / (2f - max - min) : delta / (max + min);
 
-            if (max == r) h = ((g - b) / delta) + (g < b ? 6f : 0f);
-            else if (max == g) h = ((b - r) / delta) + 2f;
-            else h = ((r - g) / delta) + 4f;
+            if (max == r) {
+                h = ((g - b) / delta) + (g < b ? 6f : 0f);
+            }
+            else if (max == g) {
+                h = ((b - r) / delta) + 2f;
+            }
+            else {
+                h = ((r - g) / delta) + 4f;
+            }
 
             h *= 60f;
             //h/= 6f;
@@ -97,11 +103,26 @@ public class DyeItem : Item {
     }
 
     private static float hueToRgb(float p, float q, float t) {
-        if (t < 0f) t += 360f;
-        if (t > 360f) t -= 360f;
-        if (t < 60f) return p + (q - p) * t / 60f;
-        if (t < 180f) return q;
-        if (t < 240f) return p + (q - p) * (240f - t) / 60f;
+        if (t < 0f) {
+            t += 360f;
+        }
+
+        if (t > 360f) {
+            t -= 360f;
+        }
+
+        if (t < 60f) {
+            return p + (q - p) * t / 60f;
+        }
+
+        if (t < 180f) {
+            return q;
+        }
+
+        if (t < 240f) {
+            return p + (q - p) * (240f - t) / 60f;
+        }
+
         return p;
     }
 
@@ -154,8 +175,12 @@ public class DyeItem : Item {
         float diff = float.Abs(h1 - h2);
         if (diff > 180f) {
             // wraparound!
-            if (h1 < h2) h1 += 360f;
-            else h2 += 360f;
+            if (h1 < h2) {
+                h1 += 360f;
+            }
+            else {
+                h2 += 360f;
+            }
         }
 
         float avg = (h1 + h2) / 2f;
@@ -164,8 +189,13 @@ public class DyeItem : Item {
 
     /** Mix two dye colours and return result dye metadata */
     public static int mixColours(int meta1, int meta2) {
-        if (meta1 < 0 || meta1 >= CandyBlock.colours.Length) meta1 = 0;
-        if (meta2 < 0 || meta2 >= CandyBlock.colours.Length) meta2 = 0;
+        if (meta1 < 0 || meta1 >= CandyBlock.colours.Length) {
+            meta1 = 0;
+        }
+
+        if (meta2 < 0 || meta2 >= CandyBlock.colours.Length) {
+            meta2 = 0;
+        }
 
         var c1 = CandyBlock.colours[meta1];
         var c2 = CandyBlock.colours[meta2];

@@ -35,14 +35,14 @@ public sealed class RegionFile : IDisposable {
     private bool headerDirty;
     private bool isDisposed;
 
-    // shared lock from RegionManager
-    private readonly Lock globalLock;
+    public readonly Lock @lock = new();
 
-    public RegionFile(string worldPath, int rx, int rz, Lock globalLock) {
+    public int refs;
+
+    public RegionFile(string worldPath, int rx, int rz) {
         this.rx = rx;
         this.rz = rz;
         this.path = getRegionPath(worldPath, rx, rz);
-        this.globalLock = globalLock;
 
         // ensure directory exists
         Directory.CreateDirectory(Path.GetDirectoryName(path) ?? string.Empty);
@@ -99,26 +99,28 @@ public sealed class RegionFile : IDisposable {
     }
 
     /** Write chunk to cache (write-back, no disk I/O) - thread-safe */
-    public void writeChunk(int lx, int lz, byte[] data) {
-        lock (globalLock) {
-            writeChunkUnsafe(lx, lz, data);
+    /** false = the chunk was NOT stored, fuckup happened */
+    public bool writeChunk(int lx, int lz, byte[] data) {
+        lock (@lock) {
+            return writeChunkUnsafe(lx, lz, data);
         }
     }
 
     /** Write chunk to cache - must be called with lock held */
-    internal void writeChunkUnsafe(int lx, int lz, byte[] data) {
+    internal bool writeChunkUnsafe(int lx, int lz, byte[] data) {
         if (data.Length > MAX_CHUNK_SIZE) {
             Log.warn($"Chunk ({lx},{lz}) in region ({rx},{rz}) is too large ({data.Length} bytes), skipping save");
-            return;
+            return false;
         }
 
         int idx = RegionFile.idx(lx, lz);
         dirtyChunks.Set(idx, data);
+        return true;
     }
 
     /** Read chunk (check dirty cache first, then disk) - thread-safe */
     public byte[]? readChunk(int lx, int lz) {
-        lock (globalLock) {
+        lock (@lock) {
             return readChunkUnsafe(lx, lz);
         }
     }
@@ -154,7 +156,7 @@ public sealed class RegionFile : IDisposable {
 
     /** Flush dirty chunks to disk - thread-safe */
     public void flush() {
-        lock (globalLock) {
+        lock (@lock) {
             flushUnsafe();
         }
     }
@@ -302,7 +304,7 @@ public sealed class RegionFile : IDisposable {
 
     /** Delete chunk from region - thread-safe */
     public void deleteChunk(int lx, int lz) {
-        lock (globalLock) {
+        lock (@lock) {
             deleteChunkUnsafe(lx, lz);
         }
     }
@@ -318,7 +320,7 @@ public sealed class RegionFile : IDisposable {
 
     /** Check if chunk exists (in cache or on disk) - thread-safe */
     public bool hasChunk(int localX, int localZ) {
-        lock (globalLock) {
+        lock (@lock) {
             return hasChunkUnsafe(localX, localZ);
         }
     }
@@ -330,14 +332,17 @@ public sealed class RegionFile : IDisposable {
     }
 
     public void Dispose() {
-        lock (globalLock) {
+        lock (@lock) {
             DisposeUnsafe();
         }
     }
 
     /** Dispose - must be called with lock held (for RegionManager eviction) */
     internal void DisposeUnsafe() {
-        if (isDisposed) return;
+        if (isDisposed) {
+            return;
+        }
+
         isDisposed = true;
 
         flushUnsafe();

@@ -1,19 +1,14 @@
-using BlockGame.world.chunk;
-
 namespace BlockGame.world;
 
-/** Stores world coordinates (not chunk-relative). Chunk can be null (will be loaded on demand if so) */
-public readonly record struct LightNode(int x, int y, int z, Chunk? chunk) {
+public readonly record struct LightNode(int x, int y, int z) {
     public readonly int x = x;
     public readonly int y = y;
     public readonly int z = z;
-    public readonly Chunk? chunk = chunk;
 }
 
-public readonly record struct LightRemovalNode(int x, int y, int z, byte value, Chunk? chunk) {
+public readonly record struct LightRemovalNode(int x, int y, int z, byte value) {
     public readonly int x = x;
     public readonly int y = y;
     public readonly int z = z;
     public readonly byte value = value;
-    public readonly Chunk? chunk = chunk;
 }

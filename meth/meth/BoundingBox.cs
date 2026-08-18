@@ -38,8 +38,9 @@ public struct BoundingBox : IEquatable<BoundingBox> {
             || box.Max.Y < Min.Y
             || box.Min.Y > Max.Y
             || box.Max.Z < Min.Z
-            || box.Min.Z > Max.Z)
+            || box.Min.Z > Max.Z) {
             return ContainmentType.Disjoint;
+        }
 
 
         if (box.Min.X >= Min.X
@@ -47,8 +48,9 @@ public struct BoundingBox : IEquatable<BoundingBox> {
             && box.Min.Y >= Min.Y
             && box.Max.Y <= Max.Y
             && box.Min.Z >= Min.Z
-            && box.Max.Z <= Max.Z)
+            && box.Max.Z <= Max.Z) {
             return ContainmentType.Contains;
+        }
 
         return ContainmentType.Intersects;
     }
@@ -67,15 +69,20 @@ public struct BoundingBox : IEquatable<BoundingBox> {
         // First we check if frustum is in box
         for (i = 0; i < corners.Length; i++) {
             Contains(ref corners[i], out contained);
-            if (contained == ContainmentType.Disjoint)
+            if (contained == ContainmentType.Disjoint) {
                 break;
+            }
         }
 
         if (i == corners.Length) // This means we checked all the corners and they were all contain or instersect
+        {
             return ContainmentType.Contains;
+        }
 
         if (i != 0) // if i is not equal to zero, we can fastpath and say that this box intersects
+        {
             return ContainmentType.Intersects;
+        }
 
 
         // If we get here, it means the first (and only) point we checked was actually contained in the frustum.
@@ -84,9 +91,9 @@ public struct BoundingBox : IEquatable<BoundingBox> {
         i++;
         for (; i < corners.Length; i++) {
             Contains(ref corners[i], out contained);
-            if (contained != ContainmentType.Contains)
+            if (contained != ContainmentType.Contains) {
                 return ContainmentType.Intersects;
-
+            }
         }
 
         // If we get here, then we know all the points were actually contained, therefore result is Contains
@@ -99,8 +106,9 @@ public struct BoundingBox : IEquatable<BoundingBox> {
             && sphere.Center.Z - Min.Z >= sphere.Radius
             && Max.X - sphere.Center.X >= sphere.Radius
             && Max.Y - sphere.Center.Y >= sphere.Radius
-            && Max.Z - sphere.Center.Z >= sphere.Radius)
+            && Max.Z - sphere.Center.Z >= sphere.Radius) {
             return ContainmentType.Contains;
+        }
 
         double dmin = 0;
 
@@ -155,8 +163,9 @@ public struct BoundingBox : IEquatable<BoundingBox> {
             }
         }
 
-        if (dmin <= sphere.Radius * sphere.Radius)
+        if (dmin <= sphere.Radius * sphere.Radius) {
             return ContainmentType.Intersects;
+        }
 
         return ContainmentType.Disjoint;
     }
@@ -186,10 +195,12 @@ public struct BoundingBox : IEquatable<BoundingBox> {
                  || point.Y == Min.Y
                  || point.Y == Max.Y
                  || point.Z == Min.Z
-                 || point.Z == Max.Z)
+                 || point.Z == Max.Z) {
             result = ContainmentType.Intersects;
-        else
+        }
+        else {
             result = ContainmentType.Contains;
+        }
     }
 
     private static readonly Vector3 MaxVector3 = new Vector3(float.MaxValue);
@@ -202,8 +213,9 @@ public struct BoundingBox : IEquatable<BoundingBox> {
     /// <returns>A bounding box that encapsulates the given point cloud.</returns>
     /// <exception cref="System.ArgumentException">Thrown if the given list has no points.</exception>
     public static BoundingBox CreateFromPoints(IEnumerable<Vector3> points) {
-        if (points == null)
+        if (points == null) {
             throw new ArgumentNullException();
+        }
 
         var empty = true;
         var minVec = MaxVector3;
@@ -219,8 +231,9 @@ public struct BoundingBox : IEquatable<BoundingBox> {
 
             empty = false;
         }
-        if (empty)
+        if (empty) {
             throw new ArgumentException();
+        }
 
         return new BoundingBox(minVec, maxVec);
     }
@@ -341,28 +354,36 @@ public struct BoundingBox : IEquatable<BoundingBox> {
             && sphere.Center.Z - Min.Z > sphere.Radius
             && Max.X - sphere.Center.X > sphere.Radius
             && Max.Y - sphere.Center.Y > sphere.Radius
-            && Max.Z - sphere.Center.Z > sphere.Radius)
+            && Max.Z - sphere.Center.Z > sphere.Radius) {
             return true;
+        }
 
         double dmin = 0;
 
-        if (sphere.Center.X - Min.X <= sphere.Radius)
+        if (sphere.Center.X - Min.X <= sphere.Radius) {
             dmin += (sphere.Center.X - Min.X) * (sphere.Center.X - Min.X);
-        else if (Max.X - sphere.Center.X <= sphere.Radius)
+        }
+        else if (Max.X - sphere.Center.X <= sphere.Radius) {
             dmin += (sphere.Center.X - Max.X) * (sphere.Center.X - Max.X);
+        }
 
-        if (sphere.Center.Y - Min.Y <= sphere.Radius)
+        if (sphere.Center.Y - Min.Y <= sphere.Radius) {
             dmin += (sphere.Center.Y - Min.Y) * (sphere.Center.Y - Min.Y);
-        else if (Max.Y - sphere.Center.Y <= sphere.Radius)
+        }
+        else if (Max.Y - sphere.Center.Y <= sphere.Radius) {
             dmin += (sphere.Center.Y - Max.Y) * (sphere.Center.Y - Max.Y);
+        }
 
-        if (sphere.Center.Z - Min.Z <= sphere.Radius)
+        if (sphere.Center.Z - Min.Z <= sphere.Radius) {
             dmin += (sphere.Center.Z - Min.Z) * (sphere.Center.Z - Min.Z);
-        else if (Max.Z - sphere.Center.Z <= sphere.Radius)
+        }
+        else if (Max.Z - sphere.Center.Z <= sphere.Radius) {
             dmin += (sphere.Center.Z - Max.Z) * (sphere.Center.Z - Max.Z);
+        }
 
-        if (dmin <= sphere.Radius * sphere.Radius)
+        if (dmin <= sphere.Radius * sphere.Radius) {
             return true;
+        }
 
         return false;
     }

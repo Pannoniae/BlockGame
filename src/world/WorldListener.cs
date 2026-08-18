@@ -25,4 +25,6 @@ public interface WorldListener {
     
     void onDirtyArea(Vector3I min, Vector3I max);
 
+    void onLightDirty(SubChunkCoord coord);
+
 }

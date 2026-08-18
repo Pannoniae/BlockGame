@@ -45,7 +45,10 @@ namespace Silk.NET.Windowing.Sdl
             get
             {
                 var modePtr = SDL3.SDL_GetCurrentDisplayMode((SDL_DisplayID)Index);
-                if (modePtr == null) return default;
+                if (modePtr == null) {
+                    return default;
+                }
+
                 return new VideoMode(new Vector2D<int>(modePtr->w, modePtr->h), (int)modePtr->refresh_rate);
             }
         }

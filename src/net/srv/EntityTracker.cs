@@ -24,7 +24,8 @@ public class EntityTracker {
         public Vector3 lastSentRot;
         public int ticksSinceUpdate;
 
-        public bool sendVelocity = true;
+        /** so a permanently broken entity logs once, not sixty times a second */
+        public bool warnedNaN;
 
         /** clients that have this entity loaded */
         public HashSet<ServerConnection> viewers = [];
@@ -48,25 +49,11 @@ public class EntityTracker {
             lastSentPos = entity.position,
             lastSentRot = entity.rotation,
             ticksSinceUpdate = 0,
-            sendVelocity = shouldSendVelocity(entity),
         };
 
         // updateViewers handles sending spawn packets to all viewers
         tracked[entity.id] = t;
         updateViewers(t);
-    }
-
-    private static bool shouldSendVelocity(Entity entity) {
-        // only send velocity for entities that actually move
-        return entity switch {
-            Player => true,  // players need velocity for smooth animation
-            ItemEntity => true,
-            FallingBlockEntity => true,
-            ArrowEntity => true,
-            SnowballEntity => true,
-            GrenadeEntity => true,
-            _ => false
-        };
     }
 
     /** stop tracking an entity (broadcasts despawn to clients) */
@@ -105,53 +92,47 @@ public class EntityTracker {
             return;
         }
 
-        // threshold: 0.0625 blocks (1/16) or 0.5rad
+        // A NaN position encodes to something plausible-looking rather than failing, so every client
+        // would snap the entity to wherever that lands and never correct it. Drop the update instead -
+        // one stale tick, and a log line pointing at whatever produced the NaN.
+        if (!double.IsFinite(entity.position.X) || !double.IsFinite(entity.position.Y) ||
+            !double.IsFinite(entity.position.Z)) {
+            if (!t.warnedNaN) {
+                t.warnedNaN = true;
+                Log.error($"Entity {entity.id} ({entity.type}) has a non-finite position {entity.position}, not syncing it");
+            }
+            return;
+        }
+
+        t.warnedNaN = false;
+
+        // threshold: 0.0625 blocks (1/16) or 0.5deg
         const double MOVE_THRESHOLD_SQ = 0.0625 * 0.0625;
         const float ROT_THRESHOLD_SQ = 0.5f * 0.5f;
+        const int KEEPALIVE = 40;
 
-        bool movedEnough = Vector3D.DistanceSquared(entity.position, t.lastSentPos) > MOVE_THRESHOLD_SQ;
-        bool rotatedEnough = Vector3.DistanceSquared(entity.rotation, t.lastSentRot) > ROT_THRESHOLD_SQ;
         t.ticksSinceUpdate++;
 
-        if (movedEnough || rotatedEnough) {
-            // try to use delta packet for small movements
-            bool usedDelta = false;
-            if (EntityPositionDeltaPacket.tryCreate(entity.id, entity.position, t.lastSentPos, entity.rotation, t.lastSentRot, out var deltaPacket)) {
-                // send delta
-                foreach (var viewer in t.viewers) {
-                    viewer.send(deltaPacket, DeliveryMethod.Unreliable);
-                }
-                usedDelta = true;
-            }
+        bool moved = Vector3D.DistanceSquared(entity.position, t.lastSentPos) > MOVE_THRESHOLD_SQ;
+        bool rotated = Vector3.DistanceSquared(entity.rotation, t.lastSentRot) > ROT_THRESHOLD_SQ;
 
-            if (!usedDelta) {
-                // delta too large, send full position packet
-                var packet = new EntityPositionRotationPacket {
-                    entityID = entity.id,
-                    position = entity.position,
-                    rotation = entity.rotation,
-                };
-
-                foreach (var viewer in t.viewers) {
-                    viewer.send(packet, DeliveryMethod.Unreliable);
-                }
-            }
-
-            if (t.sendVelocity) {
-                // send velocity packet too
-                var velPacket = new EntityVelocityPacket {
-                    entityID = entity.id,
-                    velocity = entity.velocity
-                };
-                foreach (var viewer in t.viewers) {
-                    viewer.send(velPacket, DeliveryMethod.Unreliable);
-                }
-            }
-
-            t.lastSentPos = entity.position;
-            t.lastSentRot = entity.rotation;
-            t.ticksSinceUpdate = 0;
+        if (!moved && !rotated && t.ticksSinceUpdate < KEEPALIVE) {
+            return;
         }
+
+        var packet = new EntityPositionRotationPacket {
+            entityID = entity.id,
+            position = entity.position,
+            rotation = entity.rotation,
+        };
+
+        foreach (var viewer in t.viewers) {
+            viewer.send(packet, DeliveryMethod.Unreliable);
+        }
+
+        t.lastSentPos = entity.position;
+        t.lastSentRot = entity.rotation;
+        t.ticksSinceUpdate = 0;
     }
 
     /** recalculate which clients can see this entity (based on distance) */
@@ -170,14 +151,18 @@ public class EntityTracker {
                 continue;
             }
 
-            if (conn.isInRange(t.entity.position)) {
+            var hys = t.viewers.Contains(conn) ? 16.0 : 0.0;
+            if (conn.isInRange(t.entity.position, hys)) {
                 t.tempViewers.Add(conn);
             }
         }
 
         // send spawn to new viewers (in tempViewers but not in viewers)
         foreach (var viewer in t.tempViewers) {
-            if (t.viewers.Contains(viewer)) continue;
+            if (t.viewers.Contains(viewer)) {
+                continue;
+            }
+
             if (t.entity is Player sp) {
 
                 // DON'T SEND SPAWNS, we send them in finishLogin!
@@ -245,7 +230,9 @@ public class EntityTracker {
 
         // send despawn to old viewers no longer in range (in viewers but not in tempViewers)
         foreach (var viewer in t.viewers) {
-            if (t.tempViewers.Contains(viewer)) continue;
+            if (t.tempViewers.Contains(viewer)) {
+                continue;
+            }
 
             // DON'T SEND DESPAWNS for players either (todo players never despawn until disconnect, this needs to be improved later)
             if (t.entity is Player) {

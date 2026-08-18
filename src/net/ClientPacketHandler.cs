@@ -1,4 +1,4 @@
-using BlockGame.logic;
+﻿using BlockGame.logic;
 using BlockGame.main;
 using BlockGame.net.packet;
 using BlockGame.net.srv;
@@ -67,6 +67,9 @@ public class ClientPacketHandler : PacketHandler {
             case MultiBlockChangePacket p:
                 handleMultiBlockChange(p);
                 break;
+            case LightUpdatePacket p:
+                handleLightUpdate(p);
+                break;
             case BlockBreakProgressPacket p:
                 handleBlockBreakProgress(p);
                 break;
@@ -88,11 +91,11 @@ public class ClientPacketHandler : PacketHandler {
             case EntityPositionRotationPacket p:
                 handleEntityPositionRotation(p);
                 break;
-            case EntityPositionDeltaPacket p:
-                handleEntityPositionDelta(p);
-                break;
             case EntityVelocityPacket p:
                 handleEntityVelocity(p);
+                break;
+            case ServerStatsPacket p:
+                handleServerStats(p);
                 break;
             case EntityStatePacket p:
                 handleEntityState(p);
@@ -420,6 +423,31 @@ public class ClientPacketHandler : PacketHandler {
         //Log.info($"Received chunk {p.coord.x},{p.coord.z} with {p.subChunks.Length} subchunks");
     }
 
+    public void handleLightUpdate(LightUpdatePacket p) {
+        if (Game.world == null) {
+            return;
+        }
+
+        if (!Game.world.getChunkMaybe(p.coord, out var chunk) || chunk == null || chunk.destroyed) {
+            return;
+        }
+
+        chunk.blocks[p.y].setLightPlanes(p.skyPlane, p.blockPlane, p.uniformSky, p.uniformBlock);
+
+        for (int dy = -1; dy <= 1; dy++) {
+            var sy = p.y + dy;
+            if (sy is < 0 or >= Chunk.CHUNKHEIGHT) {
+                continue;
+            }
+
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    Game.world.dirtyChunk(new SubChunkCoord(p.coord.x + dx, sy, p.coord.z + dz));
+                }
+            }
+        }
+    }
+
     public void handleUnloadChunk(UnloadChunkPacket p) {
         //Console.Out.WriteLine($"CLIENT: Received UnloadChunkPacket for {p.coord}");
 
@@ -500,12 +528,11 @@ public class ClientPacketHandler : PacketHandler {
         entity.rotation = p.rotation;
         entity.velocity = p.velocity;
 
-        // initialize interpolation targets for mobs (delta packets apply to these...)
-        if (entity is Mob mob) {
-            mob.targetPos = p.position;
-            mob.targetRot = p.rotation;
-            mob.interpolationTicks = 0;
-        }
+        // set the interpolation target. Because delta packets *also* apply to these they must start in sync
+        // with the server's lastSentPos or we're already fucked from the start (might be a cause of the entity jitter?)
+        entity.targetPos = p.position;
+        entity.targetRot = p.rotation;
+        entity.interpolationTicks = 0;
 
         // deserialize entity-specific data
         EntityTracker.deserializeExtraData(entity, p.extraData);
@@ -520,14 +547,7 @@ public class ClientPacketHandler : PacketHandler {
             return;
         }
 
-        // find and remove entity
-        Entity? entity = null;
-        foreach (Entity e in Game.world.entities) {
-            if (e.id == p.entityID) {
-                entity = e;
-                break;
-            }
-        }
+        var entity = Game.world.getEntity(p.entityID);
 
         if (entity != null) {
             Game.world.removeEntity(entity);
@@ -546,14 +566,7 @@ public class ClientPacketHandler : PacketHandler {
             return;
         }
 
-        // check if already spawned
-        Entity? existing = null;
-        foreach (Entity e in Game.world.entities) {
-            if (e.id == p.entityID) {
-                existing = e;
-                break;
-            }
-        }
+        var existing = Game.world.getEntity(p.entityID);
         if (existing != null) {
             Log.warn($"[Client] Player '{p.username}' (entityID={p.entityID}) already exists! Skipping duplicate spawn.");
             return;
@@ -579,23 +592,10 @@ public class ClientPacketHandler : PacketHandler {
             return;
         }
 
-        // find entity and update position
-        Entity? entity = null;
-        foreach (Entity e in Game.world.entities) {
-            if (e.id == p.entityID) {
-                entity = e;
-                break;
-            }
-        }
-
+        var entity = Game.world.getEntity(p.entityID);
         if (entity != null) {
-            if (entity is Humanoid humanoid) {
-                // use packet's position with current target rotation
-                humanoid.mpInterpolate(p.position, humanoid.targetRot);
-            }
-            else {
-                entity.position = p.position;
-            }
+            // keep the current target rotation, only the position moved
+            entity.mpInterpolate(p.position, entity.targetRot);
         }
     }
 
@@ -604,23 +604,9 @@ public class ClientPacketHandler : PacketHandler {
             return;
         }
 
-        // find entity and update rotation
-        Entity? entity = null;
-        foreach (Entity e in Game.world.entities) {
-            if (e.id == p.entityID) {
-                entity = e;
-                break;
-            }
-        }
+        var entity = Game.world.getEntity(p.entityID);
         if (entity != null) {
-            if (entity is Humanoid humanoid) {
-                // use packet's rotation with current target position
-                humanoid.mpInterpolate(humanoid.targetPos, p.rotation);
-            }
-            else {
-                entity.rotation = p.rotation;
-                entity.bodyRotation = p.bodyRotation;
-            }
+            entity.mpInterpolate(entity.targetPos, p.rotation);
         }
     }
 
@@ -629,55 +615,38 @@ public class ClientPacketHandler : PacketHandler {
             return;
         }
 
-        // find entity and update both position and rotation
-        Entity? entity = null;
-        foreach (Entity e in Game.world.entities) {
-            if (e.id == p.entityID) {
-                entity = e;
-                break;
-            }
+        Game.world.getEntity(p.entityID)?.mpInterpolate(p.position, p.rotation);
+    }
+
+    public static ServerStatsPacket? serverStats;
+
+    public const int SERVER_MSPT_HISTORY = 400;
+
+    public static readonly XRingBuffer<float> serverMspt = history();
+    public static int serverMsptIdx;
+
+    private static XRingBuffer<float> history() {
+        var b = new XRingBuffer<float>(SERVER_MSPT_HISTORY);
+        for (var i = 0; i < SERVER_MSPT_HISTORY; i++) {
+            b.PushBack(0f);
         }
-        if (entity != null) {
-            if (entity is Humanoid humanoid) {
-                humanoid.mpInterpolate(p.position, p.rotation);
-            }
-            else if (entity is Mob mob) {
-                mob.mpInterpolate(p.position, p.rotation);
-            }
-            else {
-                entity.position = p.position;
-                entity.rotation = p.rotation;
-            }
+        return b;
+    }
+
+    public static void clearServerStats() {
+        serverStats = null;
+        serverMsptIdx = 0;
+        for (var i = 0; i < SERVER_MSPT_HISTORY; i++) {
+            serverMspt[i] = 0f;
         }
     }
 
-    public void handleEntityPositionDelta(EntityPositionDeltaPacket p) {
-        if (Game.world == null) {
-            return;
-        }
+    public void handleServerStats(ServerStatsPacket p) {
+        serverStats = p;
 
-        // find entity and apply delta to last received position+rotation
-        Entity? entity = null;
-        foreach (Entity e in Game.world.entities) {
-            if (e.id == p.entityID) {
-                entity = e;
-                break;
-            }
-        }
-        if (entity != null) {
-            if (entity is Humanoid humanoid) {
-                p.applyDelta(humanoid.targetPos, humanoid.targetRot, out var newPos, out var newRot);
-                humanoid.mpInterpolate(newPos, newRot);
-            }
-            else if (entity is Mob mob) {
-                p.applyDelta(mob.targetPos, mob.targetRot, out var newPos, out var newRot);
-                mob.mpInterpolate(newPos, newRot);
-            }
-            else {
-                p.applyDelta(entity.position, entity.rotation, out var newPos, out var newRot);
-                entity.position = newPos;
-                entity.rotation = newRot;
-            }
+        foreach (var s in p.samples) {
+            serverMspt[serverMsptIdx] = s;
+            serverMsptIdx = (serverMsptIdx + 1) % SERVER_MSPT_HISTORY;
         }
     }
 
@@ -685,27 +654,8 @@ public class ClientPacketHandler : PacketHandler {
         if (Game.world == null) {
             return;
         }
-
-        // find entity and update velocity
-        Entity? entity = null;
-        foreach (Entity e in Game.world.entities) {
-            if (e.id == p.entityID) {
-                entity = e;
-                break;
-            }
-        }
-        if (entity != null) {
-            // apply knockback to local player immediately (client-side)
-            if (entity == Game.player) {
-                entity.velocity = p.velocity;
-            }
-            else if (entity is Humanoid humanoid) {
-                humanoid.mpInterpolateVelocity(p.velocity);
-            }
-            else {
-                entity.prevVelocity = entity.velocity;
-                entity.velocity = p.velocity;
-            }
+        if (Game.player != null && Game.world.getEntity(p.entityID) == Game.player) {
+            Game.player.velocity += p.velocity;
         }
     }
 
@@ -714,14 +664,7 @@ public class ClientPacketHandler : PacketHandler {
             return;
         }
 
-        // find entity and apply state
-        Entity? entity = null;
-        foreach (Entity e in Game.world.entities) {
-            if (e.id == p.entityID) {
-                entity = e;
-                break;
-            }
-        }
+        var entity = Game.world.getEntity(p.entityID);
 
         if (entity != null) {
             entity.state.deserialize(p.data);
@@ -734,14 +677,7 @@ public class ClientPacketHandler : PacketHandler {
             return;
         }
 
-        // find entity and apply action
-        Entity? entity = null;
-        foreach (Entity e in Game.world.entities) {
-            if (e.id == p.entityID) {
-                entity = e;
-                break;
-            }
-        }
+        var entity = Game.world.getEntity(p.entityID);
         if (entity != null) {
             switch (p.action) {
                 case EntityActionPacket.Action.SWING:
@@ -905,14 +841,7 @@ public class ClientPacketHandler : PacketHandler {
             return;
         }
 
-        // find player entity
-        Entity? entity = null;
-        foreach (Entity e in Game.world.entities) {
-            if (e.id == p.entityID) {
-                entity = e;
-                break;
-            }
-        }
+        var entity = Game.world.getEntity(p.entityID);
         if (entity is not Player player) {
             return;
         }
@@ -1148,14 +1077,7 @@ public class ClientPacketHandler : PacketHandler {
             return;
         }
 
-        // update held item for other players
-        Entity? entity = null;
-        foreach (Entity e in Game.world.entities) {
-            if (e.id == p.entityID) {
-                entity = e;
-                break;
-            }
-        }
+        var entity = Game.world.getEntity(p.entityID);
         if (entity is Humanoid humanoid) {
             humanoid.inventory.selected = p.slotIndex;
             // set the held item in their inventory

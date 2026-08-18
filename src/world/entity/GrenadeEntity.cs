@@ -103,7 +103,9 @@ public class GrenadeEntity : Entity {
 
         // apply damage with falloff
         foreach (var entity in entities) {
-            if (entity == this) continue;
+            if (entity == this) {
+                continue;
+            }
 
             var dist = (entity.position - position).Length();
 

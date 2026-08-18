@@ -1,4 +1,4 @@
-﻿using BlockGame.main;
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world.block;
 using BlockGame.world.entity;
@@ -44,9 +44,24 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
     public bool isRendered = false;
     public ulong lastSaved;
+
+    public bool dirty;
     public bool destroyed = false;
-    private readonly List<LightNode> toPropagate = [];
-    private readonly Queue<LightNode> propQueue = new();
+
+    public byte lightDirty;
+
+    private readonly record struct LocalLightNode(int x, int y, int z, Chunk chunk) {
+        public readonly int x = x;
+        public readonly int y = y;
+        public readonly int z = z;
+        public readonly Chunk chunk = chunk;
+    }
+
+    [ThreadStatic] private static List<LightNode>? _toPropagate;
+    private static List<LightNode> toPropagate => _toPropagate ??= [];
+
+    [ThreadStatic] private static Queue<LocalLightNode>? _propQueue;
+    private static Queue<LocalLightNode> propQueue => _propQueue ??= new Queue<LocalLightNode>();
 
     public ChunkCache cache = new();
 
@@ -64,14 +79,38 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
     /** invalidate cache entry in neighbours when this chunk is removed */
     public void removeFromCache() {
-        if (cache.w != null) cache.w.cache.e = null;
-        if (cache.e != null) cache.e.cache.w = null;
-        if (cache.s != null) cache.s.cache.n = null;
-        if (cache.n != null) cache.n.cache.s = null;
-        if (cache.sw != null) cache.sw.cache.ne = null;
-        if (cache.se != null) cache.se.cache.nw = null;
-        if (cache.nw != null) cache.nw.cache.se = null;
-        if (cache.ne != null) cache.ne.cache.sw = null;
+        if (cache.w != null) {
+            cache.w.cache.e = null;
+        }
+
+        if (cache.e != null) {
+            cache.e.cache.w = null;
+        }
+
+        if (cache.s != null) {
+            cache.s.cache.n = null;
+        }
+
+        if (cache.n != null) {
+            cache.n.cache.s = null;
+        }
+
+        if (cache.sw != null) {
+            cache.sw.cache.ne = null;
+        }
+
+        if (cache.se != null) {
+            cache.se.cache.nw = null;
+        }
+
+        if (cache.nw != null) {
+            cache.nw.cache.se = null;
+        }
+
+        if (cache.ne != null) {
+            cache.ne.cache.sw = null;
+        }
+
         cache.clear();
     }
 
@@ -84,6 +123,8 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     public Chunk(World world, int chunkX, int chunkZ) {
         status = ChunkStatus.EMPTY;
         this.world = world;
+
+        dirty = true;
 
         subChunks = new SubChunk[CHUNKHEIGHT];
         coord = new ChunkCoord(chunkX, chunkZ);
@@ -132,6 +173,80 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         entities[scy].Remove(e);
     }
 
+    public void markLightDirty(int x, int y, int z) {
+        var sy = y >> 4;
+        markSection(sy);
+
+        // vertical
+        if ((y & 0xF) == 0 && sy > 0) {
+            markSection(sy - 1);
+        }
+        else if ((y & 0xF) == 0xF && sy < CHUNKHEIGHT - 1) {
+            markSection(sy + 1);
+        }
+
+        // horizontal
+        var w = x == 0;
+        var e = x == CHUNKSIZE - 1;
+        var so = z == 0;
+        var no = z == CHUNKSIZE - 1;
+        if (!(w || e || so || no)) {
+            return;
+        }
+
+        if (w) {
+            cache.w?.markColumn(y);
+        }
+
+        if (e) {
+            cache.e?.markColumn(y);
+        }
+
+        if (so) {
+            cache.s?.markColumn(y);
+        }
+
+        if (no) {
+            cache.n?.markColumn(y);
+        }
+
+        if (w && so) {
+            cache.sw?.markColumn(y);
+        }
+
+        if (w && no) {
+            cache.nw?.markColumn(y);
+        }
+
+        if (e && so) {
+            cache.se?.markColumn(y);
+        }
+
+        if (e && no) {
+            cache.ne?.markColumn(y);
+        }
+    }
+
+    /** mark the section at world-y plus its vertical neighbours - used when the spill crosses a chunk */
+    private void markColumn(int y) {
+        var sy = y >> 4;
+        markSection(sy);
+        if ((y & 0xF) == 0 && sy > 0) {
+            markSection(sy - 1);
+        }
+        else if ((y & 0xF) == 0xF && sy < CHUNKHEIGHT - 1) {
+            markSection(sy + 1);
+        }
+    }
+
+    private void markSection(int sy) {
+        if (lightDirty == 0) {
+            world.lightDirtyChunks.Add(this);
+        }
+
+        lightDirty |= (byte)(1 << sy);
+    }
+
     public void lightChunk() {
         // set the top of the chunk to 15 if not solid
         // then propagate down
@@ -159,7 +274,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 // convert to world coords
                 int worldX = coord.x * CHUNKSIZE + x;
                 int worldZ = coord.z * CHUNKSIZE + z;
-                world.skyLightQueue.Enqueue(new LightNode(worldX, y + 1, worldZ, this));
+                world.skyLightQueue.Enqueue(new LightNode(worldX, y + 1, worldZ));
 
                 // y + 1 is air
                 // y is water or solid block
@@ -169,31 +284,46 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 // it will eat ALL the performance.
                 // instead, what we will do is, we'll fast forward to the bottom of the water, lighting it up as we go (decreasing the light level obviously THEN add that to the propagation)
 
-                var ll = getSkyLight(x, y + 1, z);
+                // int, not byte! byte would wrap to 255 the moment absorption > ll
+                int ll = getSkyLight(x, y + 1, z);
                 if (bl ==  Block.WATER.id) {
                     // if the block is water, we need to propagate downwards
                     // but we need to do it manually, because otherwise it will add 7 million entries to the queue
                     while (y > 0 && bl ==  Block.WATER.id) {
                         ll -= Block.lightAbsorption[bl];
-                        if (ll <= 0) break;
+                        if (ll <= 0) {
+                            break;
+                        }
+
                         y--;
-                        setSkyLightDumb(x, y, z, ll);
                         bl = getBlock(x, y, z);
+                        // only light the water itself
+                        if (bl != Block.WATER.id) {
+                            break;
+                        }
+
+                        setSkyLightDumb(x, y, z, (byte)ll);
                     }
 
                     // add it to the queue for propagation
-                    world.skyLightQueue.Enqueue(new LightNode(worldX, y + 1, worldZ, this));
+                    world.skyLightQueue.Enqueue(new LightNode(worldX, y + 1, worldZ));
                 }
 
                 blockLoop: ;
                 worldX = coord.x * CHUNKSIZE + x;
                 worldZ = coord.z * CHUNKSIZE + z;
                 // loop from y down to the bottom of the world
-                for (int yy = y - 1; yy >= 0; yy--) {
+                // start AT y, not y - 1, if the top of the map is filled for some reason we'd be fucked
+                for (int yy = y; yy >= 0; yy--) {
+                    if ((yy & 0xF) == 0xF && !blocks[yy >> 4].hasLightSources()) {
+                        yy -= 15;
+                        continue;
+                    }
+
                     bl = getBlock(x, yy, z);
                     // if blocklight, propagate
                     if (Block.lightLevel[bl] > 0) {
-                        world.blockLightQueue.Enqueue(new LightNode(worldX, yy, worldZ, this));
+                        world.blockLightQueue.Enqueue(new LightNode(worldX, yy, worldZ));
                     }
                 }
             }
@@ -202,10 +332,12 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         // we collect, then we propagate!
         toPropagate.Clear();
 
-        // second pass: check for horizontal propagation into unlit neighbours
+        // second pass: check for horizontal propagation into unlit neighbours.
+        var scanTop = int.Min(maxNeighbourHeight() + 1, CHUNKSIZE * CHUNKHEIGHT - 1);
+
         for (int x = 0; x < CHUNKSIZE; x++) {
             for (int z = 0; z < CHUNKSIZE; z++) {
-                for (int y = CHUNKSIZE * CHUNKHEIGHT - 1; y >= 0; y--) {
+                for (int y = scanTop; y >= 0; y--) {
                     // if this position has skylight and is air
                     if (getSkyLight(x, y, z) == 15) {
                         // check horizontal neighbours
@@ -221,7 +353,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                             //if (!Block.isFullBlock(world.getRelativeBlock(this, x, y, z, new Vector3I(dx, 0, dz))) {
                             // if full skylight there, nothing to do....
                             //world.getSkyLight(worldnx, y, worldnz) != 15) {
-                            //world.skyLightQueue.Add(new LightNode(x, y, z, this));
+                            //world.skyLightQueue.Add(new LightNode(x, y, z));
 
                             // what if we propagated manually? let's find out!
                             //}
@@ -230,10 +362,6 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                             // if at least one neighbour is solid, add this to the propagation and the block below it too! (for overhangs)
                             var relPos = world.getChunkAndRelativePos(this, x, y, z, new Vector3I(d.X, 0, d.Z),
                                 out var neighbourChunk);
-
-                            if (neighbourChunk.destroyed) {
-                                Console.Out.WriteLine(neighbourChunk.coord);
-                            }
 
                             var neighbourBlock = neighbourChunk?.getBlock(relPos.X, relPos.Y, relPos.Z) ?? 0;
                             if (Block.isFullBlock(neighbourBlock)) {
@@ -254,12 +382,12 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                         // we only propagate *once* per position, so if we found an empty neighbour, we propagate
                         // we don't propagate inside the loop lol
                         //if (propagateThis) {
-                        //toPropagate.Add(new LightNode(x, y, z, this));
+                        //toPropagate.Add(new LightNode(x, y, z));
                         //}
 
                         // if we found a block below, we also propagate it
                         if (propagateBelow) {
-                            toPropagate.Add(new LightNode(x, y - 1, z, this));
+                            toPropagate.Add(new LightNode(x, y - 1, z));
                         }
                     }
                 }
@@ -275,8 +403,96 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             manuallyPropagate(lightNode.x, lightNode.y, lightNode.z);
         }
 
-        world.processSkyLightQueueNoUpdate();
+        for (int i = 0; i < CHUNKHEIGHT; i++) {
+            markSection(i);
+        }
+
+        getxchunks();
+        world.processSkyLightQueueFully();
         status = ChunkStatus.LIGHTED;
+    }
+
+    /** tallest solid block in this chunk or any of the 4 neighbours */
+    private int maxNeighbourHeight() {
+        var h = 0;
+        for (int i = 0; i < CHUNKSIZE; i++) {
+            for (int j = 0; j < CHUNKSIZE; j++) {
+                h = int.Max(h, heightMap.get(i, j));
+                if (cache.w != null) {
+                    h = int.Max(h, cache.w.heightMap.get(i, j));
+                }
+
+                if (cache.e != null) {
+                    h = int.Max(h, cache.e.heightMap.get(i, j));
+                }
+
+                if (cache.s != null) {
+                    h = int.Max(h, cache.s.heightMap.get(i, j));
+                }
+
+                if (cache.n != null) {
+                    h = int.Max(h, cache.n.heightMap.get(i, j));
+                }
+            }
+        }
+
+        return h;
+    }
+    private void getxchunks() {
+        getxchunk(cache.w, -1, 0);
+        getxchunk(cache.e, 1, 0);
+        getxchunk(cache.s, 0, -1);
+        getxchunk(cache.n, 0, 1);
+    }
+
+    private void getxchunk(Chunk? n, int dx, int dz) {
+        if (n == null || n.destroyed || n.status < ChunkStatus.LIGHTED) {
+            return;
+        }
+
+        var wx = coord.x * CHUNKSIZE;
+        var wz = coord.z * CHUNKSIZE;
+        var nwx = n.coord.x * CHUNKSIZE;
+        var nwz = n.coord.z * CHUNKSIZE;
+
+        for (int i = 0; i < CHUNKSIZE; i++) {
+            var ox = dx == 0 ? i : dx > 0 ? CHUNKSIZE - 1 : 0;
+            var oz = dz == 0 ? i : dz > 0 ? CHUNKSIZE - 1 : 0;
+            var tx = dx == 0 ? i : dx > 0 ? 0 : CHUNKSIZE - 1;
+            var tz = dz == 0 ? i : dz > 0 ? 0 : CHUNKSIZE - 1;
+
+            for (int y = 0; y < CHUNKSIZE * CHUNKHEIGHT; y++) {
+                var o = Block.isFullBlock(getBlock(ox, y, oz));
+                var t = Block.isFullBlock(n.getBlock(tx, y, tz));
+                if (o && t) {
+                    continue;
+                }
+
+                var ol = getLight(ox, y, oz);
+                var tl = n.getLight(tx, y, tz);
+
+                // enqueue the BRIGHTER side cuz it broadcasts "out"
+                if (!o) {
+                    if ((tl & 0xF) > (ol & 0xF) + 1) {
+                        world.skyLightQueue.Enqueue(new LightNode(nwx + tx, y, nwz + tz));
+                    }
+
+                    if ((tl >> 4) > (ol >> 4) + 1) {
+                        world.blockLightQueue.Enqueue(new LightNode(nwx + tx, y, nwz + tz));
+                    }
+                }
+
+                if (!t) {
+                    if ((ol & 0xF) > (tl & 0xF) + 1) {
+                        world.skyLightQueue.Enqueue(new LightNode(wx + ox, y, wz + oz));
+                    }
+
+                    if ((ol >> 4) > (tl >> 4) + 1) {
+                        world.blockLightQueue.Enqueue(new LightNode(wx + ox, y, wz + oz));
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -289,7 +505,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         propQueue.Clear();
         int worldX = coord.x * CHUNKSIZE + x;
         int worldZ = coord.z * CHUNKSIZE + z;
-        propQueue.Enqueue(new LightNode(worldX, y, worldZ, this));
+        propQueue.Enqueue(new LocalLightNode(worldX, y, worldZ, this));
 
         while (propQueue.Count > 0) {
             var (wx, wy, wz, chunk) = propQueue.Dequeue();
@@ -311,7 +527,9 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 var nz = neighbourPos.Z;
 
                 // skip if neighbour is solid
-                if (Block.fullBlock[neighbourChunk.getBlock(nx, ny, nz)]) continue;
+                if (Block.fullBlock[neighbourChunk.getBlock(nx, ny, nz)]) {
+                    continue;
+                }
 
                 var neighbourLight = neighbourChunk.getSkyLight(nx, ny, nz);
                 byte newLevel;
@@ -327,11 +545,11 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 // only propagate if we can improve the light level
                 if (newLevel > 0 && newLevel > neighbourLight &&
                     (neighbourLight + 2 <= currentLight || dir == Direction.DOWN)) {
-                    neighbourChunk.setSkyLightDumb(nx, ny, nz, newLevel);
+                    neighbourChunk.setSkyLight(nx, ny, nz, newLevel);
                     // convert back to world coords
                     int worldNX = (neighbourChunk.coord.x << 4) + nx;
                     int worldNZ = (neighbourChunk.coord.z << 4) + nz;
-                    propQueue.Enqueue(new LightNode(worldNX, ny, worldNZ, neighbourChunk));
+                    propQueue.Enqueue(new LocalLightNode(worldNX, ny, worldNZ, neighbourChunk));
                 }
             }
         }
@@ -341,6 +559,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     /// Uses chunk coordinates
     /// </summary>
     public void setBlockDumb(int x, int y, int z, ushort block) {
+        dirty = true;
         blocks[y >> 4][x, y & 0xF, z] = block;
         if (Block.fullBlock[block]) {
             blocks[y >> 4].setSkylight(x, y & 0xF, z, 0);
@@ -351,6 +570,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     }
 
     public void setBlockFast(int x, int y, int z, ushort block) {
+        dirty = true;
         blocks[y >> 4].fastSet(x, y & 0xF, z, block);
         if (Block.fullBlock[block]) {
             blocks[y >> 4].setSkylight(x, y & 0xF, z, 0);
@@ -361,6 +581,8 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     }
 
     public void recalc() {
+        Array.Clear(heightMap.height);
+
         for (int i = 0; i < CHUNKHEIGHT; i++) {
             blocks[i].refreshCounts();
         }
@@ -371,6 +593,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     }
 
     public void setBlock(int x, int y, int z, ushort block) {
+        dirty = true;
         var oldBlock = blocks[y >> 4][x, y & 0xF, z];
         blocks[y >> 4][x, y & 0xF, z] = block;
         var wx = coord.x * CHUNKSIZE + x;
@@ -400,15 +623,13 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                     if (skyLight > 0) {
                         int worldNX = (neighbourChunk.coord.x << 4) + neighbourPos.X;
                         int worldNZ = (neighbourChunk.coord.z << 4) + neighbourPos.Z;
-                        world.skyLightQueue.Enqueue(new LightNode(worldNX, neighbourPos.Y, worldNZ,
-                            neighbourChunk));
+                        world.skyLightQueue.Enqueue(new LightNode(worldNX, neighbourPos.Y, worldNZ));
                     }
 
                     if (blockLight > 0) {
                         int worldNX = (neighbourChunk.coord.x << 4) + neighbourPos.X;
                         int worldNZ = (neighbourChunk.coord.z << 4) + neighbourPos.Z;
-                        world.blockLightQueue.Enqueue(new LightNode(worldNX, neighbourPos.Y, worldNZ,
-                            neighbourChunk));
+                        world.blockLightQueue.Enqueue(new LightNode(worldNX, neighbourPos.Y, worldNZ));
                     }
                 }
             }
@@ -430,7 +651,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             // add lightsource
             setBlockLightDumb(x, y, z, Block.lightLevel[block]);
             //Console.Out.WriteLine(Block.get(block).lightLevel);
-            world.blockLightQueue.Enqueue(new LightNode(wx, y, wz, this));
+            world.blockLightQueue.Enqueue(new LightNode(wx, y, wz));
         }
 
         if (world.isServer) {
@@ -446,7 +667,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
         if (!world.isClient) {
             // notify listeners
-            var pos = new Vector3I(x, y, z);
+            var pos = new Vector3I(wx, y, wz);
             world.dirtyArea(pos, pos);
         }
 
@@ -455,6 +676,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     }
 
     public void setBlockMetadata(int x, int y, int z, uint block) {
+        dirty = true;
         var oldBlockRaw = blocks[y >> 4].getRaw(x, y & 0xF, z);
         var oldBlock = oldBlockRaw.getID();
         var oldMeta = oldBlockRaw.getMetadata();
@@ -487,15 +709,13 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                     if (skyLight > 0) {
                         int worldNX = (neighbourChunk.coord.x << 4) + neighbourPos.X;
                         int worldNZ = (neighbourChunk.coord.z << 4) + neighbourPos.Z;
-                        world.skyLightQueue.Enqueue(new LightNode(worldNX, neighbourPos.Y, worldNZ,
-                            neighbourChunk));
+                        world.skyLightQueue.Enqueue(new LightNode(worldNX, neighbourPos.Y, worldNZ));
                     }
 
                     if (blockLight > 0) {
                         int worldNX = (neighbourChunk.coord.x << 4) + neighbourPos.X;
                         int worldNZ = (neighbourChunk.coord.z << 4) + neighbourPos.Z;
-                        world.blockLightQueue.Enqueue(new LightNode(worldNX, neighbourPos.Y, worldNZ,
-                            neighbourChunk));
+                        world.blockLightQueue.Enqueue(new LightNode(worldNX, neighbourPos.Y, worldNZ));
                     }
                 }
             }
@@ -510,7 +730,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             // add lightsource
             setBlockLightDumb(x, y, z, Block.lightLevel[id]);
             //Console.Out.WriteLine(Block.get(block).lightLevel);
-            world.blockLightQueue.Enqueue(new LightNode(wx, y, wz, this));
+            world.blockLightQueue.Enqueue(new LightNode(wx, y, wz));
         }
 
         // if the old block had light, remove the light
@@ -530,7 +750,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
         if (!world.isClient) {
             // notify listeners
-            var pos = new Vector3I(x, y, z);
+            var pos = new Vector3I(wx, y, wz);
             world.dirtyArea(pos, pos);
         }
 
@@ -539,10 +759,12 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     }
 
     public void setBlockMetadataDumb(int x, int y, int z, uint block) {
+        dirty = true;
         blocks[y >> 4].setRaw(x, y & 0xF, z, block);
     }
 
     public void setMetadata(int x, int y, int z, byte metadata) {
+        dirty = true;
         var oldBlockRaw = blocks[y >> 4].getRaw(x, y & 0xF, z);
         blocks[y >> 4].setMetadata(x, y & 0xF, z, metadata);
         var wx = coord.x * CHUNKSIZE + x;
@@ -554,7 +776,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
         if (!world.isClient) {
             // notify listeners
-            var pos = new Vector3I(x, y, z);
+            var pos = new Vector3I(wx, y, wz);
             world.dirtyArea(pos, pos);
         }
 
@@ -566,6 +788,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     /// Uses chunk coordinates
     /// </summary>
     public void setLight(int x, int y, int z, byte value) {
+        dirty = true;
         blocks[y >> 4].setLight(x, y & 0xF, z, value);
     }
 
@@ -573,58 +796,29 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     /// Uses chunk coordinates
     /// </summary>
     public void setSkyLightDumb(int x, int y, int z, byte value) {
+        dirty = true;
         blocks[y >> 4].setSkylight(x, y & 0xF, z, value);
     }
 
     public void setSkyLight(int x, int y, int z, byte value) {
-        var sectionY = y >> 4;
-        var yRem = y & 0xF;
-
-        // handle empty chunksections
-        blocks[sectionY].setSkylight(x, yRem, z, value);
-        var wx = coord.x * CHUNKSIZE + x;
-        var wz = coord.z * CHUNKSIZE + z;
-
-        // todo remove this hack when we handle shit properly - we need to dirtyArea on the server because we use dirtyChunksBatch in setBlockNeighboursDirty
-        //  which isn't tracked by the chunk tracking
-        //  "the spec is what happens"
-
-        if (!world.isClient) {
-            // notify listeners
-            var pos = new Vector3I(x, y, z);
-            world.dirtyArea(pos, pos);
-        }
-
-
-        world.setBlockNeighboursDirty(new Vector3I(wx, y, wz));
+        dirty = true;
+        blocks[y >> 4].setSkylight(x, y & 0xF, z, value);
+        markLightDirty(x, y, z);
     }
 
     /// <summary>
     /// Uses chunk coordinates
     /// </summary>
     public void setBlockLightDumb(int x, int y, int z, byte value) {
+        dirty = true;
         // handle empty chunksections
         blocks[y >> 4].setBlocklight(x, y & 0xF, z, value);
     }
 
     public void setBlockLight(int x, int y, int z, byte value) {
-        // handle empty chunksections
+        dirty = true;
         blocks[y >> 4].setBlocklight(x, y & 0xF, z, value);
-
-        var wx = coord.x * CHUNKSIZE + x;
-        var wz = coord.z * CHUNKSIZE + z;
-
-        // todo remove this hack when we handle shit properly - we need to dirtyArea on the server because we use dirtyChunksBatch in setBlockNeighboursDirty
-        //  which isn't tracked by the chunk tracking
-        //  "the spec is what happens"
-
-        if (!world.isClient) {
-            // notify listeners
-            var pos = new Vector3I(x, y, z);
-            world.dirtyArea(pos, pos);
-        }
-
-        world.setBlockNeighboursDirty(new Vector3I(wx, y, wz));
+        markLightDirty(x, y, z);
     }
 
     /// <summary>
@@ -642,19 +836,24 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     /// Remove the selected block from the heightmap and finds the block below it to add to the heightmap.
     /// </summary>
     public void removeFromHeightMap(int x, int y, int z) {
-        var height = heightMap.get(x, z);
-        // if the block is the highest block in the column
-        if (height == y) {
-            // find the block below
-            for (int yy = y - 1; yy >= 0; yy--) {
-                if (Block.isFullBlock(getBlock(x, yy, z))) {
-                    heightMap.set(x, z, (byte)yy);
-                    return;
-                }
+        // only the top block of a column can lower the heightmap
+        if (heightMap.get(x, z) != y) {
+            return;
+        }
+
+        for (int yy = y - 1; yy >= 0; yy--) {
+            if ((yy & 0xF) == 0xF && blocks[yy >> 4].fullBlockCount == 0) {
+                yy -= 15;
+                continue;
             }
 
-            heightMap.set(x, z, 0);
+            if (Block.isFullBlock(getBlock(x, yy, z))) {
+                heightMap.set(x, z, (byte)yy);
+                return;
+            }
         }
+
+        heightMap.set(x, z, 0);
     }
 
 
@@ -694,6 +893,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     }
 
     public void setBlockEntity(int x, int y, int z, BlockEntity be) {
+        dirty = true;
         blockEntities[new Vector3I(x, y, z)] = be;
     }
 
@@ -756,20 +956,30 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     }
 
     public bool Equals(Chunk? other) {
-        if (other is null)
+        if (other is null) {
             return false;
-        if (ReferenceEquals(this, other))
+        }
+
+        if (ReferenceEquals(this, other)) {
             return true;
+        }
+
         return coord.Equals(other.coord);
     }
 
     public override bool Equals(object? obj) {
-        if (obj is null)
+        if (obj is null) {
             return false;
-        if (ReferenceEquals(this, obj))
+        }
+
+        if (ReferenceEquals(this, obj)) {
             return true;
-        if (obj.GetType() != GetType())
+        }
+
+        if (obj.GetType() != GetType()) {
             return false;
+        }
+
         return Equals((Chunk)obj);
     }
 

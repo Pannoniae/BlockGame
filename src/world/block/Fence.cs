@@ -43,9 +43,18 @@ public class Fence : EntityBlock {
         float dEast = 1f - fx;
         float dSouth = fz;
         float dNorth = 1f - fz;
-        if (dWest <= dEast && dWest <= dSouth && dWest <= dNorth) return WEST;
-        if (dEast <= dSouth && dEast <= dNorth) return EAST;
-        if (dSouth <= dNorth) return SOUTH;
+        if (dWest <= dEast && dWest <= dSouth && dWest <= dNorth) {
+            return WEST;
+        }
+
+        if (dEast <= dSouth && dEast <= dNorth) {
+            return EAST;
+        }
+
+        if (dSouth <= dNorth) {
+            return SOUTH;
+        }
+
         return NORTH;
     }
 
@@ -66,37 +75,69 @@ public class Fence : EntityBlock {
         // single match
         int count = (inEast ? 1 : 0) + (inWest ? 1 : 0) + (inSouth ? 1 : 0) + (inNorth ? 1 : 0);
         if (count == 1) {
-            if (inEast) return EAST;
-            if (inWest) return WEST;
-            if (inSouth) return SOUTH;
+            if (inEast) {
+                return EAST;
+            }
+
+            if (inWest) {
+                return WEST;
+            }
+
+            if (inSouth) {
+                return SOUTH;
+            }
+
             return NORTH;
         }
 
         // corner overlap: use raycast face to disambiguate
         if (count >= 2) {
             var face = Game.raycast.face;
-            if (face == RawDirection.EAST && inEast) return EAST;
-            if (face == RawDirection.WEST && inWest) return WEST;
-            if (face == RawDirection.SOUTH && inSouth) return SOUTH;
-            if (face == RawDirection.NORTH && inNorth) return NORTH;
+            if (face == RawDirection.EAST && inEast) {
+                return EAST;
+            }
+
+            if (face == RawDirection.WEST && inWest) {
+                return WEST;
+            }
+
+            if (face == RawDirection.SOUTH && inSouth) {
+                return SOUTH;
+            }
+
+            if (face == RawDirection.NORTH && inNorth) {
+                return NORTH;
+            }
         }
 
         // fallback: nearest active edge
         byte nearest = edgeBitFromHit(hp.X, hp.Z);
-        if ((meta & nearest) != 0) return nearest;
+        if ((meta & nearest) != 0) {
+            return nearest;
+        }
+
         // just return the first active edge
         for (int i = 0; i < 4; i++)
-            if ((meta & (1 << i)) != 0) return (byte)(1 << i);
+            if ((meta & (1 << i)) != 0) {
+                return (byte)(1 << i);
+            }
+
         return 0;
     }
 
     public override bool tryPartialBreak(World world, int x, int y, int z) {
         var meta = world.getBlockRaw(x, y, z).getMetadata();
         // only one panel? let normal break destroy the block
-        if ((meta & (meta - 1)) == 0) return false;
+        if ((meta & (meta - 1)) == 0) {
+            return false;
+        }
+
         // remove the panel the player is looking at
         byte edge = hitEdge(meta);
-        if (edge == 0) return false;
+        if (edge == 0) {
+            return false;
+        }
+
         byte newMeta = (byte)(meta & ~edge);
         world.setBlockMetadata(x, y, z, ((uint)id).setMetadata(newMeta));
         world.blockUpdateNeighbours(x, y, z);
@@ -105,14 +146,21 @@ public class Fence : EntityBlock {
 
     public override void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
         aabbs.Clear();
-        if ((metadata & EAST) != 0)
+        if ((metadata & EAST) != 0) {
             aabbs.Add(new AABB(x + 14f / 16f, y, z, x + 1, y + 1, z + 1));
-        if ((metadata & WEST) != 0)
+        }
+
+        if ((metadata & WEST) != 0) {
             aabbs.Add(new AABB(x, y, z, x + 2f / 16f, y + 1, z + 1));
-        if ((metadata & SOUTH) != 0)
+        }
+
+        if ((metadata & SOUTH) != 0) {
             aabbs.Add(new AABB(x, y, z, x + 1, y + 1, z + 2f / 16f));
-        if ((metadata & NORTH) != 0)
+        }
+
+        if ((metadata & NORTH) != 0) {
             aabbs.Add(new AABB(x, y, z + 14f / 16f, x + 1, y + 1, z + 1));
+        }
     }
 
     public override void place(World world, int x, int y, int z, byte metadata, Placement info) {
@@ -120,8 +168,10 @@ public class Fence : EntityBlock {
         // merge with existing edges if a fence is already here
         var existing = world.getBlock(x, y, z);
         byte current = 0;
-        if (blocks[existing] is Fence)
+        if (blocks[existing] is Fence) {
             current = world.getBlockRaw(x, y, z).getMetadata();
+        }
+
         byte combined = (byte)(current | edge);
         world.setBlockMetadata(x, y, z, ((uint)id).setMetadata(combined));
         world.blockUpdateNeighbours(x, y, z);
@@ -135,7 +185,10 @@ public class Fence : EntityBlock {
             byte current = world.getBlockRaw(x, y, z).getMetadata();
             return (current & edge) == 0; // only if this edge isn't set yet
         }
-        if (!base.canPlace(world, x, y, z, info)) return false;
+        if (!base.canPlace(world, x, y, z, info)) {
+            return false;
+        }
+
         var below = world.getBlock(x, y - 1, z);
         return fullBlock[below] || below == id;
     }

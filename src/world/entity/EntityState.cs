@@ -204,63 +204,82 @@ public class EntityState {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool getBool(byte fieldID, bool defaultValue = false) {
-        if (!fields.TryGetValue(fieldID, out var field)) return defaultValue;
+        if (!fields.TryGetValue(fieldID, out var field)) {
+            return defaultValue;
+        }
+
         return field.type == FieldType.BOOL_TRUE;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte getByte(byte fieldID, byte defaultValue = 0) {
-        if (!fields.TryGetValue(fieldID, out var field) || field.type != FieldType.BYTE)
+        if (!fields.TryGetValue(fieldID, out var field) || field.type != FieldType.BYTE) {
             return defaultValue;
+        }
+
         return (byte)field.value;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public short getShort(byte fieldID, short defaultValue = 0) {
-        if (!fields.TryGetValue(fieldID, out var field) || field.type != FieldType.SHORT)
+        if (!fields.TryGetValue(fieldID, out var field) || field.type != FieldType.SHORT) {
             return defaultValue;
+        }
+
         return Unsafe.As<ulong, short>(ref Unsafe.AsRef(in field.value));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int getInt(byte fieldID, int defaultValue = 0) {
-        if (!fields.TryGetValue(fieldID, out var field) || field.type != FieldType.INT)
+        if (!fields.TryGetValue(fieldID, out var field) || field.type != FieldType.INT) {
             return defaultValue;
+        }
+
         return Unsafe.As<ulong, int>(ref Unsafe.AsRef(in field.value));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long getLong(byte fieldID, long defaultValue = 0) {
-        if (!fields.TryGetValue(fieldID, out var field) || field.type != FieldType.LONG)
+        if (!fields.TryGetValue(fieldID, out var field) || field.type != FieldType.LONG) {
             return defaultValue;
+        }
+
         return Unsafe.As<ulong, long>(ref Unsafe.AsRef(in field.value));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ushort getUShort(byte fieldID, ushort defaultValue = 0) {
-        if (!fields.TryGetValue(fieldID, out var field) || field.type != FieldType.USHORT)
+        if (!fields.TryGetValue(fieldID, out var field) || field.type != FieldType.USHORT) {
             return defaultValue;
+        }
+
         return Unsafe.As<ulong, ushort>(ref Unsafe.AsRef(in field.value));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public uint getUInt(byte fieldID, uint defaultValue = 0) {
-        if (!fields.TryGetValue(fieldID, out var field) || field.type != FieldType.UINT)
+        if (!fields.TryGetValue(fieldID, out var field) || field.type != FieldType.UINT) {
             return defaultValue;
+        }
+
         return Unsafe.As<ulong, uint>(ref Unsafe.AsRef(in field.value));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public float getFloat(byte fieldID, float defaultValue = 0f) {
-        if (!fields.TryGetValue(fieldID, out var field) || field.type != FieldType.FLOAT)
+        if (!fields.TryGetValue(fieldID, out var field) || field.type != FieldType.FLOAT) {
             return defaultValue;
+        }
+
         return Unsafe.As<ulong, float>(ref Unsafe.AsRef(in field.value));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public double getDouble(byte fieldID, double defaultValue = 0.0) {
-        if (!fields.TryGetValue(fieldID, out var field) || field.type != FieldType.DOUBLE)
+        if (!fields.TryGetValue(fieldID, out var field) || field.type != FieldType.DOUBLE) {
             return defaultValue;
+        }
+
         return Unsafe.As<ulong, double>(ref Unsafe.AsRef(in field.value));
     }
 
@@ -307,7 +326,9 @@ public class EntityState {
 
         foreach (var key in fields.Keys) {
             ref var field = ref CollectionsMarshal.GetValueRefOrNullRef(fields, key);
-            if (Unsafe.IsNullRef(ref field) || !field.dirty) continue;
+            if (Unsafe.IsNullRef(ref field) || !field.dirty) {
+                continue;
+            }
 
             buffer[offset++] = field.fieldID;
             buffer[offset++] = (byte)field.type;
@@ -354,7 +375,9 @@ public class EntityState {
         int i = 0;
         while (i < data.Length) {
             byte fieldID = data[i++];
-            if (fieldID == 0xFF) break; // terminator
+            if (fieldID == 0xFF) {
+                break; // terminator
+            }
 
             FieldType type = (FieldType)data[i++];
             int byteCount = getByteCount(type);

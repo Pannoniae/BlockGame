@@ -21,7 +21,9 @@ public class PlayerRenderer : MobRenderer<Player> {
     }
 
     public void render(MatrixStack mat, Entity e, float scale, double interp, bool forceRender) {
-        if (e is not Player player) return;
+        if (e is not Player player) {
+            return;
+        }
 
         // don't render local player in first person (unless forced)
         bool isLocalPlayer = e == Game.player;

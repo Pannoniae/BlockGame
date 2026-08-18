@@ -30,32 +30,55 @@ public class Stairs : Block {
     // Corner detection: 0=none, 1=inner (quarter), 2=outer (3/4)
     // Inner: my step side adjacent to neighbor's side → step shrinks to quarter
     // Outer: my floor side adjacent to neighbor's side → step expands to 3/4
-    static (int type, int dir) detectCorner(World world, int x, int y, int z, byte facing) {
+    static (int type, int dir) detectCorner(BlockRenderer br, byte facing) {
         // facing→dir: 0=+X→1, 1=-X→0, 2=+Z→2, 3=-Z→3
         int stepDir = facing <= 1 ? (1 - facing) : facing;
         int floorDir = stepDir ^ 1; // opposite: 0↔1, 2↔3
 
         // Check step direction → inner corner
-        var r = checkNeighbor(world, x, y, z, facing, stepDir, 1);
+        var r = checkNeighbor(br, facing, stepDir, 1);
         if (r.type != 0) return r;
 
         // Check floor direction → outer corner
+        return checkNeighbor(br, facing, floorDir, 2);
+    }
+
+    static (int type, int dir) checkNeighbor(BlockRenderer br, byte myFacing, int dir, int type) {
+        offsetOf(dir, out var dx, out var dz);
+        return cornerOf(br.getBlockCached(dx, 0, dz), myFacing, type);
+    }
+
+    static (int type, int dir) detectCorner(World world, int x, int y, int z, byte facing) {
+        int stepDir = facing <= 1 ? (1 - facing) : facing;
+        int floorDir = stepDir ^ 1;
+
+        var r = checkNeighbor(world, x, y, z, facing, stepDir, 1);
+        if (r.type != 0) return r;
+
         return checkNeighbor(world, x, y, z, facing, floorDir, 2);
     }
 
     static (int type, int dir) checkNeighbor(World world, int x, int y, int z, byte myFacing, int dir, int type) {
-        int nx = x, nz = z;
+        offsetOf(dir, out var dx, out var dz);
+        return cornerOf(world.getBlockRaw(x + dx, y, z + dz), myFacing, type);
+    }
+
+    static void offsetOf(int dir, out int dx, out int dz) {
+        dx = 0;
+        dz = 0;
         switch (dir) {
-            case 0: nx--; break;
-            case 1: nx++; break;
-            case 2: nz++; break;
-            case 3: nz--; break;
+            case 0: dx = -1; break;
+            case 1: dx = 1; break;
+            case 2: dz = 1; break;
+            case 3: dz = -1; break;
         }
+    }
 
-        var nid = world.getBlock(nx, y, nz);
-        if (!isStairs(nid)) return (0, 0);
+    /** the actual decision, on an already-fetched neighbour. n is packed id + metadata. */
+    static (int type, int dir) cornerOf(uint n, byte myFacing, int type) {
+        if (!isStairs(n.getID())) return (0, 0);
 
-        var nFacing = getFacing(world.getBlockRaw(nx, y, nz).getMetadata());
+        var nFacing = getFacing(n.getMetadata());
         if (!isPerpendicular(myFacing, nFacing)) return (0, 0);
 
         // cornerDir = neighbor's step direction (determines which quadrant)
@@ -73,10 +96,7 @@ public class Stairs : Block {
         var facing = getFacing(meta);
         var flipped = isFlipped(meta);
 
-        // corner detection needs world coords (x,y,z are world coords when meshing, 0,0,0 for GUI)
-        var (cornerType, cornerDir) = br.world != null
-            ? detectCorner(br.world, x, y, z, facing)
-            : (0, 0);
+        var (cornerType, cornerDir) = detectCorner(br, facing);
 
         // renderCube needs local coords (0-15)
         int lx = x & 15, ly = y & 15, lz = z & 15;

@@ -30,11 +30,6 @@ public class Mob(World world, string type) : Entity(world, type) {
     private const float CHANCE_START_WANDERING = 0.008f; // when idle
     private const float CHANCE_STOP_WANDERING = 0.005f; // when moving
 
-    // mp interpolation
-    public Vector3D targetPos;
-    public Vector3 targetRot;
-    public int interpolationTicks;
-
     /*
      * The path that this mob is currently following (can be null)
      */
@@ -292,10 +287,14 @@ public class Mob(World world, string type) : Entity(world, type) {
     }
 
     private void followPath(double dt) {
-        if (path == null || path.isFinished()) return;
+        if (path == null || path.isFinished()) {
+            return;
+        }
 
         var currentTarget = path.getCurrentTarget();
-        if (currentTarget == null) return;
+        if (currentTarget == null) {
+            return;
+        }
 
         var target = currentTarget.Value;
         var dist = Vector3D.Distance(position.withoutY(), target.withoutY());
@@ -325,7 +324,9 @@ public class Mob(World world, string type) : Entity(world, type) {
 
     private void lookAt(Vector3D pos, double dt) {
         var dir = pos - position;
-        if (dir.Length() < 0.01) return;
+        if (dir.Length() < 0.01) {
+            return;
+        }
 
         var yaw = Meth.rad2deg((float)Math.Atan2(dir.X, dir.Z));
         var pitch = Meth.rad2deg((float)Math.Atan2(-dir.Y, Math.Sqrt(dir.X * dir.X + dir.Z * dir.Z)));
@@ -406,49 +407,8 @@ public class Mob(World world, string type) : Entity(world, type) {
         base.updateTimers(dt);
     }
 
-    public override void update(double dt) {
-        // multiplayer client: skip AI and physics for NON-PLAYER mobs, just interpolate
-        // NOTE: Player extends Mob, so we need to exclude Player subclasses!
-        if (!world.isServer && this is not Player) {
-            // set prev
-            savePrevVars();
-
-            // interpolate towards target position/rotation
-            if (interpolationTicks > 0) {
-                var t = 1.0 / interpolationTicks;
-                position = Vector3D.Lerp(position, targetPos, t);
-                rotation = Vector3.Lerp(rotation, targetRot, (float)t);
-                interpolationTicks--;
-            }
-
-            // derive velocity from movement for animation
-            if (dt > 0) {
-                velocity = (position - prevPosition) / dt;
-            }
-
-            // update body rotation, animation, timers
-            updateBodyRotation(dt);
-            updateAnimation(dt);
-            updateTimers(dt);
-
-            // update AABB
-            aabb = calcAABB(position);
-            return;
-        }
-
-        // server/singleplayer OR player: run normal update with AI and physics
-        base.update(dt);
-    }
-
     protected override void prePhysics(double dt) {
         AI(dt);
-    }
-
-    /** called when receiving position update from server (client-side) */
-    public virtual void mpInterpolate(Vector3D pos, Vector3 rot) {
-        targetPos = pos;
-        targetRot = rot;
-        interpolationTicks = 4; // interpolate over 4 ticks (~67ms)
     }
 
     protected override void checkFallDamage(double dt) {
@@ -537,7 +497,6 @@ public class Mob(World world, string type) : Entity(world, type) {
 
     protected override void updateFire(double dt) {
         if (fireTicks > 0) {
-            fireTicks--;
             fireDamageTicks++;
 
             // non-hostile mobs take normal fire damage

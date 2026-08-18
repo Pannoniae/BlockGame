@@ -8,8 +8,8 @@ public partial class OverworldWorldGenerator {
 
     public const int WATER_LEVEL = 64;
 
-    public void generate(ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
+    public void generate(Chunk chunk) {
+        var coord = chunk.coord;
         
         var densityMap = new float[Chunk.CHUNKSIZE, Chunk.CHUNKSIZE];
         

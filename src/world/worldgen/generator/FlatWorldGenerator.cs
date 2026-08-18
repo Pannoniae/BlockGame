@@ -16,10 +16,8 @@ public class FlatWorldGenerator : WorldGenerator {
         // none!
     }
 
-    public void generate(ChunkCoord coord) {
+    public void generate(Chunk chunk) {
         // fill up to 5 blocks
-
-        var chunk = world.getChunk(coord);
 
         for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {

@@ -16,7 +16,9 @@ public class MobRenderer<T> : EntityRenderer<T> where T : Mob {
     }
 
     public virtual void render(MatrixStack mat, Entity e, float scale, double interp) {
-        if (e is not Mob mob) return;
+        if (e is not Mob mob) {
+            return;
+        }
 
         // interpolate animation state
         var apos = float.Lerp(mob.papos, mob.apos, (float)interp);

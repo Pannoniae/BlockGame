@@ -145,12 +145,22 @@ public class OrientedBoundingBox
                 }
 
                 // update the overall tMin and tMax if necessary
-                if (t1 > tMin) tMin = t1;
-                if (t2 < tMax) tMax = t2;
+                if (t1 > tMin) {
+                    tMin = t1;
+                }
+
+                if (t2 < tMax) {
+                    tMax = t2;
+                }
 
                 // try to break out of the loop as fast as possible by checking for some conditions
-                if (tMin > tMax) return false; // ray misses the box
-                if (tMax < 0) return false; // box is behind the ray origin
+                if (tMin > tMax) {
+                    return false; // ray misses the box
+                }
+
+                if (tMax < 0) {
+                    return false; // box is behind the ray origin
+                }
             }
             else
             {
@@ -185,12 +195,22 @@ public class OrientedBoundingBox
                 }
 
                 // update the overall tMin and tMax if necessary
-                if (t1 > tMin) tMin = t1;
-                if (t2 < tMax) tMax = t2;
+                if (t1 > tMin) {
+                    tMin = t1;
+                }
+
+                if (t2 < tMax) {
+                    tMax = t2;
+                }
 
                 // try to break out of the loop as fast as possible by checking for some conditions
-                if (tMin > tMax) return false; // ray misses the box
-                if (tMax < 0) return false; // box is behind the ray origin
+                if (tMin > tMax) {
+                    return false; // ray misses the box
+                }
+
+                if (tMax < 0) {
+                    return false; // box is behind the ray origin
+                }
             }
             else
             {
@@ -225,12 +245,22 @@ public class OrientedBoundingBox
                 }
 
                 // update the overall tMin and tMax if necessary
-                if (t1 > tMin) tMin = t1;
-                if (t2 < tMax) tMax = t2;
+                if (t1 > tMin) {
+                    tMin = t1;
+                }
+
+                if (t2 < tMax) {
+                    tMax = t2;
+                }
 
                 // try to break out of the loop as fast as possible by checking for some conditions
-                if (tMin > tMax) return false; // ray misses the box
-                if (tMax < 0) return false; // box is behind the ray origin
+                if (tMin > tMax) {
+                    return false; // ray misses the box
+                }
+
+                if (tMax < 0) {
+                    return false; // box is behind the ray origin
+                }
             }
             else
             {

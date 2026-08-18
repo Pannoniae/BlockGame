@@ -156,7 +156,9 @@ public class GraphicsSettingsMenu : Menu {
         }
         else {
             // clamp setting if per-sample was selected but not supported
-            if (settings.ssaaMode >= 2) settings.ssaaMode = 0;
+            if (settings.ssaaMode >= 2) {
+                settings.ssaaMode = 0;
+            }
         }
 
         var ssaaMode = new ToggleButton(this, "ssaaMode", false, settings.ssaaMode, ssaaModeOptions.ToArray());

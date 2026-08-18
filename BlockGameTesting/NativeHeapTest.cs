@@ -100,8 +100,13 @@ public unsafe class NativeHeapTest {
         }
         finally {
             // cleanup
-            if (obj1 != null) CursedObject.FreeNative(obj1);
-            if (obj2 != null) CursedObject.FreeNative(obj2);
+            if (obj1 != null) {
+                CursedObject.FreeNative(obj1);
+            }
+
+            if (obj2 != null) {
+                CursedObject.FreeNative(obj2);
+            }
         }
     }
 
@@ -208,9 +213,17 @@ public unsafe class NativeHeapTest {
             Assert.That(obj1.next.next, Is.Not.Null);
         }
         finally {
-            if (obj1 != null) CursedObject.FreeNative(obj1);
-            if (obj2 != null) CursedObject.FreeNative(obj2);
-            if (obj3 != null) CursedObject.FreeNative(obj3);
+            if (obj1 != null) {
+                CursedObject.FreeNative(obj1);
+            }
+
+            if (obj2 != null) {
+                CursedObject.FreeNative(obj2);
+            }
+
+            if (obj3 != null) {
+                CursedObject.FreeNative(obj3);
+            }
         }
     }
 }

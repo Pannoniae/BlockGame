@@ -38,10 +38,14 @@ public class Ladder : Block {
     public override byte maxValidMetadata() => 3;
 
     public override bool canPlace(World world, int x, int y, int z, Placement info) {
-        if (!base.canPlace(world, x, y, z, info)) return false;
+        if (!base.canPlace(world, x, y, z, info)) {
+            return false;
+        }
 
         // can't place on top or bottom faces
-        if (info.face is RawDirection.UP or RawDirection.DOWN) return false;
+        if (info.face is RawDirection.UP or RawDirection.DOWN) {
+            return false;
+        }
 
         // check if there's a solid block behind where the ladder would be placed
         var o = Direction.getDirection(info.face.opposite());

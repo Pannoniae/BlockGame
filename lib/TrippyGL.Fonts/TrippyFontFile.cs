@@ -32,18 +32,22 @@ namespace TrippyGL.Fonts
         /// </summary>
         public void ThrowIfAnyNull()
         {
-            if (FontDatas == null || FontDatas.Length == 0)
+            if (FontDatas == null || FontDatas.Length == 0) {
                 throw new InvalidOperationException(nameof(FontDatas) + " can't be null nor empty.");
+            }
 
-            if (FontDatas.Length > ushort.MaxValue)
+            if (FontDatas.Length > ushort.MaxValue) {
                 throw new InvalidOperationException("Too many items in " + nameof(FontDatas));
+            }
 
-            if (Image == null)
+            if (Image == null) {
                 throw new InvalidOperationException(nameof(Image) + " can't be null.");
+            }
 
             for (int i = 0; i < FontDatas.Length; i++)
-                if (FontDatas[i] == null)
+                if (FontDatas[i] == null) {
                     throw new InvalidOperationException("The elements in the " + nameof(FontDatas) + "can't be null.");
+                }
         }
 
         /// <summary>
@@ -94,8 +98,9 @@ namespace TrippyGL.Fonts
         /// </summary>
         public static TrippyFontFile FromStream(Stream stream)
         {
-            if (stream == null)
+            if (stream == null) {
                 throw new ArgumentNullException(nameof(stream));
+            }
 
             return FromStream(new BinaryReader(stream));
         }
@@ -105,11 +110,13 @@ namespace TrippyGL.Fonts
         /// </summary>
         public static TrippyFontFile FromStream(BinaryReader streamReader)
         {
-            if (streamReader == null)
+            if (streamReader == null) {
                 throw new ArgumentNullException(nameof(streamReader));
+            }
 
-            if (!ReadPreamble(streamReader.BaseStream))
+            if (!ReadPreamble(streamReader.BaseStream)) {
                 throw new FontLoadingException("Wrong preamble. Ensure you're loading the correct data.");
+            }
 
             streamReader.ReadInt32();
             streamReader.ReadInt32();
@@ -118,8 +125,9 @@ namespace TrippyGL.Fonts
 
             ushort fontCount = streamReader.ReadUInt16();
 
-            if (fontCount == 0)
+            if (fontCount == 0) {
                 throw new FontLoadingException("Font count can't be 0.");
+            }
 
             TextureFontData[] fontDatas = new TextureFontData[fontCount];
             for (int i = 0; i < fontDatas.Length; i++)
@@ -155,8 +163,9 @@ namespace TrippyGL.Fonts
         /// </summary>
         public void WriteToStream(BinaryWriter streamWriter)
         {
-            if (streamWriter == null)
+            if (streamWriter == null) {
                 throw new ArgumentNullException(nameof(streamWriter));
+            }
 
             ThrowIfAnyNull();
 

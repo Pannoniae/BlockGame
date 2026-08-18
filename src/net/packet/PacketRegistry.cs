@@ -1,4 +1,5 @@
-﻿using BlockGame.util;
+﻿using System.Buffers.Binary;
+using BlockGame.util;
 
 namespace BlockGame.net.packet;
 
@@ -34,6 +35,7 @@ public class PacketRegistry {
         register(0x11, typeof(UnloadChunkPacket));
         register(0x12, typeof(BlockChangePacket));
         register(0x13, typeof(MultiBlockChangePacket));
+        register(0x14, typeof(LightUpdatePacket));
         register(0x15, typeof(TimeUpdatePacket));
 
         // entity sync (0x20-0x2F)
@@ -48,7 +50,6 @@ public class PacketRegistry {
         register(0x28, typeof(PlayerHealthPacket));
         register(0x29, typeof(EntityActionPacket));
         register(0x2A, typeof(TeleportPacket));
-        register(0x2B, typeof(EntityPositionDeltaPacket));
         register(0x2C, typeof(AddEffectPacket));
         register(0x2D, typeof(RemoveEffectPacket));
 
@@ -90,6 +91,7 @@ public class PacketRegistry {
         register(0x70, typeof(ChatMessagePacket));
         register(0x71, typeof(CommandPacket));
         register(0x72, typeof(RenderDistancePacket));
+        register(0x73, typeof(ServerStatsPacket));
     }
 
 
@@ -106,6 +108,14 @@ public class PacketRegistry {
 
     public static Type getType(int id) {
         return map[id];
+    }
+
+    public static Packet decode(ReadOnlySpan<byte> frame, out Type type) {
+        var id = BinaryPrimitives.ReadInt32LittleEndian(frame);
+        type = getType(id);
+        var packet = (Packet)Activator.CreateInstance(type)!;
+        packet.read(new PacketBuffer(frame[4..]));
+        return packet;
     }
 
     public static int getID(Type type) {

@@ -86,7 +86,9 @@ public static class ModLoader {
      */
     public static void invokeInit() {
         foreach (var mod in mods) {
-            if (mod.instance == null) continue;
+            if (mod.instance == null) {
+                continue;
+            }
 
             try {
                 Log.info("ModLoader", $"Initializing mod: {mod.internalname}");

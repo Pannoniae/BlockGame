@@ -1,4 +1,5 @@
-﻿using System.Buffers.Binary;
+﻿using System.Buffers;
+using System.Buffers.Binary;
 using System.Collections.Concurrent;
 using System.Net.Sockets;
 using BlockGame.main;
@@ -30,7 +31,9 @@ public struct OtherPlayerBreak {
 public class ClientConnection : INetEventListener {
     public static ClientConnection? instance;
 
-    private NetManager netManager;
+    private readonly NetManager netManager;
+
+    public MemPipe? mem;
 
     public NetPeer peer;
     public int ourEntityID = -1;
@@ -99,6 +102,7 @@ public class ClientConnection : INetEventListener {
     }
 
     public void disconnect() {
+        mem?.close();
         peer?.Disconnect();
         connected = false;
         entityID = -1;
@@ -107,8 +111,13 @@ public class ClientConnection : INetEventListener {
     }
 
     public void update() {
-        // poll network events
-        netManager.PollEvents();
+        if (mem != null) {
+            updateMem();
+        }
+        else {
+            // poll network events
+            netManager.PollEvents();
+        }
 
         // process all incoming packets on game thread
         while (incomingPackets.TryDequeue(out var packet)) {
@@ -164,16 +173,71 @@ public class ClientConnection : INetEventListener {
         // write packet data
         packet.write(buf);
 
-        // send to peer with packet's channel
         var bytes = PacketWriter.getBytesUnsafe();
-        peer.Send(bytes, packet.channel, method);
+
+        if (mem != null) {
+            mem.send(bytes);
+        }
+        else {
+            peer.Send(bytes, packet.channel, method);
+        }
 
         // track metrics
         Game.metrics.bytesSent += bytes.Length;
         Game.metrics.packetsSent++;
     }
 
+    private void updateMem() {
+        while (mem!.toClient.TryDequeue(out var frame)) {
+            try {
+                receive(frame.buf.AsSpan(0, frame.len));
+            }
+            catch (Exception e) {
+                Log.error("Error processing packet:");
+                Log.error(e);
+            }
+            finally {
+                ArrayPool<byte>.Shared.Return(frame.buf);
+            }
+        }
+    }
+
+    /** decode one frame and queue it for the game thread. */
+    private void receive(ReadOnlySpan<byte> frame) {
+        Game.metrics.bytesReceived += frame.Length;
+        Game.metrics.packetsReceived++;
+
+        // if this is a disconnect packet, set the flag immediately (before OnPeerDisconnected fires)
+        if (BinaryPrimitives.ReadInt32LittleEndian(frame) == 0x03) {
+            receivedDisconnectPacket = true;
+        }
+
+        var packet = PacketRegistry.decode(frame, out var type);
+
+        // track by packet type
+        Game.metrics.packets.TryAdd(type, 0);
+        Game.metrics.packets[type]++;
+
+        incomingPackets.Enqueue(packet);
+    }
+
+    public void connectMem(MemPipe pipe, string username) {
+        this.username = username;
+        mem = pipe;
+        connected = true;
+        Log.info("Connected to the integrated server");
+
+        send(new HugPacket {
+            netVersion = Constants.netVersion,
+            username = username,
+            version = Constants.VERSION,
+            contentHash = Constants.contentHash
+        }, DeliveryMethod.ReliableOrdered);
+    }
+
     public void stop() {
+        mem?.close();
+        mem = null;
         netManager.Stop();
     }
 
@@ -290,36 +354,7 @@ public class ClientConnection : INetEventListener {
     public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
         try {
             // get span directly from reader - no copy
-            var span = reader.RawData.AsSpan(reader.Position, reader.AvailableBytes);
-            int totalLen = span.Length;
-
-            // track metrics
-            Game.metrics.bytesReceived += totalLen;
-            Game.metrics.packetsReceived++;
-
-            // read packet ID directly from span
-            int packetID = BinaryPrimitives.ReadInt32LittleEndian(span);
-            span = span[4..];
-
-            // if this is a disconnect packet, set the flag immediately (before OnPeerDisconnected fires)
-            if (packetID == 0x03) {
-                receivedDisconnectPacket = true;
-            }
-
-            // create packet instance
-            var type = PacketRegistry.getType(packetID);
-            var packet = (Packet)Activator.CreateInstance(type)!;
-
-            // read from span
-            var buf = new PacketBuffer(span);
-            packet.read(buf);
-
-            // track by packet type
-            Game.metrics.packets.TryAdd(type, 0);
-            Game.metrics.packets[type]++;
-
-            // queue for game thread processing
-            incomingPackets.Enqueue(packet);
+            receive(reader.RawData.AsSpan(reader.Position, reader.AvailableBytes));
         }
         catch (Exception e) {
             Log.error($"Error processing packet: {e}");

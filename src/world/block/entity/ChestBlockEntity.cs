@@ -56,19 +56,30 @@ public class ChestBlockEntity : BlockEntity, Inventory {
     }
 
     public ItemStack getStack(int index) {
-        if (index < 0 || index >= slots.Length) return ItemStack.EMPTY;
+        if (index < 0 || index >= slots.Length) {
+            return ItemStack.EMPTY;
+        }
+
         return slots[index];
     }
 
     public void setStack(int index, ItemStack stack) {
-        if (index < 0 || index >= slots.Length) return;
+        if (index < 0 || index >= slots.Length) {
+            return;
+        }
+
         slots[index] = stack;
     }
 
     public ItemStack removeStack(int index, int count) {
-        if (index < 0 || index >= slots.Length) return ItemStack.EMPTY;
+        if (index < 0 || index >= slots.Length) {
+            return ItemStack.EMPTY;
+        }
+
         var stack = slots[index];
-        if (stack == ItemStack.EMPTY || count <= 0) return ItemStack.EMPTY;
+        if (stack == ItemStack.EMPTY || count <= 0) {
+            return ItemStack.EMPTY;
+        }
 
         var removeAmount = Math.Min(count, stack.quantity);
         var removed = new ItemStack(stack.getItem(), removeAmount, stack.metadata);
@@ -82,7 +93,10 @@ public class ChestBlockEntity : BlockEntity, Inventory {
     }
 
     public ItemStack clear(int index) {
-        if (index < 0 || index >= slots.Length) return ItemStack.EMPTY;
+        if (index < 0 || index >= slots.Length) {
+            return ItemStack.EMPTY;
+        }
+
         var stack = slots[index];
         slots[index] = ItemStack.EMPTY;
         return stack;
@@ -95,9 +109,14 @@ public class ChestBlockEntity : BlockEntity, Inventory {
     }
 
     public bool add(int index, int count) {
-        if (index < 0 || index >= slots.Length || count <= 0) return false;
+        if (index < 0 || index >= slots.Length || count <= 0) {
+            return false;
+        }
+
         var stack = slots[index];
-        if (stack == ItemStack.EMPTY) return false;
+        if (stack == ItemStack.EMPTY) {
+            return false;
+        }
 
         stack.quantity += count;
         return true;

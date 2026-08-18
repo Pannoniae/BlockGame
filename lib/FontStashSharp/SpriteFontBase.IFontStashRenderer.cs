@@ -104,9 +104,11 @@ namespace FontStashSharp
 			}
 #endif
 
-			if (source.IsNull) return 0.0f;
+			if (source.IsNull) {
+                return 0.0f;
+            }
 
-			Matrix transformation;
+            Matrix transformation;
 			var scale = sourceScale ?? Utility.DefaultScale;
 			Prepare(position, rotation, origin, ref scale, out transformation);
 
@@ -121,10 +123,11 @@ namespace FontStashSharp
 			{
 				int codepoint;
 				Color color;
-				if (!source.GetNextCodepoint(out codepoint))
-					break;
+				if (!source.GetNextCodepoint(out codepoint)) {
+                    break;
+                }
 
-				if (codepoint == '\n')
+                if (codepoint == '\n')
 				{
 					if (textStyle != TextStyle.None && firstColor != null)
 					{
@@ -264,9 +267,11 @@ namespace FontStashSharp
 			}
 #endif
 
-			if (source.IsNull) return 0.0f;
+			if (source.IsNull) {
+                return 0.0f;
+            }
 
-			Matrix transformation;
+            Matrix transformation;
 			var scale = sourceScale ?? Utility.DefaultScale;
 			Prepare(position, rotation, origin, ref scale, out transformation);
 
@@ -281,10 +286,11 @@ namespace FontStashSharp
 			{
 				int codepoint;
 				Color color;
-				if (!source.GetNextCodepoint(out codepoint))
-					break;
+				if (!source.GetNextCodepoint(out codepoint)) {
+                    break;
+                }
 
-				if (codepoint == '\n')
+                if (codepoint == '\n')
 				{
 					if (textStyle != TextStyle.None && firstColor != null)
 					{

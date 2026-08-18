@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using BlockGame.net.packet;
 using BlockGame.util;
 using BlockGame.world.block;
@@ -18,21 +19,20 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     private int vertCount;
     private int vertCapacity;
     private int density;
-    
-    // light vertices
-    private byte[] lightVertices;
-    private byte[]? lightIndices;
-    private ushort[] lightRefs;
-    private int lightCount;
-    private int lightVertCount;
-    private int lightVertCapacity;
-    private int lightDensity;
+
+    private byte[]? skyChannel;
+    private byte[]? blockChannel;
+    private byte skyValue;
+    private byte blockValue;
+
+    private const int LIGHT_PLANE_BYTES = TOTAL_BLOCKS / 2;
 
     public int blockCount;
     public int translucentCount;
     public int fullBlockCount;
     public int randomTickCount;
     public int renderTickCount;
+    public int lightSourceCount;
 
     /// <summary>
     /// Has the block storage been initialized?
@@ -45,8 +45,10 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     private const int TOTAL_BLOCKS = Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE;
     private const int TOTAL_BIOMES = Chunk.BIOMESIZE * Chunk.BIOMESIZE * Chunk.BIOMESIZE;
     private const int INITIAL_SIZE = 2;
+
+    /** Pan can't write memory-safe code WHATSOEVER so you know what, let's just oversize the array so we don't crash out */
+    private const int INDEXSLOP = 4;
     private const int SMALL_ARRAY = 16;
-    private const int INITIAL_LIGHT_SIZE = 2;
 
     // YZX because the internet said so
     public ushort this[int x, int y, int z] {
@@ -64,20 +66,193 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
             var newBlock = value;
             var newIdx = get(newBlock);
             
-            decrefcount(blockRefs, oldIdx);
+            var freed = decrefcount(blockRefs, oldIdx);
             increfcount(blockRefs, newIdx);
             
             setIndexRaw(coord, newIdx);
             
             updateCounts(oldID, value, x, y, z);
             
-            tryCompact();
+            if (freed) {
+                tryCompact();
+            }
         }
     }
 
     public uint getRaw(int x, int y, int z) {
         var index = getIndex(x, y, z);
         return vertices[index];
+    }
+
+    /**
+     * Decode dst.Length consecutive block coords starting at `coord` in (YZX) order.
+     *
+     * @param coord The starting block coordinate (0-4095) to read from.
+     * @param dst The destination span to write the decoded block values into. Must be at least 1 element long.
+     */
+    public void getRawBatch(int coord, Span<uint> dst) {
+        var pal = vertices;
+        var src = indices;
+        var n = dst.Length;
+
+        // unaligned or exotic packing just do it the slow way
+        if (density is not (0 or 1 or 2 or 4 or 8) || (coord & 7) != 0 || (n & 7) != 0) {
+            for (var i = 0; i < n; i++) {
+                dst[i] = pal[getIndexRaw(coord + i, src, density)];
+            }
+            return;
+        }
+
+        switch (density) {
+            case 0:
+                dst.Fill(pal[0]);
+                return;
+            case 8:
+                for (var i = 0; i < n; i++) {
+                    dst[i] = pal[src![coord + i]];
+                }
+                return;
+            case 4: {
+                var b = coord >> 1;
+                for (var i = 0; i < n; i += 2, b++) {
+                    var p = src![b];
+                    dst[i] = pal[p & 15];
+                    dst[i + 1] = pal[p >> 4];
+                }
+                return;
+            }
+            case 2: {
+                var b = coord >> 2;
+                for (var i = 0; i < n; i += 4, b++) {
+                    var p = src![b];
+                    dst[i] = pal[p & 3];
+                    dst[i + 1] = pal[(p >> 2) & 3];
+                    dst[i + 2] = pal[(p >> 4) & 3];
+                    dst[i + 3] = pal[p >> 6];
+                }
+                return;
+            }
+            default: { // 1
+                var b = coord >> 3;
+                for (var i = 0; i < n; i += 8, b++) {
+                    var p = src![b];
+                    dst[i] = pal[p & 1];
+                    dst[i + 1] = pal[(p >> 1) & 1];
+                    dst[i + 2] = pal[(p >> 2) & 1];
+                    dst[i + 3] = pal[(p >> 3) & 1];
+                    dst[i + 4] = pal[(p >> 4) & 1];
+                    dst[i + 5] = pal[(p >> 5) & 1];
+                    dst[i + 6] = pal[(p >> 6) & 1];
+                    dst[i + 7] = pal[p >> 7];
+                }
+                return;
+            }
+        }
+    }
+
+    // ---- light plane primitives -------------------------------------------------------------------
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static byte getNibble(byte[] plane, int coord) {
+        return (byte)((plane[coord >> 1] >> ((coord & 1) << 2)) & 0xF);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void setNibble(byte[] plane, int coord, byte val) {
+        ref var b = ref plane[coord >> 1];
+        var sh = (coord & 1) << 2;
+        b = (byte)((b & ~(0xF << sh)) | (val << sh));
+    }
+
+    /** one value -> actual array */
+    private static byte[] explode(byte uniform) {
+        var p = arrayPool.grab(LIGHT_PLANE_BYTES);
+        p.AsSpan(0, LIGHT_PLANE_BYTES).Fill((byte)(uniform | (uniform << 4)));
+        return p;
+    }
+
+    private static bool isUniform(byte[] plane, out byte val) {
+        var first = plane[0];
+        val = (byte)(first & 0xF);
+        if ((first >> 4) != val) {
+            return false;
+        }
+
+        return !plane.AsSpan(0, LIGHT_PLANE_BYTES).ContainsAnyExcept(first);
+    }
+
+    /**
+     * Decode dst.Length consecutive light bytes (blocklight in the high nibble, skylight in the low)
+     * starting at `coord`.
+     */
+    public void getLightBatch(int coord, Span<byte> dst) {
+        var sky = skyChannel;
+        var bl = blockChannel;
+        var n = dst.Length;
+
+        if (sky == null && bl == null) {
+            dst.Fill((byte)((blockValue << 4) | skyValue));
+            return;
+        }
+
+        // both planes real
+        if (sky != null && bl != null) {
+            if ((coord & 1) == 0 && (n & 1) == 0) {
+                var b = coord >> 1;
+                for (var i = 0; i < n; i += 2, b++) {
+                    int s = sky[b], k = bl[b];
+                    dst[i] = (byte)(((k & 0xF) << 4) | (s & 0xF));
+                    dst[i + 1] = (byte)((k & 0xF0) | (s >> 4));
+                }
+
+                return;
+            }
+
+            for (var i = 0; i < n; i++) {
+                var c = coord + i;
+                dst[i] = (byte)((getNibble(bl, c) << 4) | getNibble(sky, c));
+            }
+
+            return;
+        }
+
+        if (bl == null) {
+            var hi = (byte)(blockValue << 4);
+            if ((coord & 1) == 0 && (n & 1) == 0) {
+                var b = coord >> 1;
+                for (var i = 0; i < n; i += 2, b++) {
+                    int s = sky![b];
+                    dst[i] = (byte)(hi | (s & 0xF));
+                    dst[i + 1] = (byte)(hi | (s >> 4));
+                }
+
+                return;
+            }
+
+            for (var i = 0; i < n; i++) {
+                dst[i] = (byte)(hi | getNibble(sky!, coord + i));
+            }
+
+            return;
+        }
+
+        {
+            var lo = skyValue;
+            if ((coord & 1) == 0 && (n & 1) == 0) {
+                var b = coord >> 1;
+                for (var i = 0; i < n; i += 2, b++) {
+                    int k = bl[b];
+                    dst[i] = (byte)(((k & 0xF) << 4) | lo);
+                    dst[i + 1] = (byte)((k & 0xF0) | lo);
+                }
+
+                return;
+            }
+
+            for (var i = 0; i < n; i++) {
+                dst[i] = (byte)((getNibble(bl, coord + i) << 4) | lo);
+            }
+        }
     }
 
     public void setRaw(int x, int y, int z, uint value) {
@@ -88,7 +263,7 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
         
         var newIndex = get(value);
         
-        decrefcount(blockRefs, oldIndex);
+        var freed = decrefcount(blockRefs, oldIndex);
         increfcount(blockRefs, newIndex);
         
         setIndexRaw(coord, newIndex);
@@ -96,7 +271,9 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
         var newID = value.getID();
         updateCounts(oldID, newID, x, y, z);
         
-        tryCompact();
+        if (freed) {
+            tryCompact();
+        }
     }
 
     public byte getMetadata(int x, int y, int z) {
@@ -113,12 +290,14 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
         
         var newIdx = get(newValue);
         
-        decrefcount(blockRefs, oldIndex);
+        var freed = decrefcount(blockRefs, oldIndex);
         increfcount(blockRefs, newIdx);
         
         setIndexRaw(coord, newIdx);
         
-        tryCompact();
+        if (freed) {
+            tryCompact();
+        }
     }
 
     private int getIndex(int x, int y, int z) {
@@ -134,100 +313,48 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     }
     
 
-    private int getLightIndexRaw(int blockCoord) {
-        return getIndexRaw(blockCoord, lightIndices, lightDensity);
-    }
 
-    private void setLightIndexRaw(int blockCoord, int index) {
-        setIndexRaw(blockCoord, index, lightIndices, lightDensity);
-    }
-
+    /**
+     * The trick is that one unaligned uint load covers EVERY bit width because bitsPerIdx tops out at 12 which is 12 + 7 = 19 bits and
+     * always fits in the 32 bits we read. So we don't need to do the switchcaseslop anymore, we just "adjust" the result to clip it in the end.
+     * Yes this will overread, hence the <see cref="INDEXSLOP"/> constant
+     */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int getIndexRaw(int coord, byte[]? src, int bits) {
-        switch (bits) {
-            case 0:
-                return 0;
-            case 1:
-                return (src![coord >> 3] >> (coord & 7)) & 1;
-            case 2:
-                return (src![coord >> 2] >> ((coord & 3) << 1)) & 3;
-            case 4:
-                return (src![coord >> 1] >> ((coord & 1) << 2)) & 15;
-            case 8:
-                return src![coord];
+        if (bits == 0) {
+            return 0;
         }
 
-        return uncommonGetIndexRaw(coord, src, bits);
-    }
-
-    private static int uncommonGetIndexRaw(int coord, byte[]? src, int bits) {
         var bitIndex = coord * bits;
-        var i = bitIndex >> 3;
-        var bitOffset = bitIndex & 7;
-
-        var result = 0;
-        var rem = bits;
-
-        while (rem > 0) {
-            var theseBits = Math.Min(8 - bitOffset, rem);
-            var mask = (1 << theseBits) - 1;
-            var val = (src![i] >> bitOffset) & mask;
-
-            result |= val << (bits - rem);
-
-            rem -= theseBits;
-            bitOffset = 0;
-            i++;
-        }
-
-        return result;
+        ref var b = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(src!), bitIndex >> 3);
+        return (int)((Unsafe.ReadUnaligned<uint>(ref b) >> (bitIndex & 7)) & ((1u << bits) - 1));
     }
 
-    private static void setIndexRaw(int coord, int index, byte[] dest, int bits) {
-        switch (bits) {
-            case 0: 
-                return;
-            case 1: 
-                dest[coord >> 3] = (byte)((dest[coord >> 3] & ~(1 << (coord & 7))) | ((index & 1) << (coord & 7))); 
-                return;
-            case 2: 
-                dest[coord >> 2] = (byte)((dest[coord >> 2] & ~(3 << ((coord & 3) << 1))) | ((index & 3) << ((coord & 3) << 1))); 
-                return;
-            case 4: 
-                dest[coord >> 1] = (byte)((dest[coord >> 1] & ~(15 << ((coord & 1) << 2))) | ((index & 15) << ((coord & 1) << 2)));
-                return;
-            case 8: 
-                dest[coord] = (byte)index; 
-                return;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void setIndexRaw(int coord, int index, byte[]? dest, int bits) {
+        if (bits == 0) {
+            return;
         }
-        uncommonSetIndexRaw(coord, index, dest, bits);
-        
 
-    }
-
-    private static void uncommonSetIndexRaw(int coord, int index, byte[] dest, int bits) {
         var bitIndex = coord * bits;
-        var i = bitIndex >> 3;
-        var bitOffset = bitIndex & 7;
-
-        var rem = bits;
-
-        while (rem > 0) {
-            var theseBits = Math.Min(8 - bitOffset, rem);
-            var mask = (1 << theseBits) - 1;
-            var val = (index >> (bits - rem)) & mask;
-
-            dest[i] = (byte)((dest[i] & ~(mask << bitOffset)) | (val << bitOffset));
-
-            rem -= theseBits;
-            bitOffset = 0;
-            i++;
-        }
+        ref var b = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(dest!), bitIndex >> 3);
+        var sh = bitIndex & 7;
+        var mask = ((1u << bits) - 1) << sh;
+        var v = Unsafe.ReadUnaligned<uint>(ref b);
+        Unsafe.WriteUnaligned(ref b, (v & ~mask) | ((uint)index << sh));
     }
+
+    private int lastidx;
 
     private int get(uint blockValue) {
+        if (lastidx < vertCount && vertices[lastidx] == blockValue) {
+            return lastidx;
+        }
+
         // todo maybe use a dict for this? we just search linearly for now
         for (int i = 0; i < vertCount; i++) {
             if (vertices[i] == blockValue) {
+                lastidx = i;
                 return i;
             }
         }
@@ -247,40 +374,15 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
             resizeIndices(newBits, ref indices, ref count, ref density);
         }
         
-        return vertCount - 1;
+        lastidx = vertCount - 1;
+        return lastidx;
     }
     
-    private int getLight(byte lightValue) {
-        for (int i = 0; i < lightVertCount; i++) {
-            if (lightVertices[i] == lightValue) {
-                return i;
-            }
-        }
-        
-        if (lightVertCount >= lightVertCapacity) {
-            growLight();
-        }
-        
-        lightVertices[lightVertCount] = lightValue;
-        lightRefs[lightVertCount] = 0; // will be incremented by caller!
-        lightVertCount++;
-        
-        // check if we need to resize
-        var newBits = bitsPerIdx(lightVertCount);
-        if (newBits != lightDensity) {
-            resizeIndices(newBits, ref lightIndices, ref lightCount, ref lightDensity);
-        }
-        
-        return lightVertCount - 1;
-    }
 
     private void grow() {
         grow(arrayPoolU, ref vertices, ref blockRefs, ref vertCapacity, vertCount);
     }
     
-    private void growLight() {
-        grow(arrayPool, ref lightVertices, ref lightRefs, ref lightVertCapacity, lightVertCount);
-    }
     
     private static void grow<T>(VariableArrayPool<T> pool, ref T[] verticesArray, ref ushort[] refsArray, 
                                ref int capacity, int count) {
@@ -305,32 +407,25 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     }
 
 
-    private void tryCompact(bool isLight = false) {
-        var count = isLight ? lightVertCount : vertCount;
-        var refs = isLight ? lightRefs : blockRefs;
-        
-        if (count <= SMALL_ARRAY) {
+    private void tryCompact() {
+        if (vertCount <= SMALL_ARRAY) {
             return;
         }
 
         var unused = 0;
-        for (int i = 0; i < count; i++) {
-            if (refs[i] == 0) {
+        for (int i = 0; i < vertCount; i++) {
+            if (blockRefs[i] == 0) {
                 unused++;
             }
         }
-        
-        if (unused >= count / 4) {
-            if (isLight) compactLight(); else compact();
+
+        if (unused >= vertCount / 4) {
+            compact();
         }
     }
 
     private void compact() {
         compact(vertices, blockRefs, ref vertCount, ref indices, ref count, ref density, "vertices");
-    }
-    
-    private void compactLight() {
-        compact(lightVertices, lightRefs, ref lightVertCount, ref lightIndices, ref lightCount, ref lightDensity, "light vertices");
     }
     
     private static void compact<T>(T[] verticesArray, ushort[] refsArray, ref int count, 
@@ -386,6 +481,13 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static byte[] grabIndices(int len) {
+        var a = arrayPool.grab(len + INDEXSLOP);
+        Array.Clear(a, 0, len + INDEXSLOP);
+        return a;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int getIndicesSize(int bits) {
         return bits == 0 ? 0 : (TOTAL_BLOCKS * bits + 7) >> 3; // ceiling division by 8
     }
@@ -398,24 +500,27 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
         }
     }
 
+    /** true if this brought the count to zero - the only event that can make compaction worthwhile */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void decrefcount(ushort[] refCounts, int index) {
+    private static bool decrefcount(ushort[] refCounts, int index) {
         if (refCounts[index] > 0) {
-            refCounts[index]--;
+            return --refCounts[index] == 0;
         }
+        return false;
     }
 
     
     private static void resizeIndices(int newBits, ref byte[]? indices, ref int indicesLength, ref int bits) {
-        if (newBits == bits) return;
-        
+        if (newBits == bits) {
+            return;
+        }
+
         var oldBits = bits;
         
         // if growing from 0 bits, allocate indices array
         if (oldBits == 0) {
             indicesLength = getIndicesSize(newBits);
-            indices = arrayPool.grab(indicesLength);
-            Array.Clear(indices, 0, indicesLength);
+            indices = grabIndices(indicesLength);
             bits = newBits;
             return;
         }
@@ -435,9 +540,8 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
         var oldIndices = indices;
         var oldIndicesLength = indicesLength;
         indicesLength = getIndicesSize(newBits);
-        indices = arrayPool.grab(indicesLength);
-        Array.Clear(indices, 0, indicesLength);
-        
+        indices = grabIndices(indicesLength);
+
         for (int i = 0; i < TOTAL_BLOCKS; i++) {
             var oldIndex = getIndexRaw(i, oldIndices, oldBits);
             setIndexRaw(i, oldIndex, indices, newBits);
@@ -477,6 +581,15 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
         }
         else if (oldRenderTick && !renderTick) {
             renderTickCount--;
+        }
+
+        var oldEmits = Block.lightLevel[oldID] > 0;
+        var emits = Block.lightLevel[newID] > 0;
+        if (!oldEmits && emits) {
+            lightSourceCount++;
+        }
+        else if (oldEmits && !emits) {
+            lightSourceCount--;
         }
 
         var oldFullBlock = Block.isFullBlock(oldID);
@@ -562,16 +675,11 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
         blockRefs[0] = TOTAL_BLOCKS; // all blocks start as air
         vertCount = 1;
         density = 0;
-        
-        // initialize light vertices
-        lightVertCapacity = INITIAL_LIGHT_SIZE;
-        lightVertices = arrayPool.grab(lightVertCapacity);
-        lightRefs = arrayPoolUS.grab(lightVertCapacity);
-        
-        lightVertices[0] = 0;
-        lightRefs[0] = TOTAL_BLOCKS; // all start as no light
-        lightVertCount = 1;
-        lightDensity = 0;
+
+        skyChannel = null;
+        blockChannel = null;
+        skyValue = 0;
+        blockValue = 0;
         
         inited = true;
     }
@@ -592,6 +700,10 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
         return renderTickCount > 0;
     }
 
+    public bool hasLightSources() {
+        return lightSourceCount > 0;
+    }
+
     public bool isFull() {
         return fullBlockCount == TOTAL_BLOCKS;
     }
@@ -609,10 +721,10 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
         fullBlockCount = 0;
         randomTickCount = 0;
         renderTickCount = 0;
+        lightSourceCount = 0;
 
         // rebuild reference counts
         Array.Clear(blockRefs, 0, vertCount);
-        Array.Clear(lightRefs, 0, lightVertCount);
 
         for (int i = 0; i < TOTAL_BLOCKS; i++) {
             int x = i & 0xF;
@@ -623,10 +735,7 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
             var blockID = vertices[index].getID();
             
             blockRefs[index]++;
-            
-            var lightIndex = getLightIndexRaw(i);
-            lightRefs[lightIndex]++;
-            
+
             if (blockID != 0) {
                 blockCount++;
             }
@@ -638,7 +747,11 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
             if (Block.renderTick[blockID]) {
                 renderTickCount++;
             }
-            
+
+            if (Block.lightLevel[blockID] > 0) {
+                lightSourceCount++;
+            }
+
             if (Block.isFullBlock(blockID)) {
                 chunk.addToHeightMap(x, (yCoord << 4) + y, z);
                 fullBlockCount++;
@@ -653,66 +766,56 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte getLight(int x, int y, int z) {
         var coord = (y << 8) + (z << 4) + x;
-        var lightIndex = getLightIndexRaw(coord);
-        return lightVertices[lightIndex];
+        var s = skyChannel == null ? skyValue : getNibble(skyChannel, coord);
+        var b = blockChannel == null ? blockValue : getNibble(blockChannel, coord);
+        return (byte)((b << 4) | s);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void setLight(int x, int y, int z, byte val) {
-        var coord = (y << 8) + (z << 4) + x;
-        var oldIndex = getLightIndexRaw(coord);
-        var newIndex = getLight(val);
-        
-        decrefcount(lightRefs, oldIndex);
-        increfcount(lightRefs, newIndex);
-        
-        setLightIndexRaw(coord, newIndex);
-        
-        tryCompact(true);
+        setSkylight(x, y, z, (byte)(val & 0xF));
+        setBlocklight(x, y, z, (byte)(val >> 4));
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte skylight(int x, int y, int z) {
         var coord = (y << 8) + (z << 4) + x;
-        var lightIndex = getLightIndexRaw(coord);
-        var value = lightVertices[lightIndex];
-        return (byte)(value & 0xF);
+        return skyChannel == null ? skyValue : getNibble(skyChannel, coord);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte blocklight(int x, int y, int z) {
         var coord = (y << 8) + (z << 4) + x;
-        var lightIndex = getLightIndexRaw(coord);
-        var value = lightVertices[lightIndex];
-        return (byte)((value >> 4) & 0xF);
+        return blockChannel == null ? blockValue : getNibble(blockChannel, coord);
     }
 
     public void setSkylight(int x, int y, int z, byte val) {
         var coord = (y << 8) + (z << 4) + x;
-        var oldIndex = getLightIndexRaw(coord);
-        var oldValue = lightVertices[oldIndex];
-        var blocklight = (byte)((oldValue >> 4) & 0xF);
-        var newValue = (byte)((blocklight << 4) | val);
-        
-        var newIndex = getLight(newValue);
-        decrefcount(lightRefs, oldIndex);
-        increfcount(lightRefs, newIndex);
-        setLightIndexRaw(coord, newIndex);
-        
-        tryCompact(true);
+        var p = skyChannel;
+        if (p == null) {
+            // still uniform!
+            if (val == skyValue) {
+                return;
+            }
+
+            p = skyChannel = explode(skyValue);
+        }
+
+        setNibble(p, coord, val);
     }
 
     public void setBlocklight(int x, int y, int z, byte val) {
         var coord = (y << 8) + (z << 4) + x;
-        var oldIndex = getLightIndexRaw(coord);
-        var oldValue = lightVertices[oldIndex];
-        var skylight = (byte)(oldValue & 0xF);
-        var newValue = (byte)((val << 4) | skylight);
-        
-        var newIndex = getLight(newValue);
-        decrefcount(lightRefs, oldIndex);
-        increfcount(lightRefs, newIndex);
-        setLightIndexRaw(coord, newIndex);
-        
-        tryCompact(true);
+        var p = blockChannel;
+        if (p == null) {
+            if (val == blockValue) {
+                return;
+            }
+
+            p = blockChannel = explode(blockValue);
+        }
+
+        setNibble(p, coord, val);
     }
 
     // methods for serialization compatibility with WorldIO
@@ -736,25 +839,102 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int skillIssueIndexRaw(int coord) => getIndexRaw(coord);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public byte[] skillIssueLightVertices() => lightVertices;
+    /**
+     * As you can see even the "direct" access methods are not really direct because we suck
+     */
+    public void skillIssueLightPlanes(out byte[]? sky, out byte[]? block, out byte usky, out byte ubl) {
+        if (skyChannel != null && isUniform(skyChannel, out var us)) {
+            arrayPool.putBack(skyChannel);
+            skyChannel = null;
+            skyValue = us;
+        }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ushort[] skillIssueLightRefs() => lightRefs;
+        if (blockChannel != null && isUniform(blockChannel, out var ub)) {
+            arrayPool.putBack(blockChannel);
+            blockChannel = null;
+            blockValue = ub;
+        }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public int skillIssueLightVertCount() => lightVertCount;
+        sky = skyChannel;
+        block = blockChannel;
+        usky = skyValue;
+        ubl = blockValue;
+    }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public int skillIssueLightIndexRaw(int coord) => getLightIndexRaw(coord);
-    
+    public void setLightPlanes(byte[]? sky, byte[]? block, byte usky, byte ubl) {
+        if (skyChannel != null) {
+            arrayPool.putBack(skyChannel);
+        }
+
+        if (blockChannel != null) {
+            arrayPool.putBack(blockChannel);
+        }
+
+        skyChannel = sky;
+        blockChannel = block;
+        skyValue = usky;
+        blockValue = ubl;
+    }
+
     /**
      * Need a 4096 length byte array to write into!
      */
     public void getSerializationLight(byte[] light) {
-        for (int i = 0; i < TOTAL_BLOCKS; i++) {
-            var lightIndex = getLightIndexRaw(i);
-            light[i] = lightVertices[lightIndex];
+        getLightBatch(0, light.AsSpan(0, TOTAL_BLOCKS));
+    }
+
+    public void loadLight(ReadOnlySpan<byte> light) {
+        if (skyChannel != null) {
+            arrayPool.putBack(skyChannel);
+            skyChannel = null;
+        }
+
+        if (blockChannel != null) {
+            arrayPool.putBack(blockChannel);
+            blockChannel = null;
+        }
+
+        if (light.Length < TOTAL_BLOCKS) {
+            skyValue = 0;
+            blockValue = 0;
+            return;
+        }
+
+        skyValue = (byte)(light[0] & 0xF);
+        blockValue = (byte)(light[0] >> 4);
+
+        bool skyu = true, blu = true;
+        for (int i = 1; i < TOTAL_BLOCKS; i++) {
+            var v = light[i];
+            if ((v & 0xF) != skyValue) {
+                skyu = false;
+            }
+
+            if ((v >> 4) != blockValue) {
+                blu = false;
+            }
+
+            if (!skyu && !blu) {
+                break;
+            }
+        }
+
+        if (!skyu) {
+            var sp = arrayPool.grab(LIGHT_PLANE_BYTES);
+            for (int i = 0, b = 0; i < TOTAL_BLOCKS; i += 2, b++) {
+                sp[b] = (byte)((light[i] & 0xF) | ((light[i + 1] & 0xF) << 4));
+            }
+
+            skyChannel = sp;
+        }
+
+        if (!blu) {
+            var bp = arrayPool.grab(LIGHT_PLANE_BYTES);
+            for (int i = 0, b = 0; i < TOTAL_BLOCKS; i += 2, b++) {
+                bp[b] = (byte)((light[i] >> 4) | ((light[i + 1] >> 4) << 4));
+            }
+
+            blockChannel = bp;
         }
     }
 
@@ -768,41 +948,15 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
         vertices = arrayPoolU.grab(vertCapacity);
         blockRefs = arrayPoolUS.grab(vertCapacity);
 
-        lightVertCapacity = INITIAL_LIGHT_SIZE;
-        lightVertices = arrayPool.grab(lightVertCapacity);
-        lightRefs = arrayPoolUS.grab(lightVertCapacity);
-
         // reset counters
         vertices[0] = 0; // air block
         blockRefs[0] = 0; // will be set correctly by palette loading
         vertCount = 1;
         density = 0;
 
-        lightVertices[0] = 0x00; // no light
-        lightRefs[0] = 0; // will be set correctly by palette loading
-        lightVertCount = 1;
-        lightDensity = 0;
-
         // allocate initial indices
         count = getIndicesSize(density);
-        if (count > 0) {
-            indices = arrayPool.grab(count);
-            Array.Clear(indices, 0, count);
-        }
-        else {
-            indices = null;
-        }
-
-        // allocate initial light indices
-        lightCount = getIndicesSize(lightDensity);
-        if (lightCount > 0) {
-            lightIndices = arrayPool.grab(lightCount);
-            Array.Clear(lightIndices, 0, lightCount);
-        }
-        else {
-            lightIndices = null;
-        }
-
+        indices = count > 0 ? grabIndices(count) : null;
 
         // load block data
         for (int i = 0; i < blocks.Length; i++) {
@@ -811,17 +965,59 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
         }
 
         // load light data
-        for (int i = 0; i < lightData.Length && i < TOTAL_BLOCKS; i++) {
-            var lightIndex = getLight(lightData[i]);
-            setLightIndexRaw(i, lightIndex);
-        }
+        loadLight(lightData);
 
         inited = true;
         refreshCounts();
     }
 
+    public void loadFromPaletteWithPlanes(uint[] paletteBlocks, int paletteSize, byte[] paletteIndices,
+        byte[]? sky, byte[]? block, byte uSky, byte uBlk) {
+        loadBlockPalette(paletteBlocks, paletteSize, paletteIndices);
+
+        skyValue = uSky;
+        blockValue = uBlk;
+        skyChannel = copyPlane(sky);
+        blockChannel = copyPlane(block);
+
+        inited = true;
+        refreshCounts();
+    }
+
+    private static byte[]? copyPlane(byte[]? src) {
+        if (src == null || src.Length < LIGHT_PLANE_BYTES) {
+            return null;
+        }
+
+        var p = arrayPool.grab(LIGHT_PLANE_BYTES);
+        src.AsSpan(0, LIGHT_PLANE_BYTES).CopyTo(p);
+        return p;
+    }
+
     /** Load directly from NBT palette */
     public void loadFromPalette(uint[] paletteBlocks, int paletteSize, byte[] paletteIndices, byte[] lightPalette, int lightPaletteSize, byte[] lightIndices) {
+        loadBlockPalette(paletteBlocks, paletteSize, paletteIndices);
+
+        var flat = arrayPool.grab(TOTAL_BLOCKS);
+        var n = int.Min(lightIndices.Length, TOTAL_BLOCKS);
+        for (int i = 0; i < n; i++) {
+            var idx = lightIndices[i];
+            flat[i] = idx < lightPaletteSize ? lightPalette[idx] : (byte)0;
+        }
+
+        if (n < TOTAL_BLOCKS) {
+            Array.Clear(flat, n, TOTAL_BLOCKS - n);
+        }
+
+        loadLight(flat.AsSpan(0, TOTAL_BLOCKS));
+        arrayPool.putBack(flat);
+        arrayPool.putBack(lightPalette);
+
+        inited = true;
+        refreshCounts();
+    }
+
+    private void loadBlockPalette(uint[] paletteBlocks, int paletteSize, byte[] paletteIndices) {
         // return old arrays to pool
         ReleaseUnmanagedResources();
 
@@ -831,42 +1027,16 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
         vertCount = paletteSize;
         blockRefs = arrayPoolUS.grab(vertCapacity);
 
-        lightVertices = lightPalette;
-        lightVertCapacity = lightPalette.Length;
-        lightVertCount = lightPaletteSize;
-        lightRefs = arrayPoolUS.grab(lightVertCapacity);
-
         // count references by scanning indices
         Array.Clear(blockRefs, 0, paletteSize);
-        for (int i = 0; i < paletteIndices.Length; i++) {
-            int paletteIdx = paletteIndices[i];
+        foreach (int paletteIdx in paletteIndices) {
             blockRefs[paletteIdx]++;
-        }
-
-        Array.Clear(lightRefs, 0, lightPaletteSize);
-        for (int i = 0; i < lightIndices.Length; i++) {
-            int lightIdx = lightIndices[i];
-            lightRefs[lightIdx]++;
         }
 
         // calculate density and allocate indices arrays
         density = bitsPerIdx(vertCount);
         count = getIndicesSize(density);
-        if (count > 0) {
-            this.indices = arrayPool.grab(count);
-            Array.Clear(this.indices, 0, count);
-        } else {
-            this.indices = null;
-        }
-
-        lightDensity = bitsPerIdx(lightVertCount);
-        lightCount = getIndicesSize(lightDensity);
-        if (lightCount > 0) {
-            this.lightIndices = arrayPool.grab(lightCount);
-            Array.Clear(this.lightIndices, 0, lightCount);
-        } else {
-            this.lightIndices = null;
-        }
+        this.indices = count > 0 ? grabIndices(count) : null;
 
         // copy indices (skip if density is 0, means palette size 1)
         if (indices != null) {
@@ -875,14 +1045,6 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
             }
         }
 
-        if (this.lightIndices != null) {
-            for (int i = 0; i < lightIndices.Length; i++) {
-                setLightIndexRaw(i, lightIndices[i]);
-            }
-        }
-
-        inited = true;
-        refreshCounts();
     }
 
     // cleanup
@@ -890,11 +1052,6 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
         if (indices != null) {
             arrayPool.putBack(indices);
             indices = null;
-        }
-
-        if (lightIndices != null) {
-            arrayPool.putBack(lightIndices);
-            lightIndices = null;
         }
 
         if (vertices != null) {
@@ -907,15 +1064,18 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
             blockRefs = null;
         }
 
-        if (lightVertices != null) {
-            arrayPool.putBack(lightVertices);
-            lightVertices = null;
+        if (skyChannel != null) {
+            arrayPool.putBack(skyChannel);
+            skyChannel = null;
         }
 
-        if (lightRefs != null) {
-            arrayPoolUS.putBack(lightRefs);
-            lightRefs = null;
+        if (blockChannel != null) {
+            arrayPool.putBack(blockChannel);
+            blockChannel = null;
         }
+
+        skyValue = 0;
+        blockValue = 0;
 
         // reset state to prevent access to disposed arrays
         inited = false;
@@ -931,6 +1091,7 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     }
     
     public ChunkDataPacket.SubChunkData write(byte y) {
+        skillIssueLightPlanes(out var sky, out var blk, out var uSky, out var uBlk);
         return new ChunkDataPacket.SubChunkData {
             y = y,
             vertices = vertices,
@@ -939,12 +1100,10 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
             count = count,
             vertCount = vertCount,
             density = density,
-            lightVertices = lightVertices,
-            lightRefs = lightRefs,
-            lightIndices = lightIndices,
-            lightCount = lightCount,
-            lightVertCount = lightVertCount,
-            lightDensity = lightDensity,
+            skyChannel = sky,
+            blockChannel = blk,
+            skyValue = uSky,
+            blockValue = uBlk,
             blockCount = blockCount,
             translucentCount = translucentCount,
             fullBlockCount = fullBlockCount,
@@ -961,21 +1120,25 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
 
         vertices = data.vertices;
         blockRefs = data.blockRefs;
-        indices = data.indices;
         count = data.count;
+        if (data.indices != null) {
+            indices = grabIndices(count);
+            data.indices.AsSpan(0, count).CopyTo(indices);
+        }
+        else {
+            indices = null;
+        }
+
         vertCount = data.vertCount;
         density = data.density;
-        lightVertices = data.lightVertices;
-        lightRefs = data.lightRefs;
-        lightIndices = data.lightIndices;
-        lightCount = data.lightCount;
-        lightVertCount = data.lightVertCount;
-        lightDensity = data.lightDensity;
+        skyChannel = data.skyChannel;
+        blockChannel = data.blockChannel;
+        skyValue = data.skyValue;
+        blockValue = data.blockValue;
         blockCount = data.blockCount;
         translucentCount = data.translucentCount;
         fullBlockCount = data.fullBlockCount;
         vertCapacity = vertices.Length;
-        lightVertCapacity = lightVertices.Length;
         randomTickCount = data.randomTickCount;
         renderTickCount = data.renderTickCount;
         inited = true;

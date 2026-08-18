@@ -33,8 +33,8 @@ public class HumanModel : EntityModel {
         Game.graphics.tex(0, tex);
 
         // calculate interpolated rotations
-        var interpRot = Vector3.Lerp(e.prevRotation, e.rotation, (float)interp);
-        var interpBodyRot = Vector3.Lerp(e.prevBodyRotation, e.bodyRotation, (float)interp);
+        var interpRot = e.interpRot(interp);
+        var interpBodyRot = e.interpBodyRot(interp);
 
         // calculate head rotation relative to body (includes up/down look)
         var headRotX = interpRot.X - interpBodyRot.X; // pitch diff

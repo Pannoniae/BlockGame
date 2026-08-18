@@ -40,8 +40,9 @@ public class SampleCodeFixProvider : CodeFixProvider {
         var diagnosticNode = root?.FindNode(diagnosticSpan);
 
         // To get the required metadata, we should match the Node to the specific type: 'ClassDeclarationSyntax'.
-        if (diagnosticNode is not ClassDeclarationSyntax declaration)
+        if (diagnosticNode is not ClassDeclarationSyntax declaration) {
             return;
+        }
 
         // Register a code action that will invoke the fix.
         context.RegisterCodeFix(
@@ -69,7 +70,9 @@ public class SampleCodeFixProvider : CodeFixProvider {
 
         // Attempt to find the 'TypeSymbol' (compile time metadata of the class) based on highlighted Class Declaration Syntax.
         var typeSymbol = semanticModel?.GetDeclaredSymbol(classDeclarationSyntax, cancellationToken);
-        if (typeSymbol == null) return document.Project.Solution;
+        if (typeSymbol == null) {
+            return document.Project.Solution;
+        }
 
         // Produce a new solution that has all references to the class being renamed, including the declaration.
         var newSolution = await Renamer

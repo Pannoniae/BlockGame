@@ -1098,14 +1098,18 @@ public class FastNoiseLite
         float n0, n1, n2;
 
         float a = 0.5f - x0 * x0 - y0 * y0;
-        if (a <= 0) n0 = 0;
+        if (a <= 0) {
+            n0 = 0;
+        }
         else
         {
             n0 = (a * a) * (a * a) * GradCoord(seed, i, j, x0, y0);
         }
 
         float c = (float)(2 * (1 - 2 * G2) * (1 / G2 - 2)) * t + ((float)(-2 * (1 - 2 * G2) * (1 - 2 * G2)) + a);
-        if (c <= 0) n2 = 0;
+        if (c <= 0) {
+            n2 = 0;
+        }
         else
         {
             float x2 = x0 + (2 * (float)G2 - 1);
@@ -1118,7 +1122,9 @@ public class FastNoiseLite
             float x1 = x0 + (float)G2;
             float y1 = y0 + ((float)G2 - 1);
             float b = 0.5f - x1 * x1 - y1 * y1;
-            if (b <= 0) n1 = 0;
+            if (b <= 0) {
+                n1 = 0;
+            }
             else
             {
                 n1 = (b * b) * (b * b) * GradCoord(seed, i, j + PrimeY, x1, y1);
@@ -1129,7 +1135,9 @@ public class FastNoiseLite
             float x1 = x0 + ((float)G2 - 1);
             float y1 = y0 + (float)G2;
             float b = 0.5f - x1 * x1 - y1 * y1;
-            if (b <= 0) n1 = 0;
+            if (b <= 0) {
+                n1 = 0;
+            }
             else
             {
                 n1 = (b * b) * (b * b) * GradCoord(seed, i + PrimeX, j, x1, y1);
@@ -1206,7 +1214,9 @@ public class FastNoiseLite
                 }
             }
 
-            if (l == 1) break;
+            if (l == 1) {
+                break;
+            }
 
             ax0 = 0.5f - ax0;
             ay0 = 0.5f - ay0;
@@ -2321,10 +2331,13 @@ public class FastNoiseLite
         {
             float aaaa = (a * a) * (a * a);
             float xo, yo;
-            if (outGradOnly)
+            if (outGradOnly) {
                 GradCoordOut(seed, i, j, out xo, out yo);
-            else
+            }
+            else {
                 GradCoordDual(seed, i, j, x0, y0, out xo, out yo);
+            }
+
             vx += aaaa * xo;
             vy += aaaa * yo;
         }
@@ -2336,10 +2349,13 @@ public class FastNoiseLite
             float y2 = y0 + (2 * (float)G2 - 1);
             float cccc = (c * c) * (c * c);
             float xo, yo;
-            if (outGradOnly)
+            if (outGradOnly) {
                 GradCoordOut(seed, i + PrimeX, j + PrimeY, out xo, out yo);
-            else
+            }
+            else {
                 GradCoordDual(seed, i + PrimeX, j + PrimeY, x2, y2, out xo, out yo);
+            }
+
             vx += cccc * xo;
             vy += cccc * yo;
         }
@@ -2353,10 +2369,13 @@ public class FastNoiseLite
             {
                 float bbbb = (b * b) * (b * b);
                 float xo, yo;
-                if (outGradOnly)
+                if (outGradOnly) {
                     GradCoordOut(seed, i, j + PrimeY, out xo, out yo);
-                else
+                }
+                else {
                     GradCoordDual(seed, i, j + PrimeY, x1, y1, out xo, out yo);
+                }
+
                 vx += bbbb * xo;
                 vy += bbbb * yo;
             }
@@ -2370,10 +2389,13 @@ public class FastNoiseLite
             {
                 float bbbb = (b * b) * (b * b);
                 float xo, yo;
-                if (outGradOnly)
+                if (outGradOnly) {
                     GradCoordOut(seed, i + PrimeX, j, out xo, out yo);
-                else
+                }
+                else {
                     GradCoordDual(seed, i + PrimeX, j, x1, y1, out xo, out yo);
+                }
+
                 vx += bbbb * xo;
                 vy += bbbb * yo;
             }
@@ -2425,10 +2447,13 @@ public class FastNoiseLite
             {
                 float aaaa = (a * a) * (a * a);
                 float xo, yo, zo;
-                if (outGradOnly)
+                if (outGradOnly) {
                     GradCoordOut(seed, i, j, k, out xo, out yo, out zo);
-                else
+                }
+                else {
                     GradCoordDual(seed, i, j, k, x0, y0, z0, out xo, out yo, out zo);
+                }
+
                 vx += aaaa * xo;
                 vy += aaaa * yo;
                 vz += aaaa * zo;
@@ -2466,16 +2491,21 @@ public class FastNoiseLite
                 b -= 1;
                 float bbbb = (b * b) * (b * b);
                 float xo, yo, zo;
-                if (outGradOnly)
+                if (outGradOnly) {
                     GradCoordOut(seed, i1, j1, k1, out xo, out yo, out zo);
-                else
+                }
+                else {
                     GradCoordDual(seed, i1, j1, k1, x1, y1, z1, out xo, out yo, out zo);
+                }
+
                 vx += bbbb * xo;
                 vy += bbbb * yo;
                 vz += bbbb * zo;
             }
 
-            if (l == 1) break;
+            if (l == 1) {
+                break;
+            }
 
             ax0 = 0.5f - ax0;
             ay0 = 0.5f - ay0;

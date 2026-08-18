@@ -6,8 +6,10 @@ public class VariableArrayPool<T> {
     private readonly Lock _poolsLock = new();
 
     public T[] grab(int size) {
-        if (size <= 0) SkillIssueException.throwNew($"Size must be positive ({nameof(size)}");
-        
+        if (size <= 0) {
+            SkillIssueException.throwNew($"Size must be positive ({nameof(size)}");
+        }
+
         FixedArrayPool<T>? pool;
         lock (_poolsLock) {
             if (!_pools.TryGetValue(size, out pool)) {
@@ -20,8 +22,10 @@ public class VariableArrayPool<T> {
     }
 
     public void putBack(T[] array) {
-        if (array == null) return;
-        
+        if (array == null) {
+            return;
+        }
+
         int size = array.Length;
         FixedArrayPool<T>? pool;
         

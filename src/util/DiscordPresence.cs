@@ -144,8 +144,7 @@ public class DiscordPresence : IDisposable {
             int lx = x & 15;
             int lz = z & 15;
 
-            var temp = chunk.biomeData.getTemp(lx, y, lz);
-            var hum = chunk.biomeData.getHum(lx, y, lz);
+            chunk.biomeData.sample(lx, lz, out var temp, out var hum);
 
             return Biomes.getType(temp, hum, y);
         }

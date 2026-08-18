@@ -44,7 +44,9 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
                 fuelRemaining = fuelVal;
                 fuelMax = fuelVal;
                 slots[1].quantity--;
-                if (slots[1].quantity <= 0) slots[1] = ItemStack.EMPTY;
+                if (slots[1].quantity <= 0) {
+                    slots[1] = ItemStack.EMPTY;
+                }
             }
         }
 
@@ -62,7 +64,10 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
                 if (canMergeOutput(currentRecipe.getOutput())) {
                     mergeOutput(currentRecipe.getOutput());
                     slots[0].quantity--;
-                    if (slots[0].quantity <= 0) slots[0] = ItemStack.EMPTY;
+                    if (slots[0].quantity <= 0) {
+                        slots[0] = ItemStack.EMPTY;
+                    }
+
                     smeltProgress = 0;
                     currentRecipe = null; // check for new recipe next tick
                 }
@@ -82,8 +87,14 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
 
     private bool canMergeOutput(ItemStack result) {
         var output = slots[2];
-        if (output == ItemStack.EMPTY) return true;
-        if (output.id != result.id || output.metadata != result.metadata) return false;
+        if (output == ItemStack.EMPTY) {
+            return true;
+        }
+
+        if (output.id != result.id || output.metadata != result.metadata) {
+            return false;
+        }
+
         return output.quantity + result.quantity <= output.getItem().getMaxStackSize();
     }
 
@@ -132,7 +143,7 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
             // add lightsource
             world.setBlockLight(x, y, z, Block.lightLevel[lv]);
             var chunk = world.getChunk(x, z);
-            world.blockLightQueue.Enqueue(new LightNode(x, y, z, chunk));
+            world.blockLightQueue.Enqueue(new LightNode(x, y, z));
         }
 
         if (be != null) {
@@ -152,9 +163,17 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
             }
         }
 
-        if (data.has("smeltProgress")) smeltProgress = data.getInt("smeltProgress");
-        if (data.has("fuelRemaining")) fuelRemaining = data.getInt("fuelRemaining");
-        if (data.has("fuelMax")) fuelMax = data.getInt("fuelMax");
+        if (data.has("smeltProgress")) {
+            smeltProgress = data.getInt("smeltProgress");
+        }
+
+        if (data.has("fuelRemaining")) {
+            fuelRemaining = data.getInt("fuelRemaining");
+        }
+
+        if (data.has("fuelMax")) {
+            fuelMax = data.getInt("fuelMax");
+        }
 
         // restore recipe reference
         if (data.has("smeltProgress") && smeltProgress > 0 && slots[0] != ItemStack.EMPTY) {
@@ -199,19 +218,30 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
     }
 
     public ItemStack getStack(int index) {
-        if (index < 0 || index >= slots.Length) return ItemStack.EMPTY;
+        if (index < 0 || index >= slots.Length) {
+            return ItemStack.EMPTY;
+        }
+
         return slots[index];
     }
 
     public void setStack(int index, ItemStack stack) {
-        if (index < 0 || index >= slots.Length) return;
+        if (index < 0 || index >= slots.Length) {
+            return;
+        }
+
         slots[index] = stack;
     }
 
     public ItemStack removeStack(int index, int count) {
-        if (index < 0 || index >= slots.Length) return ItemStack.EMPTY;
+        if (index < 0 || index >= slots.Length) {
+            return ItemStack.EMPTY;
+        }
+
         var stack = slots[index];
-        if (stack == ItemStack.EMPTY || count <= 0) return ItemStack.EMPTY;
+        if (stack == ItemStack.EMPTY || count <= 0) {
+            return ItemStack.EMPTY;
+        }
 
         var removeAmount = Math.Min(count, stack.quantity);
         var removed = new ItemStack(stack.getItem(), removeAmount, stack.metadata);
@@ -225,7 +255,10 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
     }
 
     public ItemStack clear(int index) {
-        if (index < 0 || index >= slots.Length) return ItemStack.EMPTY;
+        if (index < 0 || index >= slots.Length) {
+            return ItemStack.EMPTY;
+        }
+
         var stack = slots[index];
         slots[index] = ItemStack.EMPTY;
         return stack;
@@ -238,9 +271,14 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
     }
 
     public bool add(int index, int count) {
-        if (index < 0 || index >= slots.Length || count <= 0) return false;
+        if (index < 0 || index >= slots.Length || count <= 0) {
+            return false;
+        }
+
         var stack = slots[index];
-        if (stack == ItemStack.EMPTY) return false;
+        if (stack == ItemStack.EMPTY) {
+            return false;
+        }
 
         stack.quantity += count;
         return true;

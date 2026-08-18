@@ -1,4 +1,4 @@
-﻿using BlockGame.main;
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
@@ -153,11 +153,8 @@ public partial class World {
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
             chunk!.setSkyLightDumb(blockPos.X, blockPos.Y, blockPos.Z, level);
+            chunk.markLightDirty(blockPos.X, blockPos.Y, blockPos.Z);
         }
-
-        // notify listeners
-        var pos = new Vector3I(x, y, z);
-        dirtyArea(pos, pos);
     }
 
     public void setSkyLightRemesh(int x, int y, int z, byte level) {
@@ -169,11 +166,8 @@ public partial class World {
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
             chunk!.setSkyLight(blockPos.X, blockPos.Y, blockPos.Z, level);
+            chunk.markLightDirty(blockPos.X, blockPos.Y, blockPos.Z);
         }
-
-        // notify listeners
-        var pos = new Vector3I(x, y, z);
-        dirtyArea(pos, pos);
     }
 
     public void setSkyLightAndPropagate(int x, int y, int z, byte level) {
@@ -185,16 +179,17 @@ public partial class World {
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
             chunk!.setSkyLightDumb(blockPos.X, blockPos.Y, blockPos.Z, level);
-            skyLightQueue.Enqueue(new LightNode(x, y, z, chunk));
+            skyLightQueue.Enqueue(new LightNode(x, y, z));
             //processSkyLightQueue();
+            chunk.markLightDirty(blockPos.X, blockPos.Y, blockPos.Z);
         }
-
-        // notify listeners
-        var pos = new Vector3I(x, y, z);
-        dirtyArea(pos, pos);
     }
 
     public void removeSkyLightAndPropagate(int x, int y, int z) {
+        if (!isServer) {
+            return;
+        }
+
         if (y is < 0 or >= WORLDHEIGHT) {
             return;
         }
@@ -203,13 +198,10 @@ public partial class World {
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
             var value = getSkyLight(x, y, z);
-            skyLightRemovalQueue.Enqueue(new LightRemovalNode(x, y, z, value, chunk!));
+            skyLightRemovalQueue.Enqueue(new LightRemovalNode(x, y, z, value));
             chunk!.setSkyLightDumb(blockPos.X, blockPos.Y, blockPos.Z, 0);
+            chunk.markLightDirty(blockPos.X, blockPos.Y, blockPos.Z);
         }
-
-        // notify listeners
-        var pos = new Vector3I(x, y, z);
-        dirtyArea(pos, pos);
     }
 
     public void setBlockLight(int x, int y, int z, byte level) {
@@ -221,11 +213,8 @@ public partial class World {
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
             chunk!.setBlockLightDumb(blockPos.X, blockPos.Y, blockPos.Z, level);
+            chunk.markLightDirty(blockPos.X, blockPos.Y, blockPos.Z);
         }
-
-        // notify listeners
-        var pos = new Vector3I(x, y, z);
-        dirtyArea(pos, pos);
     }
 
     public void setBlockLightRemesh(int x, int y, int z, byte level) {
@@ -237,14 +226,15 @@ public partial class World {
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
             chunk!.setBlockLight(blockPos.X, blockPos.Y, blockPos.Z, level);
+            chunk.markLightDirty(blockPos.X, blockPos.Y, blockPos.Z);
         }
-
-        // notify listeners
-        var pos = new Vector3I(x, y, z);
-        dirtyArea(pos, pos);
     }
 
     public void removeBlockLightAndPropagate(int x, int y, int z) {
+        if (!isServer) {
+            return;
+        }
+
         if (y is < 0 or >= WORLDHEIGHT) {
             return;
         }
@@ -253,13 +243,10 @@ public partial class World {
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
             var value = getBlockLight(x, y, z);
-            blockLightRemovalQueue.Enqueue(new LightRemovalNode(x, y, z, value, chunk!));
+            blockLightRemovalQueue.Enqueue(new LightRemovalNode(x, y, z, value));
             chunk!.setBlockLightDumb(blockPos.X, blockPos.Y, blockPos.Z, 0);
+            chunk.markLightDirty(blockPos.X, blockPos.Y, blockPos.Z);
         }
-
-        // notify listeners
-        var pos = new Vector3I(x, y, z);
-        dirtyArea(pos, pos);
     }
 
     /// <summary>
@@ -765,25 +752,28 @@ public partial class World {
         return result;
     }
 
-    public BiomeType getBiomeAtPlayer() {
-        var playerPos = Game.player.position;
+    public BiomeType getBiomeAt(Vector3D pos) {
         // clamp!!
-        playerPos.Y = double.Clamp(playerPos.Y, 0, WORLDHEIGHT - 1);
+        pos.Y = double.Clamp(pos.Y, 0, WORLDHEIGHT - 1);
 
-        if (!inWorld(playerPos.toBlockPos().X, playerPos.toBlockPos().Y, playerPos.toBlockPos().Z)) {
+        var bp = pos.toBlockPos();
+        if (!inWorld(bp.X, bp.Y, bp.Z)) {
             return BiomeType.Plains;
         }
 
-        var chunkPos = getChunkPos(playerPos.X.toBlockPos(), playerPos.Z.toBlockPos());
-        var chunk = getChunk(chunkPos);
-        var blockPos = getPosInChunk(playerPos.X.toBlockPos(), playerPos.Y.toBlockPos(), playerPos.Z.toBlockPos());
+        var chunkPos = getChunkPos(pos.X.toBlockPos(), pos.Z.toBlockPos());
+        if (!getChunkMaybe(chunkPos, out var chunk) || chunk == null) {
+            return BiomeType.Plains;
+        }
+
+        var blockPos = getPosInChunk(bp.X, bp.Y, bp.Z);
         var data = chunk.biomeData;
 
-        //Console.Out.WriteLine(data.getTemp(blockPos.X, blockPos.Y, blockPos.Z));
+        data.sample(blockPos.X, blockPos.Z, out var temp, out var hum);
+        return Biomes.getType(temp, hum, bp.Y);
+    }
 
-
-        return Biomes.getType(data.getTemp(blockPos.X, blockPos.Y, blockPos.Z),
-            data.getHum(blockPos.X, blockPos.Y, blockPos.Z),
-            playerPos.Y.toBlockPos());
+    public BiomeType getBiomeAtPlayer() {
+        return getBiomeAt(Game.player.position);
     }
 }

@@ -16,11 +16,6 @@ public partial class NewWorldGenerator {
     private readonly float[] gb = new float[WorldgenUtil.NOISE_SIZE_X * WorldgenUtil.NOISE_SIZE_Y * WorldgenUtil.NOISE_SIZE_Z];
     private readonly float[] mb = new float[WorldgenUtil.NOISE_SIZE_X * WorldgenUtil.NOISE_SIZE_Y * WorldgenUtil.NOISE_SIZE_Z];
     private readonly float[] ob = new float[WorldgenUtil.NOISE_SIZE_X * WorldgenUtil.NOISE_SIZE_Y * WorldgenUtil.NOISE_SIZE_Z];
-    private readonly float[] auxb = new float[WorldgenUtil.NOISE_SIZE_X * WorldgenUtil.NOISE_SIZE_Y * WorldgenUtil.NOISE_SIZE_Z];
-    private readonly float[] foliageb = new float[WorldgenUtil.NOISE_SIZE_X * WorldgenUtil.NOISE_SIZE_Y * WorldgenUtil.NOISE_SIZE_Z];
-    private readonly float[] tempb = new float[WorldgenUtil.NOISE_SIZE_X * WorldgenUtil.NOISE_SIZE_Y * WorldgenUtil.NOISE_SIZE_Z];
-    private readonly float[] humb = new float[WorldgenUtil.NOISE_SIZE_X * WorldgenUtil.NOISE_SIZE_Y * WorldgenUtil.NOISE_SIZE_Z];
-    private readonly float[] ageb = new float[WorldgenUtil.NOISE_SIZE_X * WorldgenUtil.NOISE_SIZE_Y * WorldgenUtil.NOISE_SIZE_Z];
     private readonly float[] wb = new float[WorldgenUtil.NOISE_SIZE_X * WorldgenUtil.NOISE_SIZE_Y * WorldgenUtil.NOISE_SIZE_Z];
 
 
@@ -51,8 +46,8 @@ public partial class NewWorldGenerator {
     public const float LAKE_FREQ = 1 / 762.00f;
     //public const float LAKE_FREQ = 1 / 4f;
 
-    public void generate(ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
+    public void generate(Chunk chunk) {
+        var coord = chunk.coord;
 
         switch (version) {
             case 1:
@@ -65,24 +60,24 @@ public partial class NewWorldGenerator {
                 getDensityv3(b, coord);
                 break;
             case 4:
-                getDensityBiomes(b, coord);
+                getDensityBiomes(b, chunk);
                 break;
         }
 
-        WorldgenUtil.interpolate(world, b, coord);
+        WorldgenUtil.interpolate(chunk, b);
         //Console.Out.WriteLine(coord);
 
 
         switch (version) {
             case 1:
             case 2:
-                generateSurface(coord);
+                generateSurface(chunk);
                 break;
             case 3:
-                generateSurfacev3(coord);
+                generateSurfacev3(chunk);
                 break;
             case 4:
-                generateSurfaceBiomes(coord);
+                generateSurfaceBiomes(chunk);
                 break;
         }
 
@@ -163,8 +158,7 @@ public partial class NewWorldGenerator {
         }
     }
 
-    public void generateSurface(ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
+    public void generateSurface(Chunk chunk) {
 
         for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
             for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
@@ -249,8 +243,7 @@ public partial class NewWorldGenerator {
         var xWorld = coord.x * Chunk.CHUNKSIZE;
         var zWorld = coord.z * Chunk.CHUNKSIZE;
 
-        // set seed to chunk
-        random.Seed(coord.GetHashCode());
+        random.Seed(coord.GetHashCode() ^ world.seed);
 
         // place hellrock on bottom of the world
         // height should be between 1 and 4
@@ -572,8 +565,7 @@ public partial class NewWorldGenerator {
         }
     }
 
-    public void generateSurfacev3(ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
+    public void generateSurfacev3(Chunk chunk) {
 
         for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
             for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
@@ -635,8 +627,7 @@ public partial class NewWorldGenerator {
                 }
                 else {
                     // biome-aware surface block
-                    var temp = chunk.biomeData.getTemp(x, height, z);
-                    var hum = chunk.biomeData.getHum(x, height, z);
+                    chunk.biomeData.sample(x, z, out var temp, out var hum);
                     var biome = Biomes.getType(temp, hum, height);
                     (topBlock, filler) = Biomes.getBlocks(biome, blockVar);
                 }
@@ -679,8 +670,13 @@ public partial class NewWorldGenerator {
         
         var cx = wx - (coord.x << 4);
         var cz = wz - (coord.z << 4);
-        if (cx < 0) cx += 16;
-        if (cz < 0) cz += 16;
+        if (cx < 0) {
+            cx += 16;
+        }
+
+        if (cz < 0) {
+            cz += 16;
+        }
 
         return WorldgenUtil.sampleBuffers(this, cx, wy, cz,
             WorldgenUtil.NOISE_SIZE_X * WorldgenUtil.NOISE_SIZE_Y * WorldgenUtil.NOISE_SIZE_Z,

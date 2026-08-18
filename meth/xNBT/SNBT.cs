@@ -68,7 +68,10 @@ public class SNBTWriter {
     }
 
     private void writeIndent() {
-        if (!prettyPrint) return;
+        if (!prettyPrint) {
+            return;
+        }
+
         for (int i = 0; i < indentLevel; i++) {
             sb.Append(INDENT);
         }
@@ -81,12 +84,19 @@ public class SNBTWriter {
     }
 
     private static bool canBeUnquoted(string s) {
-        if (string.IsNullOrEmpty(s)) return false;
-        if (ReservedSuffixes.Contains(s)) return false;
+        if (string.IsNullOrEmpty(s)) {
+            return false;
+        }
+
+        if (ReservedSuffixes.Contains(s)) {
+            return false;
+        }
 
         // First char must be letter or underscore
         char first = s[0];
-        if (!char.IsLetter(first) && first != '_') return false;
+        if (!char.IsLetter(first) && first != '_') {
+            return false;
+        }
 
         // Rest can be alphanumeric, underscore, dot, plus, minus
         for (int i = 1; i < s.Length; i++) {
@@ -238,7 +248,9 @@ public class SNBTWriter {
 
             first = false;
 
-            if (prettyPrint) writeIndent();
+            if (prettyPrint) {
+                writeIndent();
+            }
 
             // Write key
             writeString(kvp.Key);
@@ -306,7 +318,10 @@ public class SNBTWriter {
         sb.Append('[').Append(prefix).Append("; ");
 
         for (int i = 0; i < data.Length; i++) {
-            if (i > 0) sb.Append(", ");
+            if (i > 0) {
+                sb.Append(", ");
+            }
+
             sb.Append(data[i]?.ToString() ?? "0");
         }
 
@@ -514,26 +529,41 @@ internal class SNBTParser {
     }
 
     private static bool isValidInteger(ReadOnlySpan<char> s) {
-        if (s.Length == 0) return false;
+        if (s.Length == 0) {
+            return false;
+        }
+
         int start = s[0] == '-' ? 1 : 0;
-        if (start >= s.Length) return false;
+        if (start >= s.Length) {
+            return false;
+        }
 
         for (int i = start; i < s.Length; i++) {
-            if (!char.IsDigit(s[i])) return false;
+            if (!char.IsDigit(s[i])) {
+                return false;
+            }
         }
 
         return true;
     }
 
     private static bool isValidFloat(ReadOnlySpan<char> s) {
-        if (s.Length == 0) return false;
+        if (s.Length == 0) {
+            return false;
+        }
+
         int start = s[0] == '-' ? 1 : 0;
-        if (start >= s.Length) return false;
+        if (start >= s.Length) {
+            return false;
+        }
 
         bool hasDot = false;
         for (int i = start; i < s.Length; i++) {
             if (s[i] == '.') {
-                if (hasDot) return false;
+                if (hasDot) {
+                    return false;
+                }
+
                 hasDot = true;
             }
             else if (!char.IsDigit(s[i])) {

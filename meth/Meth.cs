@@ -189,8 +189,14 @@ public static partial class Meth {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float mapRange(float value, float fromStart, float fromEnd, float toStart, float toEnd) {
-        if (value < fromStart) return toStart;
-        if (value > fromEnd) return toEnd;
+        if (value < fromStart) {
+            return toStart;
+        }
+
+        if (value > fromEnd) {
+            return toEnd;
+        }
+
         float t = (value - fromStart) / (fromEnd - fromStart);
         return toStart + t * (toEnd - toStart);
     }
@@ -250,17 +256,23 @@ public static partial class Meth {
         return from + angleDiff(from, to) * Math.Clamp(amount, 0.0f, 1.0f);
     }
 
-    /** clamps the angle from -180 to 180 */
-    public static Vector3 clampAngle(Vector3 a) {
+    /** lerp between angle vectors, shortest path per component */
+    public static Vector3 lerpAngle(Vector3 from, Vector3 to, float amount) {
         return new Vector3(
-            (a.X + 180f) % 360f - 180f,
-            (a.Y + 180f) % 360f - 180f,
-            (a.Z + 180f) % 360f - 180f
+            lerpAngle(from.X, to.X, amount),
+            lerpAngle(from.Y, to.Y, amount),
+            lerpAngle(from.Z, to.Z, amount)
         );
     }
 
+    /** clamps the angle from -180 to 180 */
+    public static Vector3 clampAngle(Vector3 a) {
+        return new Vector3(clampAngle(a.X), clampAngle(a.Y), clampAngle(a.Z));
+    }
+
+    /** C's % keeps the dividend's sign, so the naive (a+180)%360-180 leaves anything under -180 alone */
     public static float clampAngle(float a) {
-        return (a + 180f) % 360f - 180f;
+        return ((a + 180f) % 360f + 360f) % 360f - 180f;
     }
 
     public static Matrix4x4 to4x4(this Matrix4F mat) {
@@ -360,7 +372,10 @@ public static partial class Meth {
     }
 
     public static int nxtpow2(int n) {
-        if (n <= 0) return 1;
+        if (n <= 0) {
+            return 1;
+        }
+
         n--;
         n |= n >> 1;
         n |= n >> 2;
@@ -513,7 +528,9 @@ public static partial class Meth {
     public static Color4 HSL2RGB(float h, float s, float l) {
         // normalise hue to [0,1]
         h = (h % 360f) / 360f;
-        if (h < 0f) h += 1f;
+        if (h < 0f) {
+            h += 1f;
+        }
 
         float r, g, b;
 
@@ -526,11 +543,26 @@ public static partial class Meth {
 
             // helper to convert hue to rgb component
             float hue2rgb(float p, float q, float t) {
-                if (t < 0f) t += 1f;
-                if (t > 1f) t -= 1f;
-                if (t < 1f / 6f) return p + (q - p) * 6f * t;
-                if (t < 1f / 2f) return q;
-                if (t < 2f / 3f) return p + (q - p) * (2f / 3f - t) * 6f;
+                if (t < 0f) {
+                    t += 1f;
+                }
+
+                if (t > 1f) {
+                    t -= 1f;
+                }
+
+                if (t < 1f / 6f) {
+                    return p + (q - p) * 6f * t;
+                }
+
+                if (t < 1f / 2f) {
+                    return q;
+                }
+
+                if (t < 2f / 3f) {
+                    return p + (q - p) * (2f / 3f - t) * 6f;
+                }
+
                 return p;
             }
 

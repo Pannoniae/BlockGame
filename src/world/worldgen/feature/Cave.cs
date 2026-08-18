@@ -38,6 +38,28 @@ public class Cave : OverlayFeature {
     private World world;
     private Chunk chunk;
 
+    private int bbx0;
+    private int bbx1;
+    private int bbz0;
+    private int bbz1;
+
+    private readonly record struct WormHead(XRandom.State state, int x0, int x1, int z0, int z1) {
+        public readonly int x0 = x0;
+        public readonly int x1 = x1;
+        public readonly int z0 = z0;
+        public readonly int z1 = z1;
+    };
+
+    private struct Worm {
+        public ChunkCoord coord;
+        public XUList<WormHead>? worms;
+    }
+
+    // the age-old dilemma of how much memory we fancy wasting today
+    private const int SLOTS = 4096;
+
+    private readonly Worm[] slots = new Worm[SLOTS];
+
 
     /// <summary>
     /// TODO generate less caves in plains biomes / flat terrain
@@ -47,10 +69,23 @@ public class Cave : OverlayFeature {
     /// Solution? Create a "base" terrain heightmap (which will be saved!!) and use that for cave generation and all the stuff which should get the "raw" terrain...
     /// </summary>
     public override void generate(World world, XRandom rand, ChunkCoord coord, ChunkCoord origin) {
+        this.world = world;
+        chunk = world.getChunk(origin);
+
+        // if the chunk is cached, we already know whether the caves will reach here or not
+        ref var slot = ref slots[(coord.GetHashCode() & int.MaxValue) & (SLOTS - 1)];
+        if (slot.worms != null && slot.coord == coord) {
+            carve(rand, coord, origin, ref slot);
+            return;
+        }
+
         // if this chunk isn't lucky, it gets murdered
         var luck = rand.Next(20);
         //Console.WriteLine($"Chunk {coord}: luck={luck}");
         if (luck != 0) {
+            // cache the miss too
+            slot.coord = coord;
+            (slot.worms ??= []).Clear();
             return;
         }
 
@@ -69,10 +104,14 @@ public class Cave : OverlayFeature {
 
         // trim
         //count = rand.Next(count);
-        this.world = world;
-        chunk = world.getChunk(origin);
+
+        slot.coord = coord;
+        var worms = slot.worms ??= [];
+        worms.Clear();
 
         for (int i = 0; i < count; i++) {
+            var state = rand.save();
+
             // get random position to start with
             var x = coord.x * Chunk.CHUNKSIZE + rand.Next(Chunk.CHUNKSIZE);
             var z = coord.z * Chunk.CHUNKSIZE + rand.Next(Chunk.CHUNKSIZE);
@@ -86,6 +125,29 @@ public class Cave : OverlayFeature {
             //if (y > world.getHeight(x, z) + 6) {
             //continue;
             //}
+
+            genCave(world, rand, x, y, z, origin);
+            worms.Add(new WormHead(state, bbx0, bbx1, bbz0, bbz1));
+        }
+    }
+
+    private void carve(XRandom rand, ChunkCoord coord, ChunkCoord origin, ref Worm worm) {
+        var x0 = origin.x * Chunk.CHUNKSIZE;
+        var x1 = x0 + Chunk.CHUNKSIZE;
+        var z0 = origin.z * Chunk.CHUNKSIZE;
+        var z1 = z0 + Chunk.CHUNKSIZE;
+
+        var worms = worm.worms!;
+        foreach (WormHead w in worms) {
+            if (w.x1 < x0 || w.x0 > x1 || w.z1 < z0 || w.z0 > z1) {
+                continue;
+            }
+
+            rand.restore(w.state);
+            var x = coord.x * Chunk.CHUNKSIZE + rand.Next(Chunk.CHUNKSIZE);
+            var z = coord.z * Chunk.CHUNKSIZE + rand.Next(Chunk.CHUNKSIZE);
+            var y = rand.Next(8, 96);
+            y = rand.Next(8, y);
 
             genCave(world, rand, x, y, z, origin);
         }
@@ -108,6 +170,8 @@ public class Cave : OverlayFeature {
         cx = x;
         cy = y;
         cz = z;
+        bbx0 = bbz0 = int.MaxValue;
+        bbx1 = bbz1 = int.MinValue;
         hAngle = rand.NextSingle() * MathF.PI * 2;
         vAngle = (rand.NextSingle() - 0.5f) * MathF.PI * 0.25f;
         isRoom = false;
@@ -261,6 +325,22 @@ public class Cave : OverlayFeature {
         var zMax = (int)(cz + width);
 
 
+        if (xMin < bbx0) {
+            bbx0 = xMin;
+        }
+
+        if (xMax > bbx1) {
+            bbx1 = xMax;
+        }
+
+        if (zMin < bbz0) {
+            bbz0 = zMin;
+        }
+
+        if (zMax > bbz1) {
+            bbz1 = zMax;
+        }
+
         // if we are outside the chunk, bail
         if (xMax < origin.x * Chunk.CHUNKSIZE ||
             xMin > (origin.x + 1) * Chunk.CHUNKSIZE ||
@@ -273,7 +353,7 @@ public class Cave : OverlayFeature {
 
         // if the area has water, bail
         if (world.anyWaterInArea(xMin, yMin, zMin, xMax, yMax, zMax)) {
-            return;
+            goto cleanup;
         }
 
         // cap them to the original chunk
@@ -334,7 +414,7 @@ public class Cave : OverlayFeature {
                         //} 
 
                         // if it's grass, exchange below
-                        if (block ==  Block.GRASS.id) {
+                        if (block == Block.GRASS.id) {
                             hasGrass = Block.GRASS.id;
                         }
 
@@ -342,7 +422,7 @@ public class Cave : OverlayFeature {
                         if (Block.fullBlock[block]) {
                             // if y low, LAVA TIME
                             if (yy < 12) {
-                                chunk.setBlockDumb(cxx, yy, czz,  Block.LAVA.id);
+                                chunk.setBlockDumb(cxx, yy, czz, Block.LAVA.id);
                                 // we have to unironically place light here though.
                                 chunk.setBlockLight(cxx, yy, czz, Block.lightLevel[Block.LAVA.id]);
                             }
@@ -357,7 +437,7 @@ public class Cave : OverlayFeature {
                 }
 
                 // if we have grass, set the block below it to grass
-                if (hasGrass != -1 && chunk.getBlock(cxx, lastSetBlock - 1, czz) ==  Block.DIRT.id) {
+                if (hasGrass != -1 && chunk.getBlock(cxx, lastSetBlock - 1, czz) == Block.DIRT.id) {
                     chunk.setBlockDumb(cxx, lastSetBlock - 1, czz, (ushort)hasGrass);
                 }
             }

@@ -43,7 +43,10 @@ public ref struct PacketBuffer {
     // primitives - signed
     public void writeSByte(sbyte value) => writer!.Write(value);
     public sbyte readSByte() {
-        if (reader != null) return reader.ReadSByte();
+        if (reader != null) {
+            return reader.ReadSByte();
+        }
+
         var val = (sbyte)span[pos];
         pos += 1;
         return val;
@@ -51,7 +54,10 @@ public ref struct PacketBuffer {
 
     public void writeShort(short value) => writer!.Write(value);
     public short readShort() {
-        if (reader != null) return reader.ReadInt16();
+        if (reader != null) {
+            return reader.ReadInt16();
+        }
+
         var val = BinaryPrimitives.ReadInt16LittleEndian(span[pos..]);
         pos += 2;
         return val;
@@ -59,7 +65,10 @@ public ref struct PacketBuffer {
 
     public void writeInt(int value) => writer!.Write(value);
     public int readInt() {
-        if (reader != null) return reader.ReadInt32();
+        if (reader != null) {
+            return reader.ReadInt32();
+        }
+
         var val = BinaryPrimitives.ReadInt32LittleEndian(span[pos..]);
         pos += 4;
         return val;
@@ -67,7 +76,10 @@ public ref struct PacketBuffer {
 
     public void writeLong(long value) => writer!.Write(value);
     public long readLong() {
-        if (reader != null) return reader.ReadInt64();
+        if (reader != null) {
+            return reader.ReadInt64();
+        }
+
         var val = BinaryPrimitives.ReadInt64LittleEndian(span[pos..]);
         pos += 8;
         return val;
@@ -76,7 +88,10 @@ public ref struct PacketBuffer {
     // primitives - unsigned
     public void writeByte(byte value) => writer!.Write(value);
     public byte readByte() {
-        if (reader != null) return reader.ReadByte();
+        if (reader != null) {
+            return reader.ReadByte();
+        }
+
         var val = span[pos];
         pos += 1;
         return val;
@@ -84,7 +99,10 @@ public ref struct PacketBuffer {
 
     public void writeUShort(ushort value) => writer!.Write(value);
     public ushort readUShort() {
-        if (reader != null) return reader.ReadUInt16();
+        if (reader != null) {
+            return reader.ReadUInt16();
+        }
+
         var val = BinaryPrimitives.ReadUInt16LittleEndian(span[pos..]);
         pos += 2;
         return val;
@@ -92,7 +110,10 @@ public ref struct PacketBuffer {
 
     public void writeUInt(uint value) => writer!.Write(value);
     public uint readUInt() {
-        if (reader != null) return reader.ReadUInt32();
+        if (reader != null) {
+            return reader.ReadUInt32();
+        }
+
         var val = BinaryPrimitives.ReadUInt32LittleEndian(span[pos..]);
         pos += 4;
         return val;
@@ -100,7 +121,10 @@ public ref struct PacketBuffer {
 
     public void writeULong(ulong value) => writer!.Write(value);
     public ulong readULong() {
-        if (reader != null) return reader.ReadUInt64();
+        if (reader != null) {
+            return reader.ReadUInt64();
+        }
+
         var val = BinaryPrimitives.ReadUInt64LittleEndian(span[pos..]);
         pos += 8;
         return val;
@@ -109,7 +133,10 @@ public ref struct PacketBuffer {
     // floating point
     public void writeFloat(float value) => writer!.Write(value);
     public float readFloat() {
-        if (reader != null) return reader.ReadSingle();
+        if (reader != null) {
+            return reader.ReadSingle();
+        }
+
         var val = BinaryPrimitives.ReadSingleLittleEndian(span[pos..]);
         pos += 4;
         return val;
@@ -117,7 +144,10 @@ public ref struct PacketBuffer {
 
     public void writeDouble(double value) => writer!.Write(value);
     public double readDouble() {
-        if (reader != null) return reader.ReadDouble();
+        if (reader != null) {
+            return reader.ReadDouble();
+        }
+
         var val = BinaryPrimitives.ReadDoubleLittleEndian(span[pos..]);
         pos += 8;
         return val;
@@ -126,7 +156,10 @@ public ref struct PacketBuffer {
     // other
     public void writeBool(bool value) => writer!.Write(value);
     public bool readBool() {
-        if (reader != null) return reader.ReadBoolean();
+        if (reader != null) {
+            return reader.ReadBoolean();
+        }
+
         var val = span[pos] != 0;
         pos += 1;
         return val;

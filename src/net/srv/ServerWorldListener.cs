@@ -1,4 +1,4 @@
-using BlockGame.world;
+﻿using BlockGame.world;
 using BlockGame.world.chunk;
 using Molten;
 
@@ -38,6 +38,14 @@ public class ServerWorldListener : WorldListener {
     }
 
     public void onDirtyChunksBatch(ReadOnlySpan<SubChunkCoord> coords) {
+    }
+
+    public void onLightDirty(SubChunkCoord coord) {
+        if (server.world.nosend) {
+            return;
+        }
+
+        server.get(new ChunkCoord(coord.x, coord.z)).dirtyLight(coord.y);
     }
 
     public void onDirtyArea(Vector3I min, Vector3I max) {

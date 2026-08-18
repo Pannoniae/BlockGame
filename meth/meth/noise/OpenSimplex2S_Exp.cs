@@ -334,7 +334,9 @@ public static class OpenSimplex2S_Exp {
             }
 
             // Break from loop if we're done, skipping updates below.
-            if (l == 1) break;
+            if (l == 1) {
+                break;
+            }
 
             // Update absolute value.
             ax0 = 0.5f - ax0;
@@ -474,7 +476,9 @@ public static class OpenSimplex2S_Exp {
                 value += a * a * grad * mult;
             }
 
-            if (i == 4) break;
+            if (i == 4) {
+                break;
+            }
 
             xsi += LATTICE_STEP_4D;
             ysi += LATTICE_STEP_4D;
@@ -581,7 +585,10 @@ public static class OpenSimplex2S_Exp {
         }
 
         for (int i = 0, j = 0; i < GRADIENTS_2D.Length; i++, j++) {
-            if (j == grad2.Length) j = 0;
+            if (j == grad2.Length) {
+                j = 0;
+            }
+
             GRADIENTS_2D[i] = grad2[j];
         }
 
@@ -642,7 +649,10 @@ public static class OpenSimplex2S_Exp {
         }
 
         for (int i = 0, j = 0; i < GRADIENTS_3D.Length; i++, j++) {
-            if (j == grad3.Length) j = 0;
+            if (j == grad3.Length) {
+                j = 0;
+            }
+
             GRADIENTS_3D[i] = grad3[j];
         }
 
@@ -815,7 +825,10 @@ public static class OpenSimplex2S_Exp {
         }
 
         for (int i = 0, j = 0; i < GRADIENTS_4D.Length; i++, j++) {
-            if (j == grad4.Length) j = 0;
+            if (j == grad4.Length) {
+                j = 0;
+            }
+
             GRADIENTS_4D[i] = grad4[j];
         }
     }

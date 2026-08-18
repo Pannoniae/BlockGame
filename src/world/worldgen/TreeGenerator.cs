@@ -24,7 +24,10 @@ public class TreeGenerator {
         // leaves, thick
         for (int x1 = -2; x1 <= 2; x1++) {
             for (int z1 = -2; z1 <= 2; z1++) {
-                if (x1 == 0 && z1 == 0) continue;
+                if (x1 == 0 && z1 == 0) {
+                    continue;
+                }
+
                 for (int y1 = trunkHeight - 2; y1 <= trunkHeight - 1; y1++) {
                     world.setBlockSilent(x + x1, y + y1, z + z1, Block.LEAVES.id);
                 }
@@ -71,7 +74,7 @@ public class TreeGenerator {
     public static void placeFancyTree(World world, XRandom random, int x, int y, int z) {
         int height = random.Next(4, 4 + random.Next(16));
         var oak = new ProceduralTree(world, random, x, y, z, height);
-        oak.prepareRound(rootButtresses:false, trunkHeightMult:psiF);
+        oak.prepareRound(psiF);
         oak.generate(roots:false, rootButtresses:false);
     }
 
@@ -147,50 +150,6 @@ public class TreeGenerator {
         world.setBlockSilent(x, y + height + 1, z, Block.PINE_LEAVES.id);
     }
 
-    /** place a normal tree with foliage bulb */
-    public static void placeNormalTree(World world, XRandom random, int x, int y, int z, int height = 5) {
-        // trunk
-        for (int i = 0; i < height; i++) {
-            world.setBlockSilent(x, y + i, z, Block.OAK_LOG.id);
-        }
-
-        // foliage bulb from (top-2) to (top+1)
-        int topY = y + height - 1;
-        for (int cy = topY - 2; cy < topY + 2; cy++) {
-            int rad = (cy > topY - 1) ? 1 : 2;
-
-            for (int xoff = -rad; xoff <= rad; xoff++) {
-                for (int zoff = -rad; zoff <= rad; zoff++) {
-                    // randomly skip corners
-                    if (random.NextSingle() > psiF &&
-                        Math.Abs(xoff) == Math.Abs(zoff) &&
-                        Math.Abs(xoff) == rad) {
-                        continue;
-                    }
-
-                    world.setBlockSilent(x + xoff, cy, z + zoff, Block.LEAVES.id);
-                }
-            }
-        }
-    }
-
-    /** place a bamboo-style tree with sparse foliage along trunk */
-    public static void placeBambooTree(World world, XRandom random, int x, int y, int z, int height = 7) {
-        // trunk
-        for (int i = 0; i < height; i++) {
-            world.setBlockSilent(x, y + i, z, Block.OAK_LOG.id);
-        }
-
-        // sparse foliage adjacent to trunk from base to top+1
-        for (int cy = y; cy < y + height + 1; cy++) {
-            for (int i = 0; i < 2; i++) {
-                int xoff = random.Next(0, 2) == 0 ? -1 : 1;
-                int zoff = random.Next(0, 2) == 0 ? -1 : 1;
-                world.setBlockSilent(x + xoff, cy, z + zoff, Block.LEAVES.id);
-            }
-        }
-    }
-
     /** place a palm tree with fan-shaped foliage at top */
     public static void placePalmTree(World world, XRandom random, int x, int y, int z, int height = 7) {
         // trunk bottom with logs
@@ -263,13 +222,19 @@ public class TreeGenerator {
 
             for (int xo = -radius; xo <= radius; xo++) {
                 for (int zo = -radius; zo <= radius; zo++) {
-                    if (xo == 0 && zo == 0 && layer > 0) continue;
+                    if (xo == 0 && zo == 0 && layer > 0) {
+                        continue;
+                    }
 
                     // simple circular shape
-                    if (xo * xo + zo * zo > radius * radius) continue;
+                    if (xo * xo + zo * zo > radius * radius) {
+                        continue;
+                    }
 
                     // random gaps for naturalness
-                    if (random.NextSingle() < 0.2f) continue;
+                    if (random.NextSingle() < 0.2f) {
+                        continue;
+                    }
 
                     world.setBlockSilent(x + xo, layerY, z + zo, Block.MAHOGANY_LEAVES.id);
                 }
@@ -293,95 +258,69 @@ public class TreeGenerator {
         mahogany.generate(roots:false, rootButtresses:false);
     }
 
-    /** place huge mahogany tree - 25-35 blocks, 2x2 trunk, multi-canopy */
     public static void placeHugeMahogany(World world, XRandom random, int x, int y, int z) {
         int height = random.Next(25, 36);
 
-        // 2x2 trunk base
-        for (int h = 0; h < height; h++) {
-            float taper = 1.0f - (h / (float)height) * 0.3f; // taper from 1.0 to 0.7
-            if (taper > 0.8f) {
-                // full 2x2 at base
-                world.setBlockSilent(x, y + h, z, Block.MAHOGANY_LOG.id);
-                world.setBlockSilent(x + 1, y + h, z, Block.MAHOGANY_LOG.id);
-                world.setBlockSilent(x, y + h, z + 1, Block.MAHOGANY_LOG.id);
-                world.setBlockSilent(x + 1, y + h, z + 1, Block.MAHOGANY_LOG.id);
-            }
-            else {
-                // single trunk higher up
-                world.setBlockSilent(x, y + h, z, Block.MAHOGANY_LOG.id);
-            }
-        }
+        var t = new ProceduralTree(world, random, x, y, z, height) {
+            trunkThickness = random.NextSingle() * 0.8f + 2.2f,
+            foliageDensity = 2.2f,
+            branchDensity = 1.4f,
+            leafMat = Block.MAHOGANY_LEAVES.id,
+            logMat = Block.MAHOGANY_LOG.id
+        };
+        t.prepareMahoganyHuge();
+        t.generate(roots: false, rootButtresses: true);
+    }
 
-        // buttress roots at base (4 roots spreading out)
-        for (int i = 0; i < 4; i++) {
-            float angle = i * MathF.PI / 2f + random.NextSingle() * 0.3f;
-            int rootLength = random.Next(3, 6);
-            for (int r = 1; r <= rootLength; r++) {
-                int rx = x + (int)(MathF.Sin(angle) * r);
-                int rz = z + (int)(MathF.Cos(angle) * r);
-                int ry = y + rootLength - r; // slope down
-                if (ry < y) ry = y;
-                world.setBlockSilent(rx, ry, rz, Block.MAHOGANY_LOG.id);
-            }
-        }
+    /** small fern - 1-2 blocks tall, sparse leaves */
+    public static void placeSmallFern(World world, XRandom random, int x, int y, int z) {
+        world.setBlockSilent(x, y, z, Block.FERN_LOG.id);
 
-        // multi-layer canopy - 3 levels
-        Span<int> canopyHeights = [
-            (int)(height * 0.5f), // lower canopy
-            (int)(height * 0.7f), // mid canopy
-            height - 3            // top canopy
-        ];
+        int topY = y + 1;
+        int radius = random.Next(2, 4);
 
-        foreach (var canopyY in canopyHeights) {
-            int canopyRadius = random.Next(4, 7);
-            int canopyHeight = random.Next(3, 5);
-
-            for (int dy = 0; dy < canopyHeight; dy++) {
-                int layerY = y + canopyY + dy;
-                float layerFactor = 1.0f - (dy / (float)canopyHeight);
-                int layerRadius = (int)(canopyRadius * layerFactor);
-
-                for (int xo = -layerRadius; xo <= layerRadius; xo++) {
-                    for (int zo = -layerRadius; zo <= layerRadius; zo++) {
-                        int distSq = xo * xo + zo * zo;
-                        if (distSq > layerRadius * layerRadius) {
-                            continue;
-                        }
-
-                        // check if not trunk
-                        int leafX = x + xo;
-                        int leafZ = z + zo;
-                        if (leafX >= x && leafX <= x + 1 && leafZ >= z && leafZ <= z + 1 && dy < canopyHeight - 1) {
-                            continue; // keep trunk clear
-                        }
-
-                        world.setBlockSilent(leafX, layerY, leafZ, Block.MAHOGANY_LEAVES.id);
-                    }
+        for (int xo = -radius; xo <= radius; xo++) {
+            for (int zo = -radius; zo <= radius; zo++) {
+                if (xo == 0 && zo == 0) {
+                    continue;
                 }
+
+                // rough distance check
+                if (xo * xo + zo * zo > radius * radius) {
+                    continue;
+                }
+
+                if (Block.log[world.getBlock(x + xo, topY, z + zo)]) {
+                    continue;
+                }
+
+                world.setBlockSilent(x + xo, y, z + zo, Block.MAHOGANY_LEAVES.id);
+                world.setBlockSilent(x + xo, topY, z + zo, Block.MAHOGANY_LEAVES.id);
             }
         }
 
-        // add a few branches connecting canopy layers
-        int numBranches = random.Next(4, 8);
-        for (int i = 0; i < numBranches; i++) {
-            float angle = random.NextSingle() * 2 * MathF.PI;
-            int branchLength = random.Next(4, 8);
-            int branchStartY = y + random.Next(height / 2, height - 5);
+        world.setBlockSilent(x, topY, z, Block.MAHOGANY_LEAVES.id);
+    }
 
-            for (int b = 1; b < branchLength; b++) {
-                int bx = x + (int)(MathF.Sin(angle) * b);
-                int bz = z + (int)(MathF.Cos(angle) * b);
-                int by = branchStartY + b / 3; // slight upward angle
-                world.setBlockSilent(bx, by, bz, Block.MAHOGANY_LOG.id);
+    /** dense bush - short but very leafy */
+    public static void placeDenseBush(World world, XRandom random, int x, int y, int z) {
+        world.setBlockSilent(x, y, z, Block.MAHOGANY_LOG.id);
 
-                // leaves around branch end
-                if (b >= branchLength - 2) {
-                    for (int xo = -1; xo <= 1; xo++) {
-                        for (int zo = -1; zo <= 1; zo++) {
-                            world.setBlockSilent(bx + xo, by, bz + zo, Block.MAHOGANY_LEAVES.id);
-                        }
+        for (int h = 0; h <= 2; h++) {
+            int layerY = y + h;
+            int radius = random.Next(1, 3);
+
+            for (int xo = -radius; xo <= radius; xo++) {
+                for (int zo = -radius; zo <= radius; zo++) {
+                    if (xo * xo + zo * zo > radius * radius) {
+                        continue;
                     }
+
+                    if (Block.log[world.getBlock(x + xo, layerY, z + zo)]) {
+                        continue;
+                    }
+
+                    world.setBlockSilent(x + xo, layerY, z + zo, Block.MAHOGANY_LEAVES.id);
                 }
             }
         }
@@ -390,13 +329,17 @@ public class TreeGenerator {
     /** create a circular cross-section perpendicular to dirAxis */
     private static void crossSection(World world, int cx, int cy, int cz, float radius, int dirAxis, ushort block) {
         int rad = (int)(radius + psiF);
-        if (rad <= 0) return;
+        if (rad <= 0) {
+            return;
+        }
 
         for (int off1 = -rad; off1 <= rad; off1++) {
             for (int off2 = -rad; off2 <= rad; off2++) {
                 float dist = MathF.Sqrt((MathF.Abs(off1) + 0.5f) * (MathF.Abs(off1) + 0.5f) +
                                         (MathF.Abs(off2) + 0.5f) * (MathF.Abs(off2) + 0.5f));
-                if (dist > radius) continue;
+                if (dist > radius) {
+                    continue;
+                }
 
                 int px = cx, py = cy, pz = cz;
                 if (dirAxis == 0) {
@@ -423,13 +366,21 @@ public class TreeGenerator {
         var delta = new Vector3I(ex - sx, ey - sy, ez - sz);
         var maxdist = Math.Max(Math.Abs(delta.X), Math.Max(Math.Abs(delta.Y), Math.Abs(delta.Z)));
 
-        if (maxdist == 0) return;
+        if (maxdist == 0) {
+            return;
+        }
 
         // find primary axis (largest delta)
         int primidx;
-        if (Math.Abs(delta.X) == maxdist) primidx = 0;
-        else if (Math.Abs(delta.Y) == maxdist) primidx = 1;
-        else primidx = 2;
+        if (Math.Abs(delta.X) == maxdist) {
+            primidx = 0;
+        }
+        else if (Math.Abs(delta.Y) == maxdist) {
+            primidx = 1;
+        }
+        else {
+            primidx = 2;
+        }
 
         var secidx1 = Meth.mod(primidx - 1, 3);
         var secidx2 = Meth.mod((1 + primidx), 3);
@@ -454,20 +405,21 @@ public class TreeGenerator {
     }
 
     /** raycast along vec from start, return distance to first block matching predicate (or limit) */
-    private static int distToMat(World world, float sx, float sy, float sz, float vx, float vy, float vz,
-        Func<ushort, bool> predicate, float limit) {
+    private static int cast(World world, float sx, float sy, float sz, float vx, float vy, float vz,
+        ushort leafMat, bool wantAir, float limit) {
         float cx = sx + 0.5f;
         float cy = sy + 0.5f;
         float cz = sz + 0.5f;
         int iterations = 0;
 
         while (iterations < limit) {
-            int bx = (int)cx;
-            int by = (int)cy;
-            int bz = (int)cz;
-
-            ushort block = world.getBlock(bx, by, bz);
-            if (predicate(block)) break;
+            ushort block = world.getBlock((int)cx, (int)cy, (int)cz);
+            var hit = wantAir
+                ? block == Block.AIR.id
+                : block != Block.AIR.id && block != leafMat;
+            if (hit) {
+                break;
+            }
 
             cx += vx;
             cy += vy;
@@ -488,9 +440,6 @@ public class TreeGenerator {
         public float trunkThickness = 1.0f;
         public float foliageDensity = 1.0f;
         public float branchDensity = 1.0f;
-        public bool brokenTrunk = false;
-        public bool hollowTrunk = false;
-        public bool isMangrove = false;
         public ushort leafMat = Block.LEAVES.id;
         public ushort logMat = Block.OAK_LOG.id;
 
@@ -510,63 +459,53 @@ public class TreeGenerator {
             this.height = height;
         }
 
-        /** prepare a round deciduous tree */
-        public void prepareRound(bool rootButtresses, float trunkHeightMult) {
-            branchSlope = rhoF;
 
-            trunkRadius = psiF * MathF.Sqrt(height * trunkThickness) * 0.8f;
-            if (trunkRadius < 1) trunkRadius = 1;
+        private static readonly float[] roundShape = [2f, 3f, 3f, 2.5f, 1.6f];
+        private static readonly float[] mahoganyShape = [3.0f, 2.5f, 2.0f, 1.5f];
+        private static readonly float[] mapleShape = [2f, 2f, 1f];
 
-            float foliageHeight = height;
-            if (brokenTrunk) {
-                foliageHeight = height * (0.3f + random.NextSingle() * 0.4f);
-            }
+        private void prepare(float slope, float radiusMult, float trunkHeightMult, float[] shape,
+            Func<ProceduralTree, int, float?> shapeFunc) {
+            branchSlope = slope;
+            trunkRadius = MathF.Max(1, psiF * MathF.Sqrt(height * trunkThickness) * radiusMult);
+            trunkHeight = height * trunkHeightMult;
+            foliageShape = shape;
 
-            trunkHeight = foliageHeight * trunkHeightMult;
-            foliageShape = [2f, 3f, 3f, 2.5f, 1.6f];
-
-            prepareFoliageClusters(roundShapeFunc, (int)(foliageHeight + 0.5f));
+            prepareFoliageClusters(shapeFunc, height);
         }
 
-        /** prepare a conical pine tree */
-        public void prepareCone() {
-            branchSlope = 0.15f;
-            trunkRadius = psiF * MathF.Sqrt(height * trunkThickness) * 0.5f;
-            if (trunkRadius < 1) trunkRadius = 1;
-
-            float foliageHeight = height;
-            if (brokenTrunk) {
-                foliageHeight = height * (0.3f + random.NextSingle() * 0.4f);
-            }
-
-            trunkHeight = foliageHeight;
-            foliageShape = [2.5f, 1.6f, 1f];
-
-            prepareFoliageClusters(coneShapeFunc, (int)(foliageHeight + 0.5f));
+        /** round deciduous tree */
+        public void prepareRound(float trunkHeightMult) {
+            prepare(rhoF, 0.8f, trunkHeightMult, roundShape, roundShapeFunc);
         }
 
-        /** prepare a really spread-to-the-side maple tree */
+        public void prepareMahogany() {
+            prepare(1.0f, rhoF, psiF * 0.8f, mahoganyShape, rainforestShapeFunc);
+        }
+
+        /** medium mahogany - branches start at 50% height instead of 80% */
+        public void prepareMahoganyMedium() {
+            prepare(1.0f, rhoF, psiF * 0.7f, mahoganyShape, mahoganyMediumShapeFunc);
+        }
+
+        /** huge mahogany */
+        public void prepareMahoganyHuge() {
+            prepare(1.0f, rhoF, psiF * 0.9f, mahoganyShape, rainforestShapeFunc);
+        }
+
         public void prepareMaple() {
             branchSlope = 0.15f;
-            trunkRadius = psiF * MathF.Sqrt(height * trunkThickness) * 0.5f;
-            if (trunkRadius < 1) trunkRadius = 1;
+            trunkRadius = MathF.Max(1, psiF * MathF.Sqrt(height * trunkThickness) * 0.5f);
+            trunkHeight = height;
+            foliageShape = mapleShape;
 
-            float foliageHeight = height;
-            if (brokenTrunk) {
-                foliageHeight = height * (0.3f + random.NextSingle() * 0.4f);
-            }
-
-            trunkHeight = foliageHeight;
-            foliageShape = [2f, 2f, 1f];
-
-            // add random bushy clusters
             foliageCords.Clear();
             int numClusters = (int)(foliageDensity * height * 2.5f);
             for (int i = 0; i < numClusters; i++) {
                 rand: ;
                 // favour lower heights - more bushy at bottom
                 float yFac = MathF.Pow(random.NextSingle(), 0.6f); // bias toward 0
-                int cy = y + (int)(yFac * foliageHeight);
+                int cy = y + (int)(yFac * height);
 
                 // wider spread lower down
                 float maxRadius = (1 - yFac) * height + 0.5f;
@@ -583,75 +522,6 @@ public class TreeGenerator {
                 foliageCords.Add(new Vector3I(cx, cy, cz));
             }
         }
-
-        public void prepareMahogany() {
-            branchSlope = 1.0f;
-            trunkRadius = psiF * MathF.Sqrt(height * trunkThickness) * rhoF;
-            if (trunkRadius < 1) trunkRadius = 1;
-
-            float foliageHeight = height;
-            if (brokenTrunk) {
-                foliageHeight = height * (0.3f + random.NextSingle() * 0.4f);
-            }
-
-            trunkHeight = foliageHeight * psiF * 0.8f;
-            foliageShape = [3.0f, 2.5f, 2.0f, 1.5f];
-
-            prepareFoliageClusters(rainforestShapeFunc, (int)(foliageHeight + 0.5f));
-        }
-
-        /** prepare medium mahogany - improved with mid-height branches */
-        public void prepareMahoganyMedium() {
-            branchSlope = 1.0f;
-            trunkRadius = psiF * MathF.Sqrt(height * trunkThickness) * rhoF;
-            if (trunkRadius < 1) trunkRadius = 1;
-
-            float foliageHeight = height;
-            if (brokenTrunk) {
-                foliageHeight = height * (0.3f + random.NextSingle() * 0.4f);
-            }
-
-            trunkHeight = foliageHeight * psiF * 0.7f;
-            foliageShape = [3.0f, 2.5f, 2.0f, 1.5f];
-
-            // branches start at 50% instead of 80%!
-            prepareFoliageClusters(mahoganyMediumShapeFunc, (int)(foliageHeight + 0.5f));
-        }
-
-        /** prepare a rainforest tree */
-        public void prepareRainforest() {
-            branchSlope = 1.0f;
-            trunkRadius = psiF * MathF.Sqrt(height * trunkThickness) * rhoF;
-            if (trunkRadius < 1) trunkRadius = 1;
-
-            float foliageHeight = height;
-            if (brokenTrunk) {
-                foliageHeight = height * (0.3f + random.NextSingle() * 0.4f);
-            }
-
-            trunkHeight = foliageHeight * psiF * 0.9f;
-            foliageShape = [3.4f, 2.6f];
-
-            prepareFoliageClusters(rainforestShapeFunc, (int)(foliageHeight + 0.5f));
-        }
-
-        /** prepare a mangrove tree */
-        public void prepareMangrove() {
-            branchSlope = 1.0f;
-            trunkRadius = psiF * MathF.Sqrt(height * trunkThickness) * psiF * 0.8f;
-            if (trunkRadius < 1) trunkRadius = 1;
-
-            float foliageHeight = height;
-            if (brokenTrunk) {
-                foliageHeight = height * (0.3f + random.NextSingle() * 0.4f);
-            }
-
-            trunkHeight = foliageHeight * psiF;
-            foliageShape = [2f, 3f, 3f, 2.5f, 1.6f];
-
-            prepareFoliageClusters(mangroveShapeFunc, (int)(foliageHeight + 0.5f));
-        }
-
         /** shape function for round trees */
         private static float? roundShapeFunc(ProceduralTree tree, int yOff) {
             if (yOff < tree.height * 0.3f) {
@@ -670,30 +540,16 @@ public class TreeGenerator {
             float radius = tree.height / 2f;
             float adj = tree.height / 2f - yOff;
 
-            if (adj == 0) return radius * psiF;
-            if (MathF.Abs(adj) >= radius) return null;
+            if (adj == 0) {
+                return radius * psiF;
+            }
+
+            if (MathF.Abs(adj) >= radius) {
+                return null;
+            }
 
             float dist = MathF.Sqrt(radius * radius - adj * adj);
             return dist * psiF;
-        }
-
-        /** shape function for conical trees */
-        private static float? coneShapeFunc(ProceduralTree tree, int yOff) {
-            if (yOff < tree.height * 0.5f) {
-                return null;
-            }
-
-            // occasional twigs low down
-            if (tree.random.NextSingle() < 100f / (tree.height * tree.height) && yOff < tree.trunkHeight) {
-                return tree.height * 0.12f;
-            }
-
-            if (yOff < tree.height * (0.25f + 0.05f * tree.random.NextSingle() * tree.random.NextSingle())) {
-                return null;
-            }
-
-            float radius = (tree.height - yOff) * rhoF;
-            return radius < 0 ? null : radius;
         }
 
         /** shape function for maples trees */
@@ -715,7 +571,9 @@ public class TreeGenerator {
             yOff -= (int)(tree.height * 0.3f);
             float t = (tree.height - yOff) / (float)tree.height; // 1 at base, 0 at top
             float radius = MathF.Pow(t, 3f) * tree.height * 1.8f;
-            if (radius < 1) return null;
+            if (radius < 1) {
+                return null;
+            }
 
             return radius * psiF;
         }
@@ -756,27 +614,24 @@ public class TreeGenerator {
             return dist;
         }
 
-        /** shape function for mangrove trees - wider version of round */
-        private static float? mangroveShapeFunc(ProceduralTree tree, int yOff) {
-            var val = roundShapeFunc(tree, yOff);
-            if (val == null) return null;
-            return val.Value * phiF;
-        }
-
         /** prepare foliage cluster positions using shape function */
         private void prepareFoliageClusters(Func<ProceduralTree, int, float?> shapeFunc, int effectiveHeight) {
             foliageCords.Clear();
 
             int topY = y + effectiveHeight;
             int clustersPerY = (int)(1.5f + MathF.Pow(foliageDensity * height / 19f, 2));
-            if (clustersPerY < 1) clustersPerY = 1;
+            if (clustersPerY < 1) {
+                clustersPerY = 1;
+            }
 
             // iterate from top down, EXCLUDING base
             for (int cy = topY; cy > y; cy--) {
                 int yOff = cy - y;
                 for (int i = 0; i < clustersPerY; i++) {
                     float? shapeFac = shapeFunc(this, yOff);
-                    if (shapeFac == null) continue;
+                    if (shapeFac == null) {
+                        continue;
+                    }
 
                     float r = (MathF.Sqrt(random.NextSingle()) + 0.328f) * shapeFac.Value;
                     float theta = random.NextSingle() * 2 * PI;
@@ -808,7 +663,7 @@ public class TreeGenerator {
                         float vz = offz / offlength;
 
                         // check for solid blocks (anything not air/leaves)
-                        int matDist = distToMat(world, x, startY, z, vx, vy, vz, b => b != Block.AIR.id && b != leafMat, offlength + 3);
+                        int matDist = cast(world, x, startY, z, vx, vy, vz, leafMat, false, offlength + 3);
 
                         // skip this cluster if we hit terrain before reaching it
                         if (matDist < offlength + 2) {
@@ -838,8 +693,13 @@ public class TreeGenerator {
             float endSizeFactor = trunkHeight / height;
             float midRad = trunkRadius * (1 - endSizeFactor * 0.5f);
             float endRad = trunkRadius * (1 - endSizeFactor);
-            if (endRad < 1.0f) endRad = 1.0f;
-            if (midRad < endRad) midRad = endRad;
+            if (endRad < 1.0f) {
+                endRad = 1.0f;
+            }
+
+            if (midRad < endRad) {
+                midRad = endRad;
+            }
 
             float startRad = trunkRadius;
             rootBases.Clear();
@@ -850,8 +710,7 @@ public class TreeGenerator {
                 rootBases.Add((x, z, startRad));
 
                 float buttressRad = trunkRadius * rhoF;
-                // normal trees use trunkRadius, mangrove extends 2.618x
-                float posRadius = isMangrove ? trunkRadius * (phiF + 1) : trunkRadius;
+                float posRadius = trunkRadius;
                 int numButtresses = (int)(MathF.Sqrt(trunkRadius) + 3.5f);
 
                 for (int i = 0; i < numButtresses; i++) {
@@ -860,7 +719,9 @@ public class TreeGenerator {
                     int bx = x + (int)(thisPosRadius * MathF.Sin(ang));
                     int bz = z + (int)(thisPosRadius * MathF.Cos(ang));
                     float thisRad = buttressRad * (psiF + random.NextSingle());
-                    if (thisRad < 1.0f) thisRad = 1.0f;
+                    if (thisRad < 1.0f) {
+                        thisRad = 1.0f;
+                    }
 
                     taperedCylinder(world, bx, y, bz, x, midY, z, thisRad, thisRad, logMat);
                     rootBases.Add((bx, bz, thisRad));
@@ -880,7 +741,9 @@ public class TreeGenerator {
                 float ydist = coord.Y - y;
 
                 float value = (normBranchDens * 220 * height) / MathF.Pow(ydist + dist, 3);
-                if (value < random.NextSingle()) continue;
+                if (value < random.NextSingle()) {
+                    continue;
+                }
 
                 float slope = branchSlope + (0.5f - random.NextSingle()) * 0.16f;
 
@@ -889,7 +752,10 @@ public class TreeGenerator {
 
                 if (coord.Y - dist * slope > topY) {
                     float threshold = 1f / height;
-                    if (random.NextSingle() < threshold) continue;
+                    if (random.NextSingle() < threshold) {
+                        continue;
+                    }
+
                     branchY = topY;
                     baseSize = endRad;
                 }
@@ -899,7 +765,9 @@ public class TreeGenerator {
                 }
 
                 float startSize = baseSize * (1 + random.NextSingle()) * psiF * MathF.Pow(dist / height, psiF);
-                if (startSize < 1.0f) startSize = 1.0f;
+                if (startSize < 1.0f) {
+                    startSize = 1.0f;
+                }
 
                 float rndr = MathF.Sqrt(random.NextSingle()) * baseSize * psiF;
                 float rndang = random.NextSingle() * 2 * PI;
@@ -917,7 +785,9 @@ public class TreeGenerator {
                     float ydist = coord.Y - y;
 
                     float value = (normBranchDens * 220 * height) / MathF.Pow(ydist + dist, 3);
-                    if (value < random.NextSingle()) continue;
+                    if (value < random.NextSingle()) {
+                        continue;
+                    }
 
                     var rootBase = rootBases[random.Next(rootBases.Count)];
                     int rootx = rootBase.x;
@@ -938,19 +808,14 @@ public class TreeGenerator {
                     int offy = starty - coord.Y;
                     int offz = startz - coord.Z;
 
-                    // mangrove roots are 1.618x longer
-                    if (isMangrove) {
-                        offx = (int)(offx * phiF - 1.5f);
-                        offy = (int)(offy * phiF - 1.5f);
-                        offz = (int)(offz * phiF - 1.5f);
-                    }
-
                     int endx = startx + offx;
                     int endy = starty + offy;
                     int endz = startz + offz;
 
                     float rootStartSize = rootbaseRadius * psiF * MathF.Abs(offy) / (height * psiF);
-                    if (rootStartSize < 1.0f) rootStartSize = 1.0f;
+                    if (rootStartSize < 1.0f) {
+                        rootStartSize = 1.0f;
+                    }
 
                     // hanging roots: raycast to find where they hit air, then hang down
                     float offlength = MathF.Sqrt(offx * offx + offy * offy + offz * offz);
@@ -965,8 +830,8 @@ public class TreeGenerator {
                         float searchz = startz + startdist * vz;
 
                         // search for air blocks (hanging roots)
-                        int raydist = startdist + distToMat(world, searchx, searchy, searchz, vx, vy, vz,
-                            static b => b == Block.AIR.id, offlength);
+                        int raydist = startdist + cast(world, searchx, searchy, searchz, vx, vy, vz,
+                            leafMat, true, offlength);
 
                         if (raydist < offlength) {
                             // found air, root stops here then hangs down
@@ -995,28 +860,6 @@ public class TreeGenerator {
                 }
             }
 
-            // hollow trunk with proper wall thickness and tapering
-            if (hollowTrunk && trunkRadius > 2) {
-                float wallThickness = 1 + trunkRadius * 0.1f * random.NextSingle();
-                if (wallThickness < 1.3f) wallThickness = 1.3f;
-
-                float baseRadius = trunkRadius - wallThickness;
-                if (baseRadius < 1) baseRadius = 1.0f;
-                float midRadius = midRad - wallThickness;
-                float topRadius = endRad - wallThickness;
-
-                // offset for asymmetric hollow
-                int baseOffset = (int)wallThickness;
-                int startX = x + random.Next(-baseOffset, baseOffset + 1);
-                int startZ = z + random.Next(-baseOffset, baseOffset + 1);
-
-                // hollow out bottom and middle sections with taper
-                taperedCylinder(world, startX, y, startZ, x, midY, z, baseRadius, midRadius, Block.AIR.id);
-
-                // extend hollow above trunk top
-                int hollowTopY = (int)(topY + trunkRadius + 1.5f);
-                taperedCylinder(world, x, midY, z, x, hollowTopY, z, midRadius, topRadius, Block.AIR.id);
-            }
         }
 
         /** place a foliage cluster */

@@ -216,6 +216,13 @@ public class ServerPacketHandler : PacketHandler {
         // try to load existing player data
         var player = GameServer.instance.loadPlayerData(conn.username);
 
+        if (player == null && conn.isHost && world.legacyPlayerNBT != null) {
+            player = new ServerPlayer(world, 0, 0, 0);
+            player.read(world.legacyPlayerNBT);
+            world.legacyPlayerNBT = null;
+            Log.info($"Migrated test player data for '{conn.username}' at {player.position}");
+        }
+
         if (player == null) {
             // new player - create with defaults at world spawn
             var spawnPos = world.spawn;
@@ -318,7 +325,10 @@ public class ServerPacketHandler : PacketHandler {
 
         // send all existing players to the new client (both player list and spawn packets)
         foreach (var existingConn in GameServer.instance.connections.Values) {
-            if (existingConn.entityID == conn.entityID) continue; // skip self
+            if (existingConn.entityID == conn.entityID) {
+                continue; // skip self
+            }
+
             if (existingConn.player == null) {
                 continue;
             }
@@ -506,18 +516,6 @@ public class ServerPacketHandler : PacketHandler {
         }
 
         conn.player.velocity = p.velocity;
-
-        // broadcast to other players
-        GameServer.instance.send(
-            conn.player.position,
-            128.0,
-            new EntityVelocityPacket {
-                entityID = conn.entityID,
-                velocity = p.velocity
-            },
-            DeliveryMethod.Unreliable,
-            exclude: conn
-        );
     }
 
     private void handleStartBlockBreak(StartBlockBreakPacket p) {
@@ -678,7 +676,9 @@ public class ServerPacketHandler : PacketHandler {
 
     /** mirrors ClientPlayer.placeBlock() logic */
     private void handlePlaceBlock(PlaceBlockPacket p) {
-        if (!conn.authenticated || conn.player == null) return;
+        if (!conn.authenticated || conn.player == null) {
+            return;
+        }
 
         // validate reach - early check before processing
         if (!validateReach(p.position)) {
@@ -687,8 +687,14 @@ public class ServerPacketHandler : PacketHandler {
         }
 
         // chain of responsibility - matches client precedence
-        if (tryInteractWithBlock(p)) return;
-        if (tryUseItemOnBlock(p)) return;
+        if (tryInteractWithBlock(p)) {
+            return;
+        }
+
+        if (tryUseItemOnBlock(p)) {
+            return;
+        }
+
         tryPlaceBlockItem(p);
     }
 
@@ -697,7 +703,9 @@ public class ServerPacketHandler : PacketHandler {
         var world = GameServer.instance.world;
         var block = Block.get(world.getBlock(p.position));
 
-        if (block == null || block == Block.AIR) return false;
+        if (block == null || block == Block.AIR) {
+            return false;
+        }
 
         // execute onUse (opens inventory, etc)
         return block.onUse(world, p.position.X, p.position.Y, p.position.Z, conn.player);
@@ -714,7 +722,9 @@ public class ServerPacketHandler : PacketHandler {
 
         // try item's useBlock hook
         var result = stack.getItem().useBlock(stack, GameServer.instance.world, conn.player, p.position.X, p.position.Y, p.position.Z, p.info);
-        if (result == null) return false;
+        if (result == null) {
+            return false;
+        }
 
         // item handled it - update inventory
         conn.player.inventory.setStack(conn.player.inventory.selected, result);
@@ -726,10 +736,14 @@ public class ServerPacketHandler : PacketHandler {
     /** place block from item */
     private void tryPlaceBlockItem(PlaceBlockPacket p) {
         var stack = conn.player.inventory.getSelected();
-        if (stack == ItemStack.EMPTY || !stack.getItem().isBlock()) return;
+        if (stack == ItemStack.EMPTY || !stack.getItem().isBlock()) {
+            return;
+        }
 
         var block = Block.get(stack.getItem().getBlockID());
-        if (block == null || block.id == 0) return;
+        if (block == null || block.id == 0) {
+            return;
+        }
 
         var metadata = (byte)stack.metadata;
 
@@ -782,14 +796,18 @@ public class ServerPacketHandler : PacketHandler {
 
         world.getAABBsCollision(aabbList, pos.X, pos.Y, pos.Z);
         foreach (var aabb in aabbList) {
-            if (AABB.isCollision(aabb, conn.player.aabb)) return true;
+            if (AABB.isCollision(aabb, conn.player.aabb)) {
+                return true;
+            }
         }
 
         return false;
     }
 
     private bool wouldCollideWithEntities(Block block, Vector3I pos, byte metadata) {
-        if (!Block.collision[block.id]) return false;
+        if (!Block.collision[block.id]) {
+            return false;
+        }
 
         var world = GameServer.instance.world;
         var aabbList = new List<AABB>();
@@ -800,7 +818,9 @@ public class ServerPacketHandler : PacketHandler {
             entities.Clear();
             world.getEntitiesInBox(entities, aabb.min.toBlockPos(), aabb.max.toBlockPos() + 1);
             foreach (var entity in entities) {
-                if (entity.blocksPlacement && AABB.isCollision(aabb, entity.aabb)) return true;
+                if (entity.blocksPlacement && AABB.isCollision(aabb, entity.aabb)) {
+                    return true;
+                }
             }
         }
 
@@ -897,6 +917,8 @@ public class ServerPacketHandler : PacketHandler {
 
         conn.send(new RenderDistancePacket { dist = (byte)dist }, DeliveryMethod.ReliableOrdered);
 
+        conn.invalidateChunks();
+        GameServer.instance.unsortChunks();
         conn.updateLoadedChunks();
     }
 
@@ -996,7 +1018,9 @@ public class ServerPacketHandler : PacketHandler {
         }
 
         // apply damage with knockback
+        var hpBefore = target.hp;
         target.dmg(damage, conn.player);
+        var applied = hpBefore - target.hp;
 
         // damage held item (if it has durability)
         if (heldStack != ItemStack.EMPTY && Item.durability[heldStack.id] > 0) {
@@ -1008,17 +1032,18 @@ public class ServerPacketHandler : PacketHandler {
         }
 
         // broadcast damage event to nearby players (for damage numbers and visual effects)
-        GameServer.instance.send(
-            target.position,
-            128.0,
-            new EntityDamagePacket {
-                entityID = p.targetEntityID,
-                attackerID = conn.player.id,
-                damage = damage,
-                knockback = target.velocity - target.prevVelocity
-            },
-            DeliveryMethod.ReliableOrdered
-        );
+        if (applied > 0) {
+            GameServer.instance.send(
+                target.position,
+                128.0,
+                new EntityDamagePacket {
+                    entityID = p.targetEntityID,
+                    attackerID = conn.player.id,
+                    damage = applied
+                },
+                DeliveryMethod.ReliableOrdered
+            );
+        }
 
         // if target is a player, send health update
         if (target is ServerPlayer targetPlayer) {
@@ -1031,17 +1056,6 @@ public class ServerPacketHandler : PacketHandler {
                 }, DeliveryMethod.ReliableOrdered);
             }
         }
-
-        // broadcast velocity update for knockback
-        GameServer.instance.send(
-            target.position,
-            128.0,
-            new EntityVelocityPacket {
-                entityID = target.id,
-                velocity = target.velocity
-            },
-            DeliveryMethod.ReliableOrdered
-        );
 
         swing: ;
 
@@ -1407,7 +1421,9 @@ public class ServerPacketHandler : PacketHandler {
     /** sync player's full inventory + cursor */
     private static void syncPlayerInventory(ServerPlayer player) {
         var conn = player.conn;
-        if (conn == null) return;
+        if (conn == null) {
+            return;
+        }
 
         // send full inventory
         var inventorySlots = new List<ItemStack>();

@@ -1,6 +1,7 @@
 using System.Numerics;
 using BlockGame.util;
 using BlockGame.world.block;
+using BlockGame.world.chunk;
 
 namespace BlockGame.world.worldgen.feature;
 
@@ -49,44 +50,94 @@ public class OreFeature : Feature {
         // walk straight line with random radius at each step
         var steps = random.Next(minSteps, maxSteps + 1);
         var pos = new Vector3(x, y, z);
+        var c = default(OreCache);
 
+        var prev = pos;
+        var prevRadSq = -1f;
         for (int i = 0; i < steps; i++) {
             var radius = random.NextSingle() * this.radius;
-            placeSphere(world, pos, radius);
+            placeSphere(world, pos, radius, prev, prevRadSq, ref c);
+            prev = pos;
+            prevRadSq = radius * radius;
             pos += dir;
         }
     }
 
-    private void placeSphere(World world, Vector3 center, float radius) {
-        int xMin = (int)(center.X - radius);
-        int xMax = (int)(center.X + radius) + 1;
-        int yMin = (int)(center.Y - radius);
-        int yMax = (int)(center.Y + radius) + 1;
-        int zMin = (int)(center.Z - radius);
-        int zMax = (int)(center.Z + radius) + 1;
+    private struct OreCache {
+        private ChunkCoord coord;
+        private Chunk? chunk;
+        private bool valid;
 
-        // clamp to world bounds
-        yMin = Math.Max(0, yMin);
-        yMax = Math.Min(World.WORLDHEIGHT, yMax);
+        public Chunk? get(World world, int x, int z) {
+            var c = new ChunkCoord(x >> 4, z >> 4);
+            if (!valid || c != coord) {
+                valid = true;
+                coord = c;
+                world.getChunkMaybe(c, out chunk);
+            }
+
+            return chunk;
+        }
+    }
+
+    private void placeSphere(World world, Vector3 center, float radius, Vector3 prev, float prevRadSq, ref OreCache c) {
+        int y0 = Math.Max(0, (int)(center.Y - radius));
+        int y1 = Math.Min(World.WORLDHEIGHT, (int)(center.Y + radius) + 1);
+        int z0 = (int)(center.Z - radius);
+        int z1 = (int)(center.Z + radius) + 1;
 
         float radSq = radius * radius;
-        for (int zz = zMin; zz < zMax; zz++) {
-            for (int yy = yMin; yy < yMax; yy++) {
-                for (int xx = xMin; xx < xMax; xx++) {
-                    float dx = xx - center.X;
-                    float dy = yy - center.Y;
-                    float dz = zz - center.Z;
-                    float distSq = dx * dx + dy * dy + dz * dz;
+        for (int zz = z0; zz < z1; zz++) {
+            float dz = zz - center.Z;
+            float dz2 = dz * dz;
+            if (dz2 > radSq) {
+                continue;
+            }
 
-                    if (distSq <= radSq) {
-                        var bl = world.getBlock(xx, yy, zz);
+            float pdz = zz - prev.Z;
+            float pdz2 = pdz * pdz;
 
-                        // only replace valid blocks
-                        if (stoneMode && bl != Block.STONE.id) continue;
-                        if (!stoneMode && bl != Block.STONE.id && bl != Block.DIRT.id && bl != Block.HELLSTONE.id) continue;
+            for (int yy = y0; yy < y1; yy++) {
+                float dy = yy - center.Y;
+                float rem = radSq - dz2 - dy * dy;
+                if (rem < 0) {
+                    continue;
+                }
 
-                        world.setBlockDumb(xx, yy, zz, block);
+                float pdy = yy - prev.Y;
+                float pdyz2 = pdz2 + pdy * pdy;
+
+                // dx^2 <= rem
+                float half = float.Sqrt(rem);
+                int x0 = (int)float.Ceiling(center.X - half);
+                int x1 = (int)float.Floor(center.X + half);
+                for (int xx = x0; xx <= x1; xx++) {
+                    float pdx = xx - prev.X;
+                    if (pdyz2 + pdx * pdx <= prevRadSq) {
+                        continue;
                     }
+
+                    var chunk = c.get(world, xx, zz);
+                    if (chunk == null) {
+                        continue;
+                    }
+
+                    var bl = chunk.getBlock(xx & 0xF, yy, zz & 0xF);
+
+                    if (bl == block) {
+                        continue;
+                    }
+
+                    // only replace valid blocks
+                    if (stoneMode && bl != Block.STONE.id) {
+                        continue;
+                    }
+
+                    if (!stoneMode && bl != Block.STONE.id && bl != Block.DIRT.id && bl != Block.HELLSTONE.id) {
+                        continue;
+                    }
+
+                    chunk.setBlockDumb(xx & 0xF, yy, zz & 0xF, block);
                 }
             }
         }

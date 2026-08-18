@@ -50,7 +50,10 @@ public class LevelSelectMenu : ScrollableMenu {
     }
 
     private void loadWorld(GUIElement element) {
-        if (load) return;
+        if (load) {
+            return;
+        }
+
         load = true;
 
         var worldEntry = (WorldEntry)element;
@@ -62,7 +65,9 @@ public class LevelSelectMenu : ScrollableMenu {
     }
 
     private void deleteSelectedWorld() {
-        if (selectedEntry == null) return;
+        if (selectedEntry == null) {
+            return;
+        }
 
         var worldEntry = selectedEntry;
         Game.instance.switchTo(CONFIRM_DIALOG);
@@ -117,7 +122,9 @@ public class LevelSelectMenu : ScrollableMenu {
         foreach (var dir in Directory.GetDirectories(levelDir)) {
             var folderName = Path.GetFileName(dir);
             var levelFile = $"{dir}/level.xnbt";
-            if (!File.Exists(levelFile)) continue;
+            if (!File.Exists(levelFile)) {
+                continue;
+            }
 
             try {
                 var tag = NBT.readFile(levelFile);
@@ -129,9 +136,10 @@ public class LevelSelectMenu : ScrollableMenu {
                 var entry = new WorldEntry(this, $"world_{folderName}", folderName, displayName, seed, size, lastPlayed, generatorName);
                 worlds.Add(entry);
             }
-            catch {
+            catch (Exception e) {
                 // skip corrupted worlds
                 Log.warn($"Failed to load world info for '{folderName}', skipping");
+                Log.warn(e);
             }
         }
 

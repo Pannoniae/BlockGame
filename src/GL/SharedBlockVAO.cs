@@ -18,6 +18,8 @@ public sealed class SharedBlockVAO : VAO {
     public uint buffer;
     public uint count;
 
+    private uint capacity;
+
     // for NV_vertex_buffer_unified_memory
     public ulong bufferAddress;
     public nuint bufferLength;
@@ -33,18 +35,7 @@ public sealed class SharedBlockVAO : VAO {
     }
 
     public void upload(BlockVertexPacked[] data, ushort[] indices) {
-        unsafe {
-            GL.DeleteBuffer(buffer);
-            buffer = GL.CreateBuffer();
-            count = (uint)indices.Length;
-            var vertexSize = (uint)(data.Length * sizeof(BlockVertexPacked));
-            fixed (BlockVertexPacked* d = data) {
-                GL.NamedBufferStorage(buffer, vertexSize, d,
-                    BufferStorageMask.None);
-            }
-        }
-
-        format();
+        throw new SkillIssueException("use upload(Span, uint)");
     }
 
     public void upload(Span<BlockVertexPacked> data, uint _count) {
@@ -54,41 +45,52 @@ public sealed class SharedBlockVAO : VAO {
         //bool elementsMode = !(Game.hasCMDL || Game.hasBindlessMDI);
         
         unsafe {
-            GL.DeleteBuffer(buffer);
-            buffer = GL.CreateBuffer();
             //count = (uint)(_count * (elementsMode ? 1.5 : 1)); // 1.5 for elements mode, 1 for arrays mode
             count = (uint)(_count * 1.5);
             var vertexSize = (uint)(data.Length * sizeof(BlockVertexPacked));
+
             fixed (BlockVertexPacked* d = data) {
-                GL.NamedBufferStorage(buffer, vertexSize, d,
-                    BufferStorageMask.None);
-            }
+                // Reuse the allocation when the new mesh fits
+                if (buffer != 0 && vertexSize <= capacity) {
+                    GL.NamedBufferSubData(buffer, 0, vertexSize, d);
+                }
+                else {
+                    if (buffer != 0) {
+                        releaseBuffer();
+                    }
 
-            // i have an idea. What if we mapped it, unmapped it, THEN manually freed it? what's the worst which could happen, right??
-            //var ptr = GL.MapBuffer(BufferTargetARB.ArrayBuffer, BufferAccessARB.ReadOnly);
-            //GL.UnmapBuffer(BufferTargetARB.ArrayBuffer);
-            //Console.WriteLine($"Mapped buffer ptr: 0x{(ulong)ptr:X16}");
-            //NativeMemory.AlignedFree(ptr); // free the temp buffer we mapped (we don't need it anymore)
+                    capacity = uint.Max(roundUp(vertexSize), 1);
 
-            // name the buffer
-            GL.ObjectLabel(ObjectIdentifier.Buffer, buffer, uint.MaxValue, "SharedBlockVAO Buffer");
+                    buffer = GL.CreateBuffer();
+                    GL.NamedBufferStorage(buffer, capacity, null, BufferStorageMask.DynamicStorageBit);
+                    GL.NamedBufferSubData(buffer, 0, vertexSize, d);
 
-            // check for unified memory support and get buffer address
-            if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
+                    if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
+                        Game.sbl.MakeNamedBufferResident(buffer, (NV)GLEnum.ReadOnly);
+                        bufferAddress = Game.sbl.GetNamedBufferParameter(buffer, NV.BufferGpuAddressNV);
+                    }
+
+                    if (Game.devMode) {
+                        // this has to be a fixed constant because of stupid silk.net marshalling
+                        //const string name = "SharedBlockVAO Buffer";
+                        GL.ObjectLabel(ObjectIdentifier.Buffer, buffer, uint.MaxValue, buf);
+                    }
+                }
+
                 bufferLength = vertexSize;
-                // make buffer resident first, then get its GPU address
-                //GL.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
-                //Game.sbl.MakeNamedBufferResident(buffer, (NV)GLEnum.ReadOnly);
-                //Game.sbl.GetNamedBufferParameter(buffer, NV.BufferGpuAddressNV, out bufferAddress);
-                Game.sbl.MakeNamedBufferResident(buffer, (NV)GLEnum.ReadOnly);
-                bufferAddress = Game.sbl.GetNamedBufferParameter(buffer, NV.BufferGpuAddressNV);
-                //Console.WriteLine($"SharedBlockVAO: buffer={buffer}, address=0x{bufferAddress:X16}, length={bufferLength}");
             }
         }
 
         format();
 
         c++;
+    }
+
+    public static ReadOnlySpan<byte> buf => "SharedBlockVAO Buffer"u8;
+
+    /** round up to a power of two so a doesn't reallocate every frame */
+    private static uint roundUp(uint bytes) {
+        return bytes <= 1024 ? 1024 : System.Numerics.BitOperations.RoundUpToPowerOf2(bytes);
     }
 
     public void upload(Span<BlockVertexPacked> data, Span<ushort> indices) {
@@ -376,12 +378,22 @@ public sealed class SharedBlockVAO : VAO {
     }
 
     private void ReleaseUnmanagedResources() {
-        if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI && buffer != 0) {
+        releaseBuffer();
+    }
+
+    private void releaseBuffer() {
+        if (buffer == 0) {
+            return;
+        }
+
+        if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
             // make buffer non-resident before deleting
             Game.sbl.MakeNamedBufferNonResident(buffer);
         }
 
         GL.DeleteBuffer(buffer);
+        buffer = 0;
+        capacity = 0;
     }
 
     ~SharedBlockVAO() {

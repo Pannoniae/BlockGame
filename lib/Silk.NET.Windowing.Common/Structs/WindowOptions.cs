@@ -168,8 +168,9 @@ namespace Silk.NET.Windowing
             try
             {
                 var asmName = Assembly.GetEntryAssembly()?.GetName().Name;
-                if (asmName is not null)
+                if (asmName is not null) {
                     name = asmName;
+                }
             }
             catch { /* cannot use reflection */ }
 

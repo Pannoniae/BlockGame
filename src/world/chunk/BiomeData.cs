@@ -5,15 +5,12 @@ using BlockGame.world.worldgen.generator;
 namespace BlockGame.world.chunk;
 
 public class BiomeData {
-    private const int BIOME_X = 4;
-    private const int BIOME_Y = 32;
-    private const int BIOME_Z = 4;
-    private const int TOTAL = BIOME_X * BIOME_Y * BIOME_Z; // 512x
+    private const int N = 5;
 
-    public sbyte[] hum = new sbyte[TOTAL];
+    private const int TOTAL = N * N;
+
     public sbyte[] temp = new sbyte[TOTAL];
-    public sbyte[] age = new sbyte[TOTAL];
-    public sbyte[] w = new sbyte[TOTAL];
+    public sbyte[] hum = new sbyte[TOTAL];
 
     private Chunk? chunk;
 
@@ -21,82 +18,53 @@ public class BiomeData {
         this.chunk = chunk;
     }
 
-    /** convert biome coords to array index (YZX) */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int idx(int bx, int by, int bz) {
-        return (by << 4) + (bz << 2) + bx;
+    private static int idx(int bx, int bz) {
+        return bz * N + bx;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void setHum(int bx, int by, int bz, sbyte value) {
-        hum[idx(bx, by, bz)] = value;
+    public void set(int bx, int bz, sbyte t, sbyte h) {
+        temp[idx(bx, bz)] = t;
+        hum[idx(bx, bz)] = h;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void setTemp(int bx, int by, int bz, sbyte value) {
-        temp[idx(bx, by, bz)] = value;
+    public float getTemp(int x, int z) {
+        sample(x, z, out var t, out _);
+        return t;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void setAge(int bx, int by, int bz, sbyte value) {
-        age[idx(bx, by, bz)] = value;
+    public float getHum(int x, int z) {
+        sample(x, z, out _, out var h);
+        return h;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void setW(int bx, int by, int bz, sbyte value) {
-        w[idx(bx, by, bz)] = value;
-    }
+    /**
+     * helper so we dont sample the same detail twice...
+     */
+    public void sample(int x, int z, out float temp, out float hum) {
+        var t = bilinear(this.temp, x, z);
+        var h = bilinear(this.hum, x, z);
 
-
-    public float getHum(int x, int y, int z) {
-        var value = interpolate(hum, x, y, z);
-        return applyDetailAndRemap(value, x, y, z);
-    }
-
-    public float getTemp(int x, int y, int z) {
-        var value = interpolate(temp, x, y, z);
-        return applyDetailAndRemap(value, x, y, z);
-    }
-
-    public float getAge(int x, int y, int z) {
-        var value = interpolate(age, x, y, z);
-        return applyDetailAndRemap(value, x, y, z);
-    }
-
-    public float getWeirdness(int x, int y, int z) {
-        var value = interpolate(w, x, y, z);
-        return applyDetailAndRemap(value, x, y, z);
-    }
-
-    private float applyDetailAndRemap(float value, int x, int y, int z) {
-        if (chunk == null || chunk.world.generator is not NewWorldGenerator gen) {
-            return value;
+        if (chunk != null && chunk.world.generator is NewWorldGenerator gen) {
+            // y pinned to 0 so the value distribution (and therefore the fe() normaliser below) is
+            // unchanged from when this was a 3D field
+            var detail = WorldgenUtil.getNoise3D(gen.detailn,
+                (chunk.worldX + x) * NewWorldGenerator.DETAIL_FREQ, 0,
+                (chunk.worldZ + z) * NewWorldGenerator.DETAIL_FREQ, 2, 2f) * NewWorldGenerator.DETAIL_STRENGTH;
+            t += detail;
+            h += detail;
         }
 
-        int wx = chunk.worldX + x;
-        int wz = chunk.worldZ + z;
-
-        var detail = WorldgenUtil.getNoise3D(gen.detailn, wx * NewWorldGenerator.DETAIL_FREQ,
-            y * NewWorldGenerator.DETAIL_FREQ, wz * NewWorldGenerator.DETAIL_FREQ, 2, 2f);
-
-        value += detail * NewWorldGenerator.DETAIL_STRENGTH;
-
         // remap with sqrt to normalise the simplex noise and push values toward extremes
-        //value = float.Sign(value) * float.Cbrt(float.Abs(value));
-        // note: this is a bit inaccurate, especially |x|>0.9 (undercounts) but idk how to do it better without a lookup table
-        //  it's NOT gaussian, it's a shorter-tailed distribution... GOOD ENOUGH:TM:
-        value = fe(value * (1 / 0.356f));
-        //value = fe(value / 0.311f);
-
-        return value;
+        // note: this is a bit inaccurate, especially |x|>0.9 (undercounts) but idk how to do it better
+        // without a lookup table. it's NOT gaussian, it's a shorter-tailed distribution... GOOD ENOUGH:TM:
+        temp = fe(t * (1 / 0.356f));
+        hum = fe(h * (1 / 0.356f));
     }
 
-    public BiomeType getBiome(int x, int y, int z) {
-        float temp = getTemp(x, y, z);
-        float hum = getHum(x, y, z);
-        int height = chunk!.heightMap.get(x, z);
-
-        return Biomes.getType(temp, hum, height);
+    public BiomeType getBiome(int x, int z) {
+        sample(x, z, out var t, out var h);
+        return Biomes.getType(t, h, chunk!.heightMap.get(x, z));
     }
 
     public static float fe(float x) {
@@ -118,43 +86,20 @@ public class BiomeData {
         return sign * y;
     }
 
+    /** bilinear interp from block coords to the 4-block sample grid */
+    private static float bilinear(sbyte[] data, int x, int z) {
+        int x0 = x >> 2;
+        int z0 = z >> 2;
+        float fx = (x & 3) * 0.25f;
+        float fz = (z & 3) * 0.25f;
 
-    /** trilinear interpolation from block coords to biome values */
-    private static float interpolate(sbyte[] data, int x, int y, int z) {
-        // convert block coords to biome space (each biome point covers 4x4x4 blocks)
-        float bx = x * 0.25f;
-        float by = y * 0.25f;
-        float bz = z * 0.25f;
+        float c00 = data[idx(x0, z0)] * (1 / 127f);
+        float c10 = data[idx(x0 + 1, z0)] * (1 / 127f);
+        float c01 = data[idx(x0, z0 + 1)] * (1 / 127f);
+        float c11 = data[idx(x0 + 1, z0 + 1)] * (1 / 127f);
 
-        int x0 = (int)bx;
-        int y0 = (int)by;
-        int z0 = (int)bz;
-
-        int x1 = Math.Min(x0 + 1, BIOME_X - 1);
-        int y1 = Math.Min(y0 + 1, BIOME_Y - 1);
-        int z1 = Math.Min(z0 + 1, BIOME_Z - 1);
-
-        float fx = bx - x0;
-        float fy = by - y0;
-        float fz = bz - z0;
-
-        float c000 = data[idx(x0, y0, z0)] * (1 / 127f);
-        float c001 = data[idx(x0, y0, z1)] * (1 / 127f);
-        float c010 = data[idx(x0, y1, z0)] * (1 / 127f);
-        float c011 = data[idx(x0, y1, z1)] * (1 / 127f);
-        float c100 = data[idx(x1, y0, z0)] * (1 / 127f);
-        float c101 = data[idx(x1, y0, z1)] * (1 / 127f);
-        float c110 = data[idx(x1, y1, z0)] * (1 / 127f);
-        float c111 = data[idx(x1, y1, z1)] * (1 / 127f);
-
-        float c00 = c000 * (1 - fx) + c100 * fx;
-        float c01 = c001 * (1 - fx) + c101 * fx;
-        float c10 = c010 * (1 - fx) + c110 * fx;
-        float c11 = c011 * (1 - fx) + c111 * fx;
-
-        float c0 = c00 * (1 - fy) + c10 * fy;
-        float c1 = c01 * (1 - fy) + c11 * fy;
-
-        return c0 * (1 - fz) + c1 * fz;
+        float c0 = c00 + (c10 - c00) * fx;
+        float c1 = c01 + (c11 - c01) * fx;
+        return c0 + (c1 - c0) * fz;
     }
 }

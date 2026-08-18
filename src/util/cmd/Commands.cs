@@ -640,7 +640,9 @@ public readonly struct Command {
             var toKill = new List<Entity>();
             foreach (var e in entities) {
                 // never kill players
-                if (e is Player) continue;
+                if (e is Player) {
+                    continue;
+                }
 
                 bool shouldKill = targetType switch {
                     "all" => true,
@@ -650,7 +652,9 @@ public readonly struct Command {
                     _ => e.type.Equals(targetType, StringComparison.OrdinalIgnoreCase)
                 };
 
-                if (shouldKill) toKill.Add(e);
+                if (shouldKill) {
+                    toKill.Add(e);
+                }
             }
 
             // kill them
@@ -1052,7 +1056,9 @@ public readonly struct Command {
 
         foreach (var field in fields) {
             var value = field.GetValue(null);
-            if (value == null) continue;
+            if (value == null) {
+                continue;
+            }
 
             // check if it's a Registry<T> or ObjectRegistry<T, TFactory>
             var fieldType = field.FieldType;

@@ -80,6 +80,15 @@ public class ServerPlayer : Player {
         rotation = Meth.clampAngle(rotation);
     }
 
+    public override void knockback(Vector3D force) {
+        base.knockback(force);
+
+        conn?.send(new EntityVelocityPacket {
+            entityID = id,
+            velocity = force
+        }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+    }
+
     // sync HP to client on damage
     public override void dmg(float damage) {
         base.dmg(damage);

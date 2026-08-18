@@ -14,9 +14,11 @@ namespace FontStashSharp
 		{
 			get
 			{
-				if (String == null) return true;
+				if (String == null) {
+                    return true;
+                }
 
-				return Offset >= String.Length;
+                return Offset >= String.Length;
 			}
 		}
 

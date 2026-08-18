@@ -41,7 +41,7 @@ public partial class Entity(World world, string type) : Persistent {
     public const double STEP_HEIGHT = 0.51;
 
     public string type = type;
-    public int id = World.ec++;
+    public int id = World.nextID();
 
     public string name;
 
@@ -62,6 +62,16 @@ public partial class Entity(World world, string type) : Persistent {
     public bool jumping;
 
     public bool sneaking;
+
+    /**
+     * Does this side own the entity's physics? For yourself / players the answer is the client,
+     * for everything else the server owns it for now.
+     */
+    public virtual bool simulated => world.isServer || this is ClientPlayer;
+
+    public Vector3D targetPos;
+    public Vector3 targetRot;
+    public int interpolationTicks;
 
     /** entity positions are at feet */
     public Vector3D prevPosition;
@@ -224,6 +234,17 @@ public partial class Entity(World world, string type) : Persistent {
      * Subclasses should override the hook methods, not this!!!
      */
     public virtual void update(double dt) {
+        if (!simulated) {
+            if (needsPrevVars) {
+                savePrevVars();
+            }
+
+            interpolate(dt);
+            updateVisualTimers(dt);
+            postPhysics(dt);
+            return;
+        }
+
         // 1. early exit checks (death animation, despawn, etc)
         if (!shouldContinueUpdate(dt)) {
             return;
@@ -250,6 +271,25 @@ public partial class Entity(World world, string type) : Persistent {
 
         // 6. post-physics updates (body rotation, animation, etc)
         postPhysics(dt);
+    }
+
+    protected virtual void interpolate(double dt) {
+        if (interpolationTicks > 0) {
+            var t = 1.0 / interpolationTicks;
+            position = Vector3D.Lerp(position, targetPos, t);
+            rotation = Meth.lerpAngle(rotation, targetRot, (float)t);
+            interpolationTicks--;
+        }
+
+        if (dt > 0) {
+            velocity = (position - prevPosition) / dt;
+        }
+    }
+
+    public virtual void mpInterpolate(Vector3D pos, Vector3 rot) {
+        targetPos = pos;
+        targetRot = rot;
+        interpolationTicks = 4;
     }
 
     /**
@@ -328,21 +368,33 @@ public partial class Entity(World world, string type) : Persistent {
         paspeed = aspeed;
     }
 
+    protected virtual void updateVisualTimers(double dt) {
+        updateSwing();
+
+        // the damage half lives in updateFire
+        if (fireTicks > 0) {
+            fireTicks--;
+        }
+
+        if (dmgTime > 0) {
+            dmgTime--;
+        }
+    }
+
     /**
      * Decrement cooldowns and timers.
      * Override to add more timers (iframes, dmgTime, etc).
+     *
+     * Reminder: NEVER run sim code (damage, drops, etc.) on non-simulated entities because it will lead to ghost entities and desync
      */
     protected virtual void updateTimers(double dt) {
-        updateSwing();
+        updateVisualTimers(dt);
+
         updateFire(dt);
         updateEffects();
 
         if (iframes > 0) {
             iframes--;
-        }
-
-        if (dmgTime > 0) {
-            dmgTime--;
         }
 
         // void
@@ -361,8 +413,6 @@ public partial class Entity(World world, string type) : Persistent {
      */
     protected virtual void updateFire(double dt) {
         if (fireTicks > 0) {
-            fireTicks--;
-
             // apply fire damage once per second (60 ticks)
             if (fireTicks % 60 == 0) {
                 dmg(1);
@@ -496,9 +546,17 @@ public partial class Entity(World world, string type) : Persistent {
             blockInstance.interact(world, pos.X, pos.Y, pos.Z, this);
 
             // check for fire/water/lava
-            if (block == Block.FIRE.id) inFire = true;
-            if (block == Block.WATER.id) inWater = true;
-            if (block == Block.LAVA.id) inLava = true;
+            if (block == Block.FIRE.id) {
+                inFire = true;
+            }
+
+            if (block == Block.WATER.id) {
+                inWater = true;
+            }
+
+            if (block == Block.LAVA.id) {
+                inLava = true;
+            }
 
             // accumulate push forces for liquids
             if (Block.liquid[block]) {
@@ -594,7 +652,7 @@ public partial class Entity(World world, string type) : Persistent {
         }
 
         // spawn damage number at top of entity with random offset
-        if (needsDamageNumbers) {
+        if (needsDamageNumbers && world.isClient) {
             var rng = Game.clientRandom;
 
             // random pos, above the entity
@@ -646,27 +704,22 @@ public partial class Entity(World world, string type) : Persistent {
 
         // apply knockback
         if (kb) {
-            var dir = Vector3D.Normalize(position - source.position);
+            // horizontal only for kb
+            var dir = (position - source.position).withoutY();
+            var len = dir.Length();
+            dir = len > Constants.epsilon ? dir / len : new Vector3D(0, 0, 1);
+
             var kbStrength = 14 + double.Sqrt(damage * 2);
 
-            // don't yeet into the air *too* much
-            // only apply upward force if on ground
-            const int up = 9;
+            const double up = 9;
+            const double maxUp = 6;
+            var upImpulse = double.Min(up, maxUp - velocity.Y);
 
-            if (velocity.Y > 6) {
-                velocity.Y = 6;
-            }
-
-            var force = new Vector3D(dir.X * kbStrength, up, dir.Z * kbStrength);
-            knockback(force);
-
-            if (velocity.Y > 6) {
-                velocity.Y = 6;
-            }
+            knockback(new Vector3D(dir.X * kbStrength, upImpulse, dir.Z * kbStrength));
         }
 
         // spawn damage number
-        if (needsDamageNumbers) {
+        if (needsDamageNumbers && world.isClient) {
             var rng = Game.clientRandom;
 
             // random pos, above the entity
@@ -719,6 +772,10 @@ public partial class Entity(World world, string type) : Persistent {
     public virtual bool interact(Player player, ItemStack stack) {
         return false;
     }
+
+    public Vector3 interpRot(double interp) => Meth.lerpAngle(prevRotation, rotation, (float)interp);
+
+    public Vector3 interpBodyRot(double interp) => Meth.lerpAngle(prevBodyRotation, bodyRotation, (float)interp);
 
     public double getSwingProgress(double dt) {
         var value = double.Lerp(prevSwingProgress, swingProgress, dt);
@@ -905,16 +962,14 @@ public partial class Entity(World world, string type) : Persistent {
      */
     protected virtual void updateAnimation(double dt) {
         var vel = velocity.withoutY();
-        var aspeed = (float)vel.Length() * 0.6f;
-        aspeed = Meth.clamp(aspeed, 0f, 1f);
+        var target = (float)vel.Length() * 0.6f;
+        target = Meth.clamp(target, 0f, 1f);
 
         // it jitters less?
-        this.aspeed = float.Lerp(this.aspeed, aspeed, 0.1f);
+        aspeed = float.Lerp(aspeed, target, 0.1f);
 
         // todo we'll need to reset apos periodically when stopping to avoid huge values
-        if (aspeed >= 0f) {
-            apos += aspeed * (float)dt;
-        }
+        apos += aspeed * (float)dt;
     }
 
     /**
@@ -929,20 +984,6 @@ public partial class Entity(World world, string type) : Persistent {
      */
     public virtual void knockback(Vector3D force) {
         velocity += force;
-
-        // broadcast velocity to all clients when entity gets knocked back
-        if (!world.isClient) {
-            GameServer.instance.send(
-                position,
-                128.0,
-                new EntityVelocityPacket {
-                    entityID = id,
-                    velocity = velocity
-                },
-                // todo is this right? maybe ReliableUnordered instead?
-                DeliveryMethod.ReliableOrdered
-            );
-        }
     }
 
     // ============ STATE SYNC ============

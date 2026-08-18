@@ -30,24 +30,20 @@ namespace BlockGame.render;
 /// TODO do we even need the world? Maybe for fancy shit, we will see!
 /// </summary>
 public partial class BlockRenderer {
-    // in the future when we want multithreaded meshing, we can just allocate like 4-8 of these and it will still be in the ballpark of 10MB
-    public static readonly List<BlockVertexPacked> chunkVertices = new(2048);
-
     /**
      * added +4 for SIMD overread, we should maybe use a magic constant?
      */
     private const int NEIGHBOURSIZE = Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX + 4;
+    private readonly uint[] neighbours = GC.AllocateUninitializedArray<uint>(NEIGHBOURSIZE);
 
-    private static readonly uint[] neighbours = GC.AllocateUninitializedArray<uint>(NEIGHBOURSIZE);
-
-    private static readonly byte[] neighbourLights = GC.AllocateUninitializedArray<byte>(NEIGHBOURSIZE);
+    private readonly byte[] neighbourLights = GC.AllocateUninitializedArray<byte>(NEIGHBOURSIZE);
 
     // 3x3x3 local cache for smooth lighting optimisation
     public const int LOCALCACHESIZE = 3;
     public const int LOCALCACHESIZE_SQ = 9;
     public const int LOCALCACHESIZE_CUBE = 27;
 
-    private static readonly BlockData?[] neighbourSections = new BlockData?[27];
+    private readonly BlockData?[] neighbourSections = new BlockData?[27];
 
     public static ReadOnlySpan<short> lightOffsets => [-1, +1, -18, +18, -324, +324];
 
@@ -159,7 +155,10 @@ public partial class BlockRenderer {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void rotate(ref float x, ref float z) {
-        if (ctx.rot == 0) return;
+        if (ctx.rot == 0) {
+            return;
+        }
+
         float dx = x - 0.5f;
         float dz = z - 0.5f;
         switch (ctx.rot) {
@@ -926,53 +925,98 @@ public partial class BlockRenderer {
     }
 
 
-    public void meshChunk(SubChunk subChunk) {
-        ctx = default;
+    /**
+     * Meshing is now splin in 3 so we can actually multicore it
+     *
+     *   collect  - get block data into a buffer                        MAIN THREAD
+     *   mesh   - the actual block game -> a chunk mesh                 ANY THREAD
+     *   upload  - vertices -> upload into a GL buffer                  MAIN THREAD
+     *
+     */
 
-        subChunk.vao?.Dispose();
-        subChunk.vao = new SharedBlockVAO(Game.renderer.chunkVAO);
-        subChunk.watervao?.Dispose();
-        subChunk.watervao = new SharedBlockVAO(Game.renderer.chunkVAO);
-
-        var currentVAO = subChunk.vao;
-        var currentWaterVAO = subChunk.watervao;
-
-        subChunk.hasRenderOpaque = false;
-        subChunk.hasRenderTranslucent = false;
-
-        // if the section is empty, nothing to do
-        // if is empty, just return, don't need to get neighbours
+    public bool collect(SubChunk subChunk) {
         if (subChunk.isEmpty) {
-            return;
+            return false;
         }
 
         setupNeighbours(subChunk);
+        return true;
+    }
 
-        constructVertices(subChunk, RenderLayer.SOLID, chunkVertices);
+    public void build(SubChunk subChunk, List<BlockVertexPacked> solid, List<BlockVertexPacked> blocks, bool doTrans) {
+        ctx = default;
 
-        if (chunkVertices.Count > 0) {
+        constructVertices(subChunk, RenderLayer.SOLID, solid);
+
+        if (doTrans) {
+            constructVertices(subChunk, RenderLayer.TRANSLUCENT, blocks);
+        }
+        else {
+            blocks.Clear();
+        }
+    }
+
+    /** Vertices -> GL. main thread only!! (until we figure out a way to cheat this) */
+    public static void upload(SubChunk subChunk, List<BlockVertexPacked> solid, List<BlockVertexPacked> trans) {
+        if (solid.Count > 0) {
             subChunk.hasRenderOpaque = true;
-            currentVAO.bindVAO();
-            var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
-            currentVAO.upload(finalVertices, (uint)finalVertices.Length);
+
+            // actually we dont need a *new* vao....
+            var vao = subChunk.vao ??= new SharedBlockVAO(Game.renderer.chunkVAO);
+            vao.bindVAO();
+            var finalVertices = CollectionsMarshal.AsSpan(solid);
+            vao.upload(finalVertices, (uint)finalVertices.Length);
         }
         else {
             subChunk.hasRenderOpaque = false;
+            subChunk.vao?.Dispose();
+            subChunk.vao = null;
         }
 
-        if (subChunk.blocks.hasTranslucentBlocks() && !Settings.instance.fastWater) {
-            constructVertices(subChunk, RenderLayer.TRANSLUCENT, chunkVertices);
-            if (chunkVertices.Count > 0) {
-                subChunk.hasRenderTranslucent = true;
-                currentWaterVAO.bindVAO();
+        if (trans.Count > 0) {
+            subChunk.hasRenderTranslucent = true;
 
-                var tFinalVertices = CollectionsMarshal.AsSpan(chunkVertices);
-                currentWaterVAO.upload(tFinalVertices, (uint)tFinalVertices.Length);
-            }
-            else {
-                subChunk.hasRenderTranslucent = false;
-            }
+            var wvao = subChunk.watervao ??= new SharedBlockVAO(Game.renderer.chunkVAO);
+            wvao.bindVAO();
+
+            var tFinalVertices = CollectionsMarshal.AsSpan(trans);
+            wvao.upload(tFinalVertices, (uint)tFinalVertices.Length);
         }
+        else {
+            subChunk.hasRenderTranslucent = false;
+            subChunk.watervao?.Dispose();
+            subChunk.watervao = null;
+        }
+
+        subChunk.meshed = true;
+    }
+
+    public static void clearMesh(SubChunk subChunk) {
+        subChunk.hasRenderOpaque = false;
+        subChunk.hasRenderTranslucent = false;
+        subChunk.vao?.Dispose();
+        subChunk.vao = null;
+        subChunk.watervao?.Dispose();
+        subChunk.watervao = null;
+        subChunk.meshed = true;
+    }
+
+    public static bool needsTranslucent(SubChunk subChunk) {
+        return subChunk.blocks.hasTranslucentBlocks() && !Settings.instance.fastWater;
+    }
+
+    public void meshChunk(SubChunk subChunk) {
+        if (!collect(subChunk)) {
+            clearMesh(subChunk);
+            return;
+        }
+
+        var solid = new List<BlockVertexPacked>();
+        var blocks = new List<BlockVertexPacked>();
+        build(subChunk, solid, blocks, needsTranslucent(subChunk));
+        upload(subChunk, solid, blocks);
+
+        subChunk.meshed = true;
     }
 
     [SkipLocalsInit]
@@ -1007,27 +1051,49 @@ public partial class BlockRenderer {
         var bes = subChunk.renderedBlockEntities;
         bes.Clear();
 
+        // ---- interior: 256 rows of 16, doing it in bulk ----
+        var hasBEs = subChunk.chunk.blockEntities.Count > 0;
+        for (y = 0; y < Chunk.CHUNKSIZE; y++) {
+            for (z = 0; z < Chunk.CHUNKSIZE; z++) {
+                var dst = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + 1;
+                var src = (y << 8) + (z << 4);
+
+                var row = neighbours.AsSpan(dst, Chunk.CHUNKSIZE);
+                blocks.getRawBatch(src, row);
+                blocks.getLightBatch(src, neighbourLights.AsSpan(dst, Chunk.CHUNKSIZE));
+
+                // only worth scanning for block entities if the chunk actually has any
+                if (!hasBEs) {
+                    continue;
+                }
+
+                for (x = 0; x < Chunk.CHUNKSIZE; x++) {
+                    if (!Block.isBlockEntity[row[x].getID()]) {
+                        continue;
+                    }
+
+                    var by = subChunk.coord.y * Chunk.CHUNKSIZE + y;
+                    var be = subChunk.chunk.getBlockEntity(x, by, z);
+                    // check if renderable
+                    if (be != null && Registry.BLOCK_ENTITIES.hasRenderer[Registry.BLOCK_ENTITIES.getID(be.type)]) {
+                        bes.Add(be.pos);
+                    }
+                }
+            }
+        }
+
+        // ---- borders ----
         for (y = -1; y < Chunk.CHUNKSIZE + 1; y++) {
             for (z = -1; z < Chunk.CHUNKSIZE + 1; z++) {
                 for (x = -1; x < Chunk.CHUNKSIZE + 1; x++) {
-                    // if inside the chunk, load from section using proper method calls
-                    if (x is >= 0 and < Chunk.CHUNKSIZE &&
+                    // interior was done above - skip the whole run in one go
+                    if (x == 0 &&
                         z is >= 0 and < Chunk.CHUNKSIZE &&
                         y is >= 0 and < Chunk.CHUNKSIZE) {
-                        blocksArrayRef = blocks.getRaw(x, y, z);
-                        lightArrayRef = blocks.getLight(x, y, z);
-
-                        // handle block entities
-                        if (Block.isBlockEntity[blocksArrayRef.getID()]) {
-                            var by = subChunk.coord.y * Chunk.CHUNKSIZE + y;
-                            var be = subChunk.chunk.getBlockEntity(x, by, z);
-                            // check if renderable
-                            if (be != null && Registry.BLOCK_ENTITIES.hasRenderer[Registry.BLOCK_ENTITIES.getID(be.type)]) {
-                                bes.Add(be.pos);
-                            }
-                        }
-
-                        goto increment;
+                        x = Chunk.CHUNKSIZE - 1;
+                        blocksArrayRef = ref Unsafe.Add(ref blocksArrayRef, Chunk.CHUNKSIZE);
+                        lightArrayRef = ref Unsafe.Add(ref lightArrayRef, Chunk.CHUNKSIZE);
+                        continue;
                     }
 
                     // index for array accesses
@@ -1063,7 +1129,6 @@ public partial class BlockRenderer {
                         : (byte)15;
 
                     // increment
-                    increment:
                     blocksArrayRef = ref Unsafe.Add(ref blocksArrayRef, 1);
                     lightArrayRef = ref Unsafe.Add(ref lightArrayRef, 1);
                 }
@@ -1080,8 +1145,7 @@ public partial class BlockRenderer {
     [SkipLocalsInit]
     //[MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private unsafe void constructVertices(SubChunk subChunk, RenderLayer layer, List<BlockVertexPacked> vertices) {
-        // clear arrays before starting
-        chunkVertices.Clear();
+        vertices.Clear();
 
         Span<uint> nba = stackalloc uint[6];
 
@@ -1091,6 +1155,7 @@ public partial class BlockRenderer {
 
         var smoothLighting = Settings.instance.smoothLighting;
         var AO = Settings.instance.AO;
+        var fastWater = Settings.instance.fastWater;
         this.smoothLighting = smoothLighting;
         this.AO = AO;
 
@@ -1112,8 +1177,8 @@ public partial class BlockRenderer {
             var bl = Block.get(blockID);
 
             // if translucent and we're opaque water and this is solid, do it anyway
-            var fastWater = Settings.instance.fastWater && Block.translucent[blockID];
-            if (blockID == 0 || (bl?.layer != layer && !fastWater)) {
+            var translucent = fastWater && Block.translucent[blockID];
+            if (blockID == 0 || (bl?.layer != layer && !translucent)) {
                 continue;
             }
 

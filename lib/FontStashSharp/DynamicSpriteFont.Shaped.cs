@@ -231,10 +231,11 @@ namespace FontStashSharp
 		internal override Bounds InternalTextBounds(TextSource source, Vector2 position,
 			float characterSpacing, float lineSpacing, FontSystemEffect effect, int effectAmount)
 		{
-			if (source.IsNull)
-				return Bounds.Empty;
+			if (source.IsNull) {
+                return Bounds.Empty;
+            }
 
-			if (FontSystem.UseTextShaping)
+            if (FontSystem.UseTextShaping)
 			{
 				return InternalShapedTextBounds(source, position, characterSpacing, lineSpacing, effect, effectAmount);
 			}
@@ -580,17 +581,31 @@ namespace FontStashSharp
 						var glyphX2 = glyphX + glyph.Size.X;
 						var glyphY2 = glyphY + glyph.Size.Y;
 
-						if (glyphX < minx) minx = glyphX;
-						if (glyphY < miny) miny = glyphY;
-						if (glyphX2 > maxx) maxx = glyphX2;
-						if (glyphY2 > maxy) maxy = glyphY2;
-					}
+						if (glyphX < minx) {
+                            minx = glyphX;
+                        }
+
+                        if (glyphY < miny) {
+                            miny = glyphY;
+                        }
+
+                        if (glyphX2 > maxx) {
+                            maxx = glyphX2;
+                        }
+
+                        if (glyphY2 > maxy) {
+                            maxy = glyphY2;
+                        }
+                    }
 
 					x += shapedGlyph.XAdvance;
 					y += shapedGlyph.YAdvance;
 				}
 
-				if (x > maxx) maxx = x;
+				if (x > maxx) {
+                    maxx = x;
+                }
+
                 lineIndex++;
 			}
 

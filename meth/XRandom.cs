@@ -55,9 +55,17 @@ internal sealed partial class Interop {
     }
 
     internal static unsafe void GetRandomBytes2(byte* buffer, int length) {
-        if (buffer == null) throw new ArgumentNullException(nameof(buffer));
-        if (length < 0) throw new ArgumentOutOfRangeException(nameof(length));
-        if (length == 0) return;
+        if (buffer == null) {
+            throw new ArgumentNullException(nameof(buffer));
+        }
+
+        if (length < 0) {
+            throw new ArgumentOutOfRangeException(nameof(length));
+        }
+
+        if (length == 0) {
+            return;
+        }
 
         // Zero-allocation approach using Span over the unsafe buffer
         // This leverages hardware acceleration when available
@@ -85,6 +93,25 @@ public sealed class XRandom {
     //     See <http://creativecommons.org/publicdomain/zero/1.0/>.
 
     private ulong _s0, _s1, _s2, _s3;
+
+    /** xoshiro256** rng state */
+    public readonly record struct State(ulong s0, ulong s1, ulong s2, ulong s3) {
+        public readonly ulong s0 = s0;
+        public readonly ulong s1 = s1;
+        public readonly ulong s2 = s2;
+        public readonly ulong s3 = s3;
+    };
+
+    public State save() {
+        return new State(_s0, _s1, _s2, _s3);
+    }
+
+    public void restore(State s) {
+        _s0 = s.s0;
+        _s1 = s.s1;
+        _s2 = s.s2;
+        _s3 = s.s3;
+    }
 
     public unsafe XRandom() {
         ulong* ptr = stackalloc ulong[4];

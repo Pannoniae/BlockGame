@@ -64,8 +64,9 @@ public class LegacyVertexAttribPointerAnalyzer : DiagnosticAnalyzer
         var invocationExpr = (InvocationExpressionSyntax)context.Node;
         
         // Check if this is a member access expression (e.g., GL.VertexAttribPointer)
-        if (invocationExpr.Expression is not MemberAccessExpressionSyntax memberAccess)
+        if (invocationExpr.Expression is not MemberAccessExpressionSyntax memberAccess) {
             return;
+        }
 
         var methodName = memberAccess.Name.Identifier.ValueText;
         
@@ -79,15 +80,17 @@ public class LegacyVertexAttribPointerAnalyzer : DiagnosticAnalyzer
             _ => null
         };
 
-        if (rule == null)
+        if (rule == null) {
             return;
+        }
 
         // Get the semantic model to check the type
         var semanticModel = context.SemanticModel;
         var typeInfo = semanticModel.GetTypeInfo(memberAccess.Expression);
         
-        if (typeInfo.Type is not INamedTypeSymbol typeSymbol)
+        if (typeInfo.Type is not INamedTypeSymbol typeSymbol) {
             return;
+        }
 
         // Check if it's being called on GL type (from Silk.NET.OpenGL)
         if (typeSymbol.Name == "GL" && 

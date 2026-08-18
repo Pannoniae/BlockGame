@@ -68,14 +68,17 @@ namespace FontStashSharp {
         }
 
         private static bool StringBuilderIsSurrogatePair(StringBuilder sb, int index) {
-            if (index + 1 < sb.Length)
+            if (index + 1 < sb.Length) {
                 return char.IsSurrogatePair(sb[index], sb[index + 1]);
+            }
+
             return false;
         }
 
         private static int StringBuilderConvertToUtf32(StringBuilder sb, int index) {
-            if (!char.IsHighSurrogate(sb[index]))
+            if (!char.IsHighSurrogate(sb[index])) {
                 return sb[index];
+            }
 
             return char.ConvertToUtf32(sb[index], sb[index + 1]);
         }

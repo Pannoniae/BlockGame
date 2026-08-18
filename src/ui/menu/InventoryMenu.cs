@@ -136,10 +136,14 @@ public abstract class InventoryMenu : Menu {
     /** handle slot click and sync to server if multiplayer */
     private void handleSlotClickAndSync(ItemSlot slot, MouseButton button) {
         var player = Game.world?.player;
-        if (player == null) return;
+        if (player == null) {
+            return;
+        }
 
         var slotIdx = slots.IndexOf(slot);
-        if (slotIdx < 0) return;
+        if (slotIdx < 0) {
+            return;
+        }
 
         // if waiting for resync, don't process clicks
         if (!Game.world.isServer && ClientConnection.instance.waitingForResync) {

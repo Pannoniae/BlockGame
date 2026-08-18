@@ -277,7 +277,9 @@ public class Coroutines {
         tempList.AddRange(activeCoroutines);
 
         foreach (var coroutine in tempList) {
-            if (!coroutine.isRunning) continue;
+            if (!coroutine.isRunning) {
+                continue;
+            }
 
             if (coroutine.currentYield is WaitForTicks wait) {
                 wait.decrement();
@@ -302,7 +304,9 @@ public class Coroutines {
         tempList.AddRange(activeCoroutines);
 
         foreach (var coroutine in tempList) {
-            if (!coroutine.isRunning) continue;
+            if (!coroutine.isRunning) {
+                continue;
+            }
 
             if (coroutine.currentYield is WaitForFrames wait) {
                 wait.decrement();

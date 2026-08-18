@@ -88,8 +88,9 @@ namespace Silk.NET.Windowing
 
         public static void ShouldLoadFirstPartyPlatforms(bool shouldLoad)
         {
-            if (_initializedFirstPartyPlatforms)
+            if (_initializedFirstPartyPlatforms) {
                 throw new InvalidOperationException("Window Platforms already loaded, cannot change first party loading");
+            }
 
             _initializedFirstPartyPlatforms = !shouldLoad;
         }

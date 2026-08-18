@@ -271,8 +271,8 @@ public class PlayerHandRenderer {
 
         // interpolate position and rotation
         var interpPos = Vector3D.Lerp(entity.prevPosition, entity.position, interp);
-        var interpRot = Vector3.Lerp(entity.prevRotation, entity.rotation, (float)interp);
-        var interpBodyRot = Vector3.Lerp(entity.prevBodyRotation, entity.bodyRotation, (float)interp);
+        var interpRot = entity.interpRot(interp);
+        var interpBodyRot = entity.interpBodyRot(interp);
 
         var headRotX = interpRot.X - interpBodyRot.X; // pitch diff
         var headRotY = interpRot.Y - interpBodyRot.Y; // yaw diff

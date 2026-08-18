@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace BlockGame.util;
 
@@ -14,7 +15,10 @@ public class XRingBuffer<T> : IEnumerable<T> {
     private int cnt;
 
     public XRingBuffer(int capacity) {
-        if (capacity < 1) throw new ArgumentException("Capacity must be positive", nameof(capacity));
+        if (capacity < 1) {
+            throw new ArgumentException("Capacity must be positive", nameof(capacity));
+        }
+
         buf = new T[capacity];
         head = 0;
         tail = 0;
@@ -47,9 +51,17 @@ public class XRingBuffer<T> : IEnumerable<T> {
     public ref T this[int idx] {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
-            if ((uint)idx >= (uint)cnt) ThrowIndexOutOfRange();
-            return ref buf[WrapIndex(head + idx)];
+            if ((uint)idx >= (uint)cnt) {
+                ThrowIndexOutOfRange();
+            }
+
+            return ref at(WrapIndex(head + idx));
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ref T at(int i) {
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(buf), (nint)(uint)i);
     }
 
     /**
@@ -87,7 +99,10 @@ public class XRingBuffer<T> : IEnumerable<T> {
      */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T PopBack() {
-        if (cnt == 0) ThrowEmpty();
+        if (cnt == 0) {
+            ThrowEmpty();
+        }
+
         tail = WrapIndex(tail - 1);
         T item = buf[tail];
         buf[tail] = default!;
@@ -100,7 +115,10 @@ public class XRingBuffer<T> : IEnumerable<T> {
      */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T PopFront() {
-        if (cnt == 0) ThrowEmpty();
+        if (cnt == 0) {
+            ThrowEmpty();
+        }
+
         T item = buf[head];
         buf[head] = default!;
         head = WrapIndex(head + 1);
@@ -113,8 +131,11 @@ public class XRingBuffer<T> : IEnumerable<T> {
      */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref T Front() {
-        if (cnt == 0) ThrowEmpty();
-        return ref buf[head];
+        if (cnt == 0) {
+            ThrowEmpty();
+        }
+
+        return ref at(head);
     }
 
     /**
@@ -122,8 +143,11 @@ public class XRingBuffer<T> : IEnumerable<T> {
      */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref T Back() {
-        if (cnt == 0) ThrowEmpty();
-        return ref buf[WrapIndex(tail - 1)];
+        if (cnt == 0) {
+            ThrowEmpty();
+        }
+
+        return ref at(WrapIndex(tail - 1));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -140,7 +164,10 @@ public class XRingBuffer<T> : IEnumerable<T> {
      * Copy to array in logical order (oldest to newest).
      */
     public T[] ToArray() {
-        if (cnt == 0) return [];
+        if (cnt == 0) {
+            return [];
+        }
+
         var result = new T[cnt];
         if (head < tail) {
             // contiguous
@@ -161,7 +188,10 @@ public class XRingBuffer<T> : IEnumerable<T> {
      * One or both may be empty.
      */
     public SpanPair AsSpans() {
-        if (cnt == 0) return new SpanPair();
+        if (cnt == 0) {
+            return new SpanPair();
+        }
+
         if (head < tail) {
             return new SpanPair(new Span<T>(buf, head, cnt), Span<T>.Empty);
         }
@@ -179,8 +209,14 @@ public class XRingBuffer<T> : IEnumerable<T> {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int WrapIndex(int idx) {
         int cap = buf.Length;
-        if (idx >= cap) return idx - cap;
-        if (idx < 0) return idx + cap;
+        if (idx >= cap) {
+            return idx - cap;
+        }
+
+        if (idx < 0) {
+            return idx + cap;
+        }
+
         return idx;
     }
 

@@ -114,7 +114,7 @@ public class Ravine : OverlayFeature {
 
         // if the area has water, bail
         if (world.anyWater((int)xMin, bottomY, (int)zMin, (int)xMax, topY, (int)zMax)) {
-            return;
+            goto cleanup;
         }
 
         // Cap to chunk boundaries

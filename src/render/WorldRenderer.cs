@@ -89,12 +89,55 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     /// </summary>
     public Queue<SubChunkCoord> meshingQueue = new();
 
+    private readonly HashSet<SubChunkCoord> meshingSet = [];
+
     private static readonly Vector3[] starPositions = generateStarPositions();
 
     public static Color defaultClearColour = new Color(168, 204, 232);
     public static Color defaultFogColour = Color.White;
 
     public readonly HashSet<SubChunkCoord> chunksToMesh = [];
+
+    private readonly Dictionary<ChunkCoord, bool> readyCache = [];
+
+    private readonly MeshJob[] jobs = makeJobs();
+
+    private static MeshJob[] makeJobs() {
+        var n = int.Max(Game.jobs.workers, 1) * 2;
+        var a = new MeshJob[n];
+        for (var i = 0; i < n; i++) {
+            a[i] = new MeshJob();
+        }
+        return a;
+    }
+
+    private bool neighboursReady(ChunkCoord coord) {
+        if (readyCache.TryGetValue(coord, out var cached)) {
+            return cached;
+        }
+
+        Span<ChunkCoord> neighbours = [
+            new(coord.x - 1, coord.z),
+            new(coord.x + 1, coord.z),
+            new(coord.x, coord.z - 1),
+            new(coord.x, coord.z + 1),
+            new(coord.x - 1, coord.z - 1),
+            new(coord.x - 1, coord.z + 1),
+            new(coord.x + 1, coord.z - 1),
+            new(coord.x + 1, coord.z + 1)
+        ];
+
+        var ready = true;
+        foreach (var n in neighbours) {
+            if (!world!.getChunkMaybe(n, out var nc) || nc.status < ChunkStatus.LIGHTED) {
+                ready = false;
+                break;
+            }
+        }
+
+        readyCache[coord] = ready;
+        return ready;
+    }
 
     public bool fastChunkSwitch = true;
     public uint chunkVAO;
@@ -135,10 +178,21 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 if (pixels[(yy << 8) + xx]) {
                     // top+bottom = 8 verts, 4 per visible side
                     fc = 8;
-                    if (!pixels[(yy << 8) + ((xx + 255) & 255)]) fc += 4;
-                    if (!pixels[(yy << 8) + ((xx + 1) & 255)]) fc += 4;
-                    if (!pixels[(((yy + 255) & 255) << 8) + xx]) fc += 4;
-                    if (!pixels[(((yy + 1) & 255) << 8) + xx]) fc += 4;
+                    if (!pixels[(yy << 8) + ((xx + 255) & 255)]) {
+                        fc += 4;
+                    }
+
+                    if (!pixels[(yy << 8) + ((xx + 1) & 255)]) {
+                        fc += 4;
+                    }
+
+                    if (!pixels[(((yy + 255) & 255) << 8) + xx]) {
+                        fc += 4;
+                    }
+
+                    if (!pixels[(((yy + 1) & 255) << 8) + xx]) {
+                        fc += 4;
+                    }
                 }
 
                 row += fc;
@@ -175,6 +229,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             subChunk.watervao?.Dispose();
             subChunk.vao = null;
             subChunk.watervao = null;
+            subChunk.meshed = false;
         }
     }
 
@@ -187,6 +242,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         foreach (var coord in coords) {
             chunksToMesh.Add(coord);
         }
+    }
+
+    public void onLightDirty(SubChunkCoord coord) {
+        chunksToMesh.Add(coord);
     }
 
     public void onDirtyArea(Vector3I min, Vector3I max) {
@@ -213,6 +272,11 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         this.world?.unlisten(this);
         this.world = world;
         this.world?.listen(this);
+
+        foreach (var job in jobs) {
+            job.br.setWorld(world);
+            job.section = null;
+        }
     }
 
     public void bindQuad() {
@@ -345,6 +409,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 subChunk.watervao?.Dispose();
                 subChunk.vao = null;
                 subChunk.watervao = null;
+                subChunk.meshed = false;
             }
 
             chunk.status = ChunkStatus.LIGHTED;
@@ -602,18 +667,70 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // enqueue the to-be-meshed-list
         // this can *probably* be eliminated in the future but yk, keeping it for now
         foreach (var subChunk in chunksToMesh) {
-            if (!meshingQueue.Contains(subChunk)) {
+            if (meshingSet.Add(subChunk)) {
                 meshingQueue.Enqueue(subChunk);
             }
         }
 
         chunksToMesh.Clear();
 
+        meshPass();
+    }
+
+    private const double TARGET_FPS = 1000 / 60.0;
+
+    /** always make SOME progress, cmon... */
+    private const double MIN_MESH_BUDGET = 1.0;
+
+    // todo unfuck this
+    private const double TARGET_KLUDGE = 1.5;
+
+    private int meshFrame = -1;
+    private double meshBudget;
+    private double meshElapsed;
+    private double lastMeshElapsed;
+
+    private void newMeshFrame() {
+        if (Game.frames == meshFrame) {
+            return;
+        }
+
+        meshFrame = Game.frames;
+        lastMeshElapsed = meshElapsed;
+        meshElapsed = 0;
+
+        var nonMesh = Game.lastFrameTime - lastMeshElapsed - Game.lastSwapTime;
+        meshBudget = double.Clamp(TARGET_FPS - nonMesh - TARGET_KLUDGE,
+            MIN_MESH_BUDGET, World.MAX_MESHLOAD_FRAMETIME);
+    }
+
+    private void meshPass() {
+        newMeshFrame();
+
+        var limit = meshBudget - meshElapsed;
+        if (limit <= 0) {
+            return;
+        }
+
         var startTime = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
-        const double limit = World.MAX_MESHLOAD_FRAMETIME;
-        // empty the meshing queue
-        while (Game.permanentStopwatch.Elapsed.TotalMilliseconds - startTime < limit &&
-               meshingQueue.TryDequeue(out var sectionCoord)) {
+
+        readyCache.Clear();
+
+        while (Game.permanentStopwatch.Elapsed.TotalMilliseconds - startTime < limit) {
+            if (!meshSubBatch()) {
+                break;
+            }
+        }
+
+        meshElapsed += Game.permanentStopwatch.Elapsed.TotalMilliseconds - startTime;
+    }
+
+    private bool meshSubBatch() {
+        // ---- gather ----
+        var n = 0;
+        while (n < jobs.Length && meshingQueue.TryDequeue(out var sectionCoord)) {
+            meshingSet.Remove(sectionCoord);
+
             // if this chunk doesn't exist anymore (because we unloaded it)
             // then don't mesh! otherwise we'll fucking crash
             if (!world!.isChunkSectionInWorld(sectionCoord)) {
@@ -622,85 +739,82 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
             // in multiplayer, wait for neighbours before meshing
             // otherwise we mesh against air/null and create holes
-            if (!Game.world.isServer) {
-                var anyMissing = false;
-
-                Span<ChunkCoord> neighbours = [
-                    new(sectionCoord.x - 1, sectionCoord.z),
-                    new(sectionCoord.x + 1, sectionCoord.z),
-                    new(sectionCoord.x, sectionCoord.z - 1),
-                    new(sectionCoord.x, sectionCoord.z + 1),
-                    new(sectionCoord.x - 1, sectionCoord.z - 1),
-                    new(sectionCoord.x - 1, sectionCoord.z + 1),
-                    new(sectionCoord.x + 1, sectionCoord.z - 1),
-                    new(sectionCoord.x + 1, sectionCoord.z + 1)
-                ];
-
-                foreach (var neighbourCoord in neighbours) {
-                    // if isn't at least LIGHTED, then skip meshing for now
-                    if (!world.getChunkMaybe(neighbourCoord, out var neighbourChunk) ||
-                        neighbourChunk.status < ChunkStatus.LIGHTED) {
-                        anyMissing = true;
-                        break;
-                    }
-                }
-
-                // if neighbouring chunks are not loaded, re-queue for later
-                if (anyMissing) {
-                    // add back to chunksToMesh so it gets retried next tick
-                    chunksToMesh.Add(sectionCoord);
-                    continue;
-                }
+            if (!Game.world.isServer && !neighboursReady(new ChunkCoord(sectionCoord.x, sectionCoord.z))) {
+                continue;
             }
 
-            var section = world.getSubChunk(sectionCoord);
-            var chunk = section.chunk;
+            var sec = world.getSubChunk(sectionCoord);
+            var job = jobs[n];
 
-            // mesh the subchunk
-            Game.blockRenderer.meshChunk(section);
-            Game.metrics.chunksUpdated++;
-
-            //Console.Out.WriteLine($"MESHED {sectionCoord}, chunk status: {chunk.status}");
-
-            // update chunk status to MESHED (once per chunk, not per subchunk)
-            // this makes the chunk visible in the renderer
-            // todo this breaks the frame limiting in singleplayer. Why? I have no fucking idea. Fix later.
-            //  for now we'll just restrict it to the MP client where we definitely don't generate anything.
-            //  In SP we shouldn't set any chunk status here anyway because it's done in World.loadChunk().
-            if (!Game.world.isServer && chunk.status < ChunkStatus.MESHED) {
-                // don't set MESHED status unless chunk has been properly lighted
-                if (chunk.status < ChunkStatus.LIGHTED) {
-                    // chunk not ready for meshing, re-queue for later
-                    chunksToMesh.Add(sectionCoord);
-                    continue;
-                }
-
-                // check if ALL subchunks in this chunk are now meshed
-                bool allMeshed = true;
-                for (int i = 0; i < Chunk.CHUNKHEIGHT; i++) {
-                    if (!chunk.subChunks[i].isMeshed()) {
-                        allMeshed = false;
-                        // requeue for next time
-                        chunksToMesh.Add(new SubChunkCoord(sectionCoord.x, i, sectionCoord.z));
-
-                        break;
-                    }
-                }
-
-                if (allMeshed) {
-                    chunk.status = ChunkStatus.MESHED;
-                }
+            // nothing in it - free the buffers and skip the roundtrip
+            if (!job.br.collect(sec)) {
+                BlockRenderer.clearMesh(sec);
+                Game.metrics.chunksUpdated++;
+                finishSection(sec, sectionCoord);
+                continue;
             }
-            /*else
-            if (chunk.status < ChunkStatus.MESHED) {
-                // don't set MESHED status unless chunk has been properly lighted
-                if (chunk.status < ChunkStatus.LIGHTED) {
-                    // chunk not ready for meshing, re-queue for later
-                    continue;
-                }
-                chunk.status = ChunkStatus.MESHED;
-            }*/
+
+            job.section = sec;
+            job.coord = sectionCoord;
+            job.doTranslucent = BlockRenderer.needsTranslucent(sec);
+            n++;
         }
+
+        if (n == 0) {
+            return false;
+        }
+
+        // ---- crunch ----
+        Game.jobs.run(jobs, n);
+
+        // ---- upload ----
+        for (var i = 0; i < n; i++) {
+            var job = jobs[i];
+
+            if (job.error != null) {
+                job.section = null;
+                continue;
+            }
+
+            BlockRenderer.upload(job.section!, job.opaque, job.translucent);
+            Game.metrics.chunksUpdated++;
+            finishSection(job.section!, job.coord);
+            job.section = null;
+        }
+
+        return n == jobs.Length;
+    }
+
+    /** promote the chunk to MESHED once every one of its sections has been */
+    private void finishSection(SubChunk section, SubChunkCoord sectionCoord) {
+        var chunk = section.chunk;
+
+        // update chunk status to MESHED (once per chunk, not per subchunk)
+        // this makes the chunk visible in the renderer
+        // todo this breaks the frame limiting in singleplayer. Why? I have no fucking idea. Fix later.
+        //  for now we'll just restrict it to the MP client where we definitely don't generate anything.
+        //  In SP we shouldn't set any chunk status here anyway because it's done in World.loadChunk().
+        if (Game.world.isServer || chunk.status >= ChunkStatus.MESHED) {
+            return;
+        }
+
+        // don't set MESHED status unless chunk has been properly lighted
+        if (chunk.status < ChunkStatus.LIGHTED) {
+            // chunk not ready for meshing, re-queue for later
+            chunksToMesh.Add(sectionCoord);
+            return;
+        }
+
+        // check if ALL subchunks in this chunk are now meshed
+        for (int i = 0; i < Chunk.CHUNKHEIGHT; i++) {
+            if (!chunk.subChunks[i].isMeshed()) {
+                // requeue for next time
+                chunksToMesh.Add(new SubChunkCoord(sectionCoord.x, i, sectionCoord.z));
+                return;
+            }
+        }
+
+        chunk.status = ChunkStatus.MESHED;
     }
 
     /** NOTE: read <see cref="CommandBuffer"/> for NV_command_list-specific noobtraps and shit.*/
@@ -1158,8 +1272,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             mat.loadIdentity();
 
             var interpPos = Vector3D.Lerp(entity.prevPosition, entity.position, interp);
-            var interpRot = Vector3.Lerp(entity.prevRotation, entity.rotation, (float)interp);
-            var interpBodyRot = Vector3.Lerp(entity.prevBodyRotation, entity.bodyRotation, (float)interp);
+            var interpRot = entity.interpRot(interp);
+            var interpBodyRot = entity.interpBodyRot(interp);
 
             // translate to entity position
             mat.translate((float)interpPos.X, (float)interpPos.Y, (float)interpPos.Z);
@@ -1167,10 +1281,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             mat.rotate(interpBodyRot.Y, 0, 1, 0);
             mat.rotate(interpBodyRot.Z, 0, 0, 1);
 
-            // get light level at entity centre
-            var spos = new Vector3D(entity.position.X, entity.position.Y + 1.0, entity.position.Z);
-            var pos = spos.toBlockPos();
-            var light = entity.world.inWorld(pos.X, pos.Y, pos.Z) ? entity.world.getLight(pos.X, pos.Y, pos.Z) : (byte)15;
+            // light at the entity's own centre, not a hardcoded +1!
+            var light = sampleEntityLight(entity, interpPos);
             var blocklight = (byte)((light >> 4) & 0xF);
             var skylight = (byte)(light & 0xF);
             var lightVal = Game.textures.light(blocklight, skylight);
@@ -1209,6 +1321,29 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         mat.pop(); // THIS is why it was leaking
     }
 
+
+    private static byte sampleEntityLight(Entity entity, Vector3D pos) {
+        var w = entity.world;
+        var h = entity.aabb.y1 - entity.aabb.y0;
+        var y = pos.Y + h * 0.5;
+
+        var x = (int)double.Floor(pos.X);
+        var z = (int)double.Floor(pos.Z);
+
+        for (var i = 0; i < 3; i++) {
+            var yy = (int)double.Floor(y) + i;
+            if (!w.inWorld(x, yy, z)) {
+                break;
+            }
+
+            if (!Block.isFullBlock(w.getBlock(x, yy, z))) {
+                return w.getLight(x, yy, z);
+            }
+        }
+
+        return 15;
+    }
+
     /** render fire effect on burning entities using their AABB */
     private static void renderEntityFire(World world, MatrixStack mat, Entity entity, double interp) {
         var idt = Game.graphics.idt;
@@ -1219,8 +1354,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         idt.proj(Game.camera.getProjectionMatrix());
 
         // rotate back to the head pos instead of body pos!
-        var interpRot = Vector3.Lerp(entity.prevRotation, entity.rotation, (float)interp);
-        var interpBodyRot = Vector3.Lerp(entity.prevBodyRotation, entity.bodyRotation, (float)interp);
+        var interpRot = entity.interpRot(interp);
+        var interpBodyRot = entity.interpBodyRot(interp);
         mat.rotate(-interpBodyRot.Y + interpRot.Y, 0, 1, 0);
         mat.rotate(-interpBodyRot.Z + interpRot.Z, 0, 0, 1);
 
