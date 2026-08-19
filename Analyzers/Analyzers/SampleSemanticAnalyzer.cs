@@ -77,7 +77,7 @@ public class SampleSemanticAnalyzer : DiagnosticAnalyzer {
             return;
 
         // Count validation is enough in most cases. Keep analyzers as simple as possible.
-        if (invocationSyntax.ArgumentList.Arguments.Count != 1)
+        if (invocationSyntax.ArgumentList.Arguments.Count != 1) {
             return;
         }
 
