@@ -404,6 +404,18 @@ public static partial class Meth {
             return new Vector3D(v.X * invLength, v.Y * invLength, v.Z * invLength);
         }
 
+        /** norm() but w a fallback */
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector3D normSafe(Vector3D fallback) {
+            double lengthSq = double.MultiplyAddEstimate(v.X, v.X, double.MultiplyAddEstimate(v.Y, v.Y, v.Z * v.Z));
+            if (!(lengthSq > 1e-12)) {
+                return fallback;
+            }
+
+            double invLength = double.ReciprocalSqrtEstimate(lengthSq);
+            return new Vector3D(v.X * invLength, v.Y * invLength, v.Z * invLength);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double dot(Vector3D b) {
             return double.MultiplyAddEstimate(v.X, b.X, double.MultiplyAddEstimate(v.Y, b.Y, v.Z * b.Z));

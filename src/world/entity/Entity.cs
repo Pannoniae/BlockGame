@@ -5,6 +5,7 @@ using BlockGame.net.packet;
 using BlockGame.net.srv;
 using BlockGame.render;
 using BlockGame.util;
+using BlockGame.util.log;
 using BlockGame.util.xNBT;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
@@ -271,6 +272,18 @@ public partial class Entity(World world, string type) : Persistent {
 
         // 6. post-physics updates (body rotation, animation, etc)
         postPhysics(dt);
+
+        if (Game.devMode) {
+            nonan();
+        }
+    }
+
+    private void nonan() {
+        if (double.IsFinite(position.X) && double.IsFinite(position.Y) && double.IsFinite(position.Z) &&
+            double.IsFinite(velocity.X) && double.IsFinite(velocity.Y) && double.IsFinite(velocity.Z)) {
+            return;
+        }
+        Log.error($"Entity {id} ({type}) is NaN: pos={position} vel={velocity} accel={accel}");
     }
 
     protected virtual void interpolate(double dt) {

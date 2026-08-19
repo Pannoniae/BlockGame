@@ -103,8 +103,14 @@ public class Mob(World world, string type) : Entity(world, type) {
     protected bool hasLineOfSight(Entity target) {
         var start = position + new Vector3D(0, eyeHeight, 0);
         var end = target.position + new Vector3D(0, target is Mob m ? m.eyeHeight : 1.6, 0);
-        var dir = Vector3D.Normalize(end - start);
-        var dist = Vector3D.Distance(start, end);
+        var delta = end - start;
+        var dist = delta.Length();
+
+        if (dist < Constants.epsilon) {
+            return true;
+        }
+
+        var dir = delta / dist;
 
         // step along the ray and check for solid blocks
         const double step = 0.25;

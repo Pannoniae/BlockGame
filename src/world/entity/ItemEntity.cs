@@ -107,7 +107,7 @@ public class ItemEntity : Entity {
         if (nearestAir.HasValue) {
             // apply velocity towards the nearest air block
             var dir = (Vector3D)nearestAir.Value + new Vector3D(0.5, 0.5, 0.5) - position;
-            var escape = dir.norm() * 2;
+            var escape = dir.normSafe(new Vector3D(0, 1, 0)) * 2;
             velocity = escape;
         }
         else {
