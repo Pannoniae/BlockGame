@@ -105,8 +105,8 @@ public class XJobPoolTest {
 
         for (var round = 0; round < 300; round++) {
             // one job is 100x the others, so the batch has a long tail
-            for (var i = 0; i < jobs.Length; i++) {
-                jobs[i].spins = rnd.Next(10, 100);
+            foreach (Spinner s in jobs) {
+                s.spins = rnd.Next(10, 100);
             }
             jobs[rnd.Next(0, jobs.Length)].spins = 200_000;
 

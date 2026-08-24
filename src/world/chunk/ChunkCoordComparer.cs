@@ -32,20 +32,24 @@ public class ChunkTicketComparer : IComparer<ChunkLoadTicket> {
     }
 }
 
+/**
+ * Sorts by level desc then distance from the nearest player so the first ("smaller") chunks are loaded first
+ *
+ */
 public sealed class ChunkTicketComparerReverse : IComparer<ChunkLoadTicket> {
-    private readonly List<Vector3D> anchors;
+    private readonly List<Vector3D> positions;
 
-    public ChunkTicketComparerReverse(List<Vector3D> anchors) {
-        this.anchors = anchors;
+    public ChunkTicketComparerReverse(List<Vector3D> positions) {
+        this.positions = positions;
     }
 
     private double distSq(ChunkCoord c) {
         double cx = (c.x << 4) + 8;
         double cz = (c.z << 4) + 8;
         var best = double.MaxValue;
-        for (var i = 0; i < anchors.Count; i++) {
-            var dx = anchors[i].X - cx;
-            var dz = anchors[i].Z - cz;
+        for (var i = 0; i < positions.Count; i++) {
+            var dx = positions[i].X - cx;
+            var dz = positions[i].Z - cz;
             var d = dx * dx + dz * dz;
             if (d < best) {
                 best = d;

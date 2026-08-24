@@ -3,34 +3,20 @@ using BlockGame.util.log;
 
 namespace BlockGame.util;
 
-/**
- * One unit of CPU work.
- */
 public abstract class XJob {
-    /**
-     * The exception the job threw (if any), normally null
-     */
+    /** the exception run() threw, if any */
     public Exception? error;
 
-    /**
-     * Runs on a worker thread.
-     */
     public abstract void run();
 }
 
 /**
- * Persistent workers for CPU-bound work. Threads are created once and block on a semaphore when idle -
- * nothing is spun up per job and nothing polls.
+ * Fork-join pool for CPU-bound work. The threads are created once and block on a semaphore when idle,
+ * so nothing gets spawned per job and nothing polls. run() hands out a batch and blocks until every
+ * job in it is done, which means a buffer given to a job can be reused as soon as run() returns.
  *
- * Fork-join, not a queue: run() starts a batch, wakes the workers up, and returns
- * once every job is done. Deliberately synchronous - a batch never outlives the call, so there is no
- * ownersh to track and no staleness. The caller can hand
- * a worker a buffer, get it back, and reuse it immediately.
- *
- * NOT for blocking work. A job that waits on disk or a lock parks a worker that could be crunching;
- * IO keeps its own dedicated threads.
- *
- * run() is single-caller. Two threads calling it concurrently is a bug, not a supported mode.
+ * Not for blocking work - a job that waits on disk or a lock parks a worker. IO gets its own threads.
+ * Only call run() from one thread at a time.
  */
 public sealed class XJobPool : IDisposable {
     private sealed class Batch {
@@ -65,9 +51,7 @@ public sealed class XJobPool : IDisposable {
         return int.Clamp(Environment.ProcessorCount - 2, 0, 8);
     }
 
-    /**
-     * Run jobs[0..count) and return when all of them are done.
-     */
+    /** Runs jobs[0..count) and blocks until all of them are done. */
     public void run(XJob[] jobs, int count) {
         if (count <= 0) {
             return;
@@ -77,6 +61,7 @@ public sealed class XJobPool : IDisposable {
             for (var i = 0; i < count; i++) {
                 exec(jobs[i]);
             }
+
             return;
         }
 
@@ -88,14 +73,12 @@ public sealed class XJobPool : IDisposable {
         // do our share
         work(b);
 
-        // and wait out whoever is still going. we only get here after finishing our own claims, so this is
-        // normally a straggler or two, i.e. at most one job's worth of waiting. sleep1Threshold: -1 because
-        // SpinWait's escalation ends in Thread.Sleep(1), and that is 1ms with the timer resolution raised and
-        // up to 15.6ms without (test host, dedicated server) - either way longer than the whole batch. Past
-        // the spin phase it yields / Sleep(0)s instead, which still gives the core away if we're oversubscribed.
+        // wait out whoever is still going. we only get here after finishing our own claims, so there's
+        // at most one job's worth of waiting left. sleep1Threshold: -1 keeps SpinWait from escalating
+        // to Thread.Sleep(1), which is 1-15.6ms depending on timer resolution - longer than the whole batch.
         var sw = new SpinWait();
         while (Volatile.Read(ref b.done) < count) {
-            sw.SpinOnce(sleep1Threshold: -1);
+            sw.SpinOnce(sleep1Threshold:-1);
         }
     }
 
@@ -134,8 +117,7 @@ public sealed class XJobPool : IDisposable {
             j.run();
         }
         catch (Exception e) {
-            // a bad job must not kill the worker or hang the batch - record it and carry on. the
-            // Interlocked on done is what publishes this write to whoever is waiting in run().
+            // a bad job must not kill the worker or hang the batch - record the error and move on
             j.error = e;
             Log.error("Error in job:");
             Log.error(e);

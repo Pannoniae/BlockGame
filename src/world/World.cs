@@ -1417,6 +1417,11 @@ public partial class World : IDisposable {
     private int genCovered;
     private int genExpected;
 
+    /**
+     * Basically preloading whatever is needed for the chunks (so if you want a fully meshed chunk, you'll need the lighted neighbours, which will need the populated neighbours, which will need the generated neighbours, etc.)
+     * kinda like prefetching so we don't have to rely on the recursive loading with loadChunk() which isn't batched
+     * so now we can use threads!
+     */
     private void pregen() {
         // still covered, and nobody appended/sorted under us
         if (genCovered > 0 && chunkLoadQueue.Count == genExpected) {
@@ -1513,9 +1518,9 @@ public partial class World : IDisposable {
         return jobs;
     }
 
-    /// <summary>
-    /// Load this chunk either from disk (if exists) or generate it with the given level.
-    /// </summary>
+    /**
+     * Load this chunk either from disk (if exists) or generate it with the given level.
+     */
     public void loadChunk(ChunkCoord chunkCoord, ChunkStatus status, bool immediately = false) {
         // TODO emergency switch! if players complain about chunk errors & lost data / crashes, flip this switch! it should make things better
         // it will make chunk loading synchronous and thus laggy / especially on shit HDDs, but it will prevent chunk errors until we can fix things:tm:
