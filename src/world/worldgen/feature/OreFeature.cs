@@ -13,6 +13,8 @@ public class OreFeature : Feature {
     public float radius;
     public bool stoneMode = true; // only place in stone
 
+    private int lx0, lx1, lz0, lz1;
+
     public OreFeature(ushort block, int steps, bool stoneMode = true) {
         this.block = block;
         this.stoneMode = stoneMode;
@@ -26,6 +28,10 @@ public class OreFeature : Feature {
 
     public override void place(World world, XRandom random, int x, int y, int z) {
         var bl = world.getBlock(x, y, z);
+        lx0 = ((x >> 4) - World.POPULATE_REACH) << 4;
+        lx1 = (((x >> 4) + World.POPULATE_REACH + 1) << 4) - 1;
+        lz0 = ((z >> 4) - World.POPULATE_REACH) << 4;
+        lz1 = (((z >> 4) + World.POPULATE_REACH + 1) << 4) - 1;
 
         // only start in valid blocks
         if (stoneMode && bl != Block.STONE.id) {
@@ -83,8 +89,8 @@ public class OreFeature : Feature {
     private void placeSphere(World world, Vector3 center, float radius, Vector3 prev, float prevRadSq, ref OreCache c) {
         int y0 = Math.Max(0, (int)(center.Y - radius));
         int y1 = Math.Min(World.WORLDHEIGHT, (int)(center.Y + radius) + 1);
-        int z0 = (int)(center.Z - radius);
-        int z1 = (int)(center.Z + radius) + 1;
+        int z0 = int.Max(lz0, (int)(center.Z - radius));
+        int z1 = int.Min(lz1 + 1, (int)(center.Z + radius) + 1);
 
         float radSq = radius * radius;
         for (int zz = z0; zz < z1; zz++) {
@@ -109,8 +115,8 @@ public class OreFeature : Feature {
 
                 // dx^2 <= rem
                 float half = float.Sqrt(rem);
-                int x0 = (int)float.Ceiling(center.X - half);
-                int x1 = (int)float.Floor(center.X + half);
+                int x0 = int.Max(lx0, (int)float.Ceiling(center.X - half));
+                int x1 = int.Min(lx1, (int)float.Floor(center.X + half));
                 for (int xx = x0; xx <= x1; xx++) {
                     float pdx = xx - prev.X;
                     if (pdyz2 + pdx * pdx <= prevRadSq) {

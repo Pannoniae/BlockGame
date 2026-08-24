@@ -1180,10 +1180,10 @@ public partial class World : IDisposable {
         // unload chunks which are far away
         if (side == Side.BOTH) {
             var playerChunk = player.getChunk();
+            var keep = renderDistance + 2 * POPULATE_REACH + 2;
             foreach (var chunk in chunks) {
                 var coord = chunk.coord;
-                // if distance is greater than renderDistance + 3, unload
-                if (playerChunk.distanceSq(coord) >= (renderDistance + 3) * (renderDistance + 3)) {
+                if (playerChunk.distanceSq(coord) >= keep * keep) {
                     unloadChunk(coord);
                 }
             }
