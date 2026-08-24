@@ -122,14 +122,9 @@ public class TexturePackMenu : Menu {
     }
 
     public void selectPack(PackEntry entry) {
-        // deselect previous
         selectedEntry?.isSelected = false;
-
-        // select new
         selectedEntry = entry;
         entry.isSelected = true;
-
-        // update preview
         updatePreview(entry);
     }
 
@@ -149,7 +144,6 @@ public class TexturePackMenu : Menu {
         Settings.instance.texturePack = selectedEntry.pack.internalname;
         Settings.instance.save();
 
-        // load the pack
         Game.textures.loadPack(selectedEntry.pack.internalname);
     }
 
@@ -161,7 +155,6 @@ public class TexturePackMenu : Menu {
 
         base.draw();
 
-        // draw preview panel if a pack is selected
         if (selectedEntry != null) {
             drawPreviewPanel();
         }

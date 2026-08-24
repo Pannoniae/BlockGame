@@ -21,7 +21,6 @@ public class TexturePack {
     public static TexturePack load(PackSource source) {
         var pack = new TexturePack { source = source };
 
-        // load metadata if exists
         var metadata = source.loadMetadata();
         if (metadata != null) {
             pack.internalname = metadata.getString("internalname", source.name);
@@ -31,7 +30,6 @@ public class TexturePack {
             pack.version = metadata.getString("version", "1.0");
             pack.tileSize = metadata.getInt("tileSize", 16);
         } else {
-            // fallback to source name
             pack.name = source.name;
         }
 
@@ -43,8 +41,6 @@ public class TexturePack {
      * Called before stitching.
      */
     public void registerSources(Textures textures) {
-
-        // register atlas sources
         if (source.exists("textures/blocks.png")) {
             var img = source.loadImage("textures/blocks.png");
             textures.addBlockSource("blocks.png", img, tileSize);

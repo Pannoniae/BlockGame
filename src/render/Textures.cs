@@ -180,7 +180,6 @@ public class Textures {
             currentPack.registerSources(this);
         }
 
-        // stitch atlases
         var (blockResult, itemResult) = stitchAtlases();
 
         // first load vs reload
@@ -194,10 +193,8 @@ public class Textures {
 
         Log.info("Textures", $"Stitched atlases: blocks={blockResult.width}x{blockResult.height}, items={itemResult.width}x{itemResult.height}");
 
-        // reload all cached non-atlas textures
         reloadCachedTextures();
 
-        // notify dependents
         onAtlasReloaded?.Invoke();
     }
 
@@ -232,7 +229,6 @@ public class Textures {
         // update Block.atlasSize
         Block.updateAtlasSize(blockResult.width, blockResult.height);
 
-        // dispose block sources
         foreach (var src in blockSources) {
             src.dispose();
         }
@@ -241,7 +237,6 @@ public class Textures {
         // stitch item atlas (no protected regions)
         var itemResult = AtlasStitcher.stitch(itemSources, []);
 
-        // dispose item sources
         foreach (var src in itemSources) {
             src.dispose();
         }
@@ -283,37 +278,22 @@ public class Textures {
         }
     }
 
-    /**
-     * Register a block atlas source from file
-     */
     public void addBlockSource(string filename, int tileSize = 16) {
         blockSources.Add(new AtlasSource("textures/" + filename, tileSize));
     }
 
-    /**
-     * Register a block atlas source from an image
-     */
     public void addBlockSource(string filename, Image<Rgba32> image, int tileSize = 16) {
         blockSources.Add(new AtlasSource("textures/" + filename, image, tileSize));
     }
 
-    /**
-     * Register an item atlas source from file
-     */
     public void addItemSource(string filename, int tileSize = 16) {
         itemSources.Add(new AtlasSource("textures/" + filename, tileSize));
     }
 
-    /**
-     * Register an item atlas source from an image
-     */
     public void addItemSource(string filename, Image<Rgba32> image, int tileSize = 16) {
         itemSources.Add(new AtlasSource("textures/" + filename, image, tileSize));
     }
 
-    /**
-     * Clear all registered sources
-     */
     private void clearSources() {
         foreach (var src in blockSources) src.dispose();
         foreach (var src in itemSources) src.dispose();
@@ -321,19 +301,10 @@ public class Textures {
         itemSources.Clear();
     }
 
-    /**
-     * Get available texture packs
-     */
     public List<TexturePack> getAvailablePacks() => availablePacks;
 
-    /**
-     * Get currently loaded pack
-     */
     public TexturePack? getCurrentPack() => currentPack;
 
-    /**
-     * Open the texture packs folder in file explorer
-     */
     public static void openPackFolder() {
         if (!Directory.Exists(PACK_DIR)) {
             Directory.CreateDirectory(PACK_DIR);

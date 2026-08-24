@@ -14,19 +14,10 @@ public interface PackSource {
      */
     string name { get; }
 
-    /**
-     * Check if a file exists in this pack
-     */
     bool exists(string path);
 
-    /**
-     * Open a file stream from the pack
-     */
     Stream open(string path);
 
-    /**
-     * Load an image from the pack
-     */
     Image<Rgba32> loadImage(string path);
 
     /**
