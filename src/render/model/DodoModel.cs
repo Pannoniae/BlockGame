@@ -14,7 +14,7 @@ public class DodoModel : EntityModel {
     public readonly Cube body = new Cube().pos(0, 21, -17).off(0, -15, 0).ext(15, 15, 17).tex(0, 0).gen(xs, ys);
     public readonly Cube nest = new Cube().pos(4, 34, -2).off(0, -23, 0).ext(7, 23, 7).tex(0, 32).gen(xs, ys);
     public readonly Cube back = new Cube().pos(3, 18, -23).off(0, -11, 0).ext(9, 11, 6).tex(66, 0).gen(xs, ys);
-    public readonly Cube tail= new Cube().pos(5, 21, -25).off(0, -5, 0).ext(5, 5, 5).tex(32, 32).gen(xs, ys);
+    public readonly Cube tail= new Cube().pos(5, 21, -26).off(0, -5, 0).ext(5, 5, 5).tex(32, 32).gen(xs, ys);
     public readonly Cube upperBeak = new Cube().pos(5.5f, 32, 0).off(0, -4, 0).ext(4, 4, 17).tex(54, 32).gen(xs, ys);
     public readonly Cube lowerBeak = new Cube().pos(5.5f, 27.75f, 0).off(0, -2, 0).ext(4, 2, 16).tex(51, 54).gen(xs, ys);
     public readonly Cube rightLeg = new Cube().pos(0, 6, -9).off(0, -5, -2).ext(2, 5, 2).tex(32, 48).gen(xs, ys);
