@@ -1122,7 +1122,7 @@ public class GameServer : INetEventListener {
 
     private void unloadUnusedChunks() {
         var toUnload = new List<ChunkCoord>();
-        var keep = world.playerRadius + 2 * World.POPULATE_REACH + 1;
+        var keep = world.playerRadius + World.LOADMARGIN;
         var keepSq = keep * keep;
 
         foreach (var chunk in world.chunks) {

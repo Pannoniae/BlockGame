@@ -181,7 +181,8 @@ public class ServerConnection {
     }
 
     private void rebuildPending(ChunkCoord playerChunk) {
-        var rdSq = renderDistance * renderDistance;
+        var send = renderDistance + 1;
+        var rdSq = send * send;
 
         // drop anything that fell out of range
         toUnload.Clear();
@@ -195,8 +196,8 @@ public class ServerConnection {
         }
 
         pending.Clear();
-        for (var dx = -renderDistance; dx <= renderDistance; dx++) {
-            for (var dz = -renderDistance; dz <= renderDistance; dz++) {
+        for (var dx = -send; dx <= send; dx++) {
+            for (var dz = -send; dz <= send; dz++) {
                 var coord = new ChunkCoord(playerChunk.x + dx, playerChunk.z + dz);
 
                 // circle

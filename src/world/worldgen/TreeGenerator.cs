@@ -432,6 +432,11 @@ public class TreeGenerator {
 
     /** procedural tree generator */
     private class ProceduralTree {
+        /**
+         * max horizontal distance of a foliage cluster from the trunk so we don't go outside the chunk
+         */
+        private const float MAX_SPREAD = 16 * World.POPULATE_REACH - 5;
+
         private World world;
         private XRandom random;
         private int x, y, z;
@@ -509,7 +514,7 @@ public class TreeGenerator {
 
                 // wider spread lower down
                 float maxRadius = (1 - yFac) * height + 0.5f;
-                float r = MathF.Sqrt(random.NextSingle()) * maxRadius;
+                float r = float.Min(MathF.Sqrt(random.NextSingle()) * maxRadius, MAX_SPREAD);
                 float theta = random.NextSingle() * 2 * PI;
                 int cx = (int)(r * MathF.Sin(theta)) + x;
                 int cz = (int)(r * MathF.Cos(theta)) + z;
@@ -633,7 +638,7 @@ public class TreeGenerator {
                         continue;
                     }
 
-                    float r = (MathF.Sqrt(random.NextSingle()) + 0.328f) * shapeFac.Value;
+                    float r = float.Min((MathF.Sqrt(random.NextSingle()) + 0.328f) * shapeFac.Value, MAX_SPREAD);
                     float theta = random.NextSingle() * 2 * PI;
                     int cx = (int)(r * MathF.Sin(theta)) + x;
                     int cz = (int)(r * MathF.Cos(theta)) + z;

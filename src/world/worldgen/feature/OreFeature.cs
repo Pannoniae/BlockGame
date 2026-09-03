@@ -55,7 +55,14 @@ public class OreFeature : Feature {
 
         // walk straight line with random radius at each step
         var steps = random.Next(minSteps, maxSteps + 1);
-        var pos = new Vector3(x, y, z);
+
+        // if we're outside, how about we dont
+        var margin = radius + 1;
+        var fwd = float.Min(raycast1d(x, dir.X, lx0, lx1), raycast1d(z, dir.Z, lz0, lz1)) - margin;
+        var back = float.Min(raycast1d(x, -dir.X, lx0, lx1), raycast1d(z, -dir.Z, lz0, lz1)) - margin;
+        var b = float.Min(steps, float.Max(fwd, 0));
+        var a = float.Min(steps - b, float.Max(back, 0));
+        var pos = new Vector3(x, y, z) - dir * a;
         var c = default(OreCache);
 
         var prev = pos;
@@ -67,6 +74,11 @@ public class OreFeature : Feature {
             prevRadSq = radius * radius;
             pos += dir;
         }
+    }
+
+
+    private static float raycast1d(float p, float d, int n, int x) {
+        return d > 0 ? (x - p) / d : d < 0 ? (p - n) / -d : float.MaxValue;
     }
 
     private struct OreCache {

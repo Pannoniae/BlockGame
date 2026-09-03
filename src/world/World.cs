@@ -32,7 +32,12 @@ public partial class World : IDisposable {
     public const int WORLDSIZE = 12;
 
     // todo optimise the chunkload radius...
-    public const int POPULATE_REACH = 2;
+    public const int POPULATE_REACH = 1;
+
+    /**
+     * how far past a player's radius chunks are kept before unloading so we don't pingpong the view edges
+     */
+    public static readonly int LOADMARGIN = (int)Math.Ceiling(Math.Sqrt(2) * (1 + 2 * POPULATE_REACH));
     public const int REGIONSIZE = 16;
     public const int WORLDHEIGHT = Chunk.CHUNKHEIGHT * Chunk.CHUNKSIZE;
 
@@ -1180,7 +1185,7 @@ public partial class World : IDisposable {
         // unload chunks which are far away
         if (side == Side.BOTH) {
             var playerChunk = player.getChunk();
-            var keep = renderDistance + 2 * POPULATE_REACH + 2;
+            var keep = renderDistance + LOADMARGIN;
             foreach (var chunk in chunks) {
                 var coord = chunk.coord;
                 if (playerChunk.distanceSq(coord) >= keep * keep) {
