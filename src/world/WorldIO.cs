@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Collections.Concurrent;
+using K4os.Compression.LZ4.Streams;
 using System.Runtime.CompilerServices;
 using BlockGame.logic;
 using BlockGame.main;
@@ -18,8 +19,6 @@ using Molten.DoublePrecision;
 namespace BlockGame.world;
 
 public class WorldIO {
-    public static readonly FixedArrayPool<byte> saveBlockPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
-
     // palette building
     private static readonly XUList<string> paletteList = new(256);
     private static readonly XUList<byte> paletteMetadata = new(256);
@@ -320,17 +319,11 @@ public class WorldIO {
 
     public void saveChunk(World world, Chunk chunk) {
         chunk.lastSaved = (ulong)Game.permanentStopwatch.ElapsedMilliseconds;
-        var nbt = serialiseChunkIntoNBT(chunk);
-
-        // serialize NBT to byte array
-        var chunkData = nbtToBytes(nbt);
+        var chunkData = serialiseChunk(chunk);
 
         if (regionManager.writeChunk(chunk.coord, chunkData)) {
             chunk.dirty = false;
         }
-
-        // return pooled arrays
-        returnPooledArrays(nbt);
     }
 
     public void saveChunkAsync(World world, Chunk chunk) {
@@ -341,10 +334,7 @@ public class WorldIO {
         }
 
         chunk.lastSaved = (ulong)Game.permanentStopwatch.ElapsedMilliseconds;
-        var nbt = serialiseChunkIntoNBT(chunk);
-
-        var chunkData = nbtToBytes(nbt);
-        returnPooledArrays(nbt);
+        var chunkData = serialiseChunk(chunk);
 
         chunkSaveThread.add(new ChunkSaveData(chunk.coord, chunkData));
     }
@@ -444,21 +434,37 @@ public class WorldIO {
         }
     }
 
-    public static NBTCompound serialiseChunkIntoNBT(Chunk chunk) {
-        var chunkTag = new NBTCompound();
-        chunkTag.addInt("posX", chunk.coord.x);
-        chunkTag.addInt("posZ", chunk.coord.z);
-        chunkTag.addByte("status", (byte)chunk.status);
-        chunkTag.addULong("lastSaved", chunk.lastSaved);
-        // YXZ
-        var sectionsTag = new NBTList<NBTCompound>(NBTType.TAG_Compound, "sections");
-        for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
-            var section = new NBTCompound();
-            // if empty, just write zeros
-            if (chunk.blocks[sectionY].inited) {
-                section.addByte("inited", 1);
+    /** Serialize a chunk straight to bytes with the streaming writer. */
+    public static byte[] serialiseChunk(Chunk chunk) {
+        using var ms = new MemoryStream();
+        using (var compress = LZ4Stream.Encode(ms)) {
+            var w = new NBTWriter(compress);
+            writeChunk(w, chunk);
+            w.flush();
+        }
 
-                var blockData = chunk.blocks[sectionY];
+        return ms.ToArray();
+    }
+
+    public static void writeChunk(NBTWriter w, Chunk chunk) {
+        w.beginCompound(null);
+        w.writeInt("posX", chunk.coord.x);
+        w.writeInt("posZ", chunk.coord.z);
+        w.writeByte("status", (byte)chunk.status);
+        w.writeULong("lastSaved", chunk.lastSaved);
+
+        // scratch buffers, reused across sections (stackalloc frees on method exit, not per iteration/in scope...)
+        Span<byte> paletteIndices = stackalloc byte[Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE];
+        Span<int> indexRemapFull = stackalloc int[Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE];
+
+        // YXZ
+        w.beginList("sections", NBTType.TAG_Compound, Chunk.CHUNKHEIGHT);
+        for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
+            w.beginCompound(null);
+            var blockData = chunk.blocks[sectionY];
+            // if empty, just write zeros
+            if (blockData.inited) {
+                w.writeByte("inited", 1);
 
                 // build NBT block palette with parallel id+metadata lists
                 paletteList.Clear();
@@ -468,7 +474,7 @@ public class WorldIO {
                 var internalVertCount = blockData.skillIssueVertCount();
 
                 // map: internal palette index -> NBT palette index
-                Span<int> indexRemap = stackalloc int[internalVertCount];
+                var indexRemap = indexRemapFull[..internalVertCount];
 
                 for (int i = 0; i < internalVertCount; i++) {
                     if (internalRefs[i] > 0) {
@@ -484,43 +490,59 @@ public class WorldIO {
                 }
 
                 // remap internal block indices to NBT indices (simple lookup)
-                var paletteIndices = saveBlockPool.grab();
                 for (int i = 0; i < Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE; i++) {
-                    int idx = blockData.skillIssueIndexRaw(i);
-                    int nbtidx = indexRemap[idx];
-                    paletteIndices[i] = (byte)nbtidx;
+                    paletteIndices[i] = (byte)indexRemap[blockData.skillIssueIndexRaw(i)];
                 }
 
                 blockData.skillIssueLightPlanes(out var skyPlane, out var blockPlane, out var uSky, out var uBlk);
 
                 // save palettes (parallel id+metadata lists)
-                var paletteCompound = new NBTCompound("palette");
-                paletteCompound.addStringListUnsafe("ids", paletteList);
-                paletteCompound.addByteListUnsafe("meta", paletteMetadata);
-                section.addCompoundTag("palette", paletteCompound);
+                w.beginCompound("palette");
+                w.beginList("ids", NBTType.TAG_String, paletteList.Count);
+                foreach (var t in paletteList) {
+                    w.writeString(null, t);
+                }
 
-                section.addByteArray("blocks", paletteIndices);
-                section.addByte("uniformSky", uSky);
-                section.addByte("uniformBlock", uBlk);
+                w.endList();
+                w.beginList("meta", NBTType.TAG_Byte, paletteMetadata.Count);
+                foreach (var t in paletteMetadata) {
+                    w.writeByte(null, t);
+                }
+
+                w.endList();
+                w.endCompound();
+
+                w.writeByteArray("blocks", paletteIndices);
+                w.writeByte("uniformSky", uSky);
+                w.writeByte("uniformBlock", uBlk);
                 if (skyPlane != null) {
-                    section.addByteArray("skyPlane", skyPlane);
+                    w.writeByteArray("skyPlane", skyPlane);
                 }
 
                 if (blockPlane != null) {
-                    section.addByteArray("blockPlane", blockPlane);
+                    w.writeByteArray("blockPlane", blockPlane);
                 }
             }
             else {
-                section.addByte("inited", 0);
+                w.writeByte("inited", 0);
             }
 
-            sectionsTag.add(section);
+            w.endCompound();
         }
 
-        chunkTag.addListTag("sections", sectionsTag);
+        w.endList();
 
         // save entities (skip players - they're saved with world data)
-        var entitiesTag = new NBTList<NBTCompound>(NBTType.TAG_Compound, "entities");
+        int entityCount = 0;
+        for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
+            foreach (var entity in chunk.entities[sectionY]) {
+                if (entity.type != "player") {
+                    entityCount++;
+                }
+            }
+        }
+
+        w.beginList("entities", NBTType.TAG_Compound, entityCount);
         for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
             foreach (var entity in chunk.entities[sectionY]) {
                 // skip players
@@ -533,27 +555,27 @@ public class WorldIO {
                 var data = new NBTCompound("data");
                 entity.write(data);
                 entityData.add(data);
-                entitiesTag.add(entityData);
+                w.writeTag(entityData);
             }
         }
 
-        chunkTag.addListTag("entities", entitiesTag);
+        w.endList();
 
         // save block entities
-        var blockEntitiesTag = new NBTList<NBTCompound>(NBTType.TAG_Compound, "blockEntities");
+        w.beginList("blockEntities", NBTType.TAG_Compound, chunk.blockEntities.Count);
         foreach (var (pos, be) in chunk.blockEntities) {
             var beData = new NBTCompound();
             be.write(beData);
-            blockEntitiesTag.add(beData);
+            w.writeTag(beData);
         }
 
-        chunkTag.addListTag("blockEntities", blockEntitiesTag);
+        w.endList();
 
         // save biome data
-        chunkTag.addSByteArray("biomeTemp", chunk.biomeData.temp);
-        chunkTag.addSByteArray("biomeHum", chunk.biomeData.hum);
+        w.writeSByteArray("biomeTemp", chunk.biomeData.temp);
+        w.writeSByteArray("biomeHum", chunk.biomeData.hum);
 
-        return chunkTag;
+        w.endCompound();
     }
 
     public static Chunk loadChunkFromNBT(World world, NBTCompound chunkTag) {
@@ -934,25 +956,6 @@ public class WorldIO {
         throw new FileNotFoundException($"Chunk {coord.x},{coord.z} not found in either region or legacy format, wtf?");
     }
 
-    /** Helper: serialize NBT to compressed byte array (LZ4) */
-    private static byte[] nbtToBytes(NBTCompound nbt) {
-        using var ms = new MemoryStream();
-        NBT.writeCompressed(nbt, ms);
-        return ms.ToArray();
-    }
-
-    /** Helper: return pooled arrays from NBT sections */
-    private static void returnPooledArrays(NBTCompound nbt) {
-        var sections = nbt.getListTag<NBTCompound>("sections");
-        foreach (var section in sections.list) {
-            if (section.getByte("inited") != 0) {
-                var blocks = section.getByteArray("blocks");
-                if (blocks != null) {
-                    saveBlockPool.putBack(blocks);
-                }
-            }
-        }
-    }
 }
 
 public readonly struct ChunkSaveData(ChunkCoord coord, byte[] chunkData) {

@@ -590,7 +590,6 @@ public class GameScreen : Screen {
         PaletteBlockData.arrayPool.clear();
         PaletteBlockData.arrayPoolU.clear();
         PaletteBlockData.arrayPoolUS.clear();
-        WorldIO.saveBlockPool.clear();
         HeightMap.heightPool.clear();
 
         // reload around player

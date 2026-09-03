@@ -136,10 +136,12 @@ public class SNBTWriter {
                 sb.Append(t.data).Append("uL");
                 break;
             case NBTFloat t:
-                sb.Append(t.data.ToString(CultureInfo.InvariantCulture)).Append('f');
+                write(t.data);
+                sb.Append('f');
                 break;
             case NBTDouble t:
-                sb.Append(t.data.ToString(CultureInfo.InvariantCulture)).Append('d');
+                write(t.data);
+                sb.Append('d');
                 break;
             case NBTString t:
                 writeString(t.data);
@@ -148,10 +150,13 @@ public class SNBTWriter {
                 writeCompound(t);
                 break;
             case INBTList list:
-                writeListInterface(list);
+                writeList(list);
                 break;
             case NBTByteArray t:
                 writeArray("B", t.data);
+                break;
+            case NBTSByteArray t:
+                writeArray("SB", t.data);
                 break;
             case NBTShortArray t:
                 writeArray("S", t.data);
@@ -172,35 +177,26 @@ public class SNBTWriter {
                 writeArray("UL", t.data);
                 break;
             case NBTStruct t:
-                writeStruct(t);
+                write(t);
                 break;
             default:
                 throw new ArgumentException($"Unsupported NBTTag type: {tag.GetType().Name}", nameof(tag));
         }
     }
 
-    private void writeStruct(NBTStruct s) {
-        sb.Append("0x");
-        foreach (byte b in s.data) {
-            sb.Append(b.ToString("X2"));
-        }
+    private void write<T>(T value) where T : struct, ISpanFormattable {
+        Span<char> buf = stackalloc char[40];
+        value.TryFormat(buf, out int len, default, CultureInfo.InvariantCulture);
+        sb.Append(buf[..len]);
     }
 
-    private void writeListInterface(INBTList list) {
-        // we updated this from reflection to dynamic! oh how nice ;)
-        var theList = (dynamic)list;
-
-        var tagList = new List<NBTTag>();
-        foreach (var item in theList.list) {
-            if (item is NBTTag nbtTag) {
-                tagList.Add(nbtTag);
-            }
-            else {
-                SkillIssueException.throwNew($"List contains non-NBTTag items! ({item.GetType().Name})");
-            }
+    private void write(NBTStruct s) {
+        sb.Append("0x");
+        Span<char> hex = stackalloc char[2];
+        foreach (byte b in s.data) {
+            b.TryFormat(hex, out _, "X2");
+            sb.Append(hex);
         }
-
-        writeList(tagList, list.listType);
     }
 
     private void writeString(string s) {
@@ -268,20 +264,21 @@ public class SNBTWriter {
         sb.Append('}');
     }
 
-    private void writeList(List<NBTTag> list, NBTType listType) {
+    private void writeList(INBTList list) {
         sb.Append('[');
 
-        if (list.Count == 0) {
-            sb.Append(NBTTag.getTypeName(listType)).Append(';');
+        int n = list.count();
+        if (n == 0) {
+            sb.Append(NBTTag.getTypeName(list.listType)).Append(';');
         }
         else {
-            bool complexItems = list.Any(t => t is NBTCompound or INBTList);
+            bool complexItems = list.listType is NBTType.TAG_Compound or NBTType.TAG_List;
             if (prettyPrint && complexItems) {
                 writeNewLine();
                 indentLevel++;
             }
 
-            for (int i = 0; i < list.Count; i++) {
+            for (int i = 0; i < n; i++) {
                 if (i > 0) {
                     sb.Append(',');
                     if (prettyPrint) {
@@ -301,7 +298,7 @@ public class SNBTWriter {
                     writeIndent();
                 }
 
-                writeValue(list[i]);
+                writeValue(list.getTag(i));
             }
 
             if (prettyPrint && complexItems) {
@@ -314,7 +311,7 @@ public class SNBTWriter {
         sb.Append(']');
     }
 
-    private void writeArray<T>(string prefix, T[] data) {
+    private void writeArray<T>(string prefix, T[] data) where T : struct, ISpanFormattable {
         sb.Append('[').Append(prefix).Append("; ");
 
         for (int i = 0; i < data.Length; i++) {
@@ -322,7 +319,7 @@ public class SNBTWriter {
                 sb.Append(", ");
             }
 
-            sb.Append(data[i]?.ToString() ?? "0");
+            write(data[i]);
         }
 
         sb.Append(']');
@@ -389,8 +386,7 @@ internal class SNBTParser {
 
         var bytes = new List<byte>();
         while (pos + 1 < input.Length && isHexDigit(input[pos]) && isHexDigit(input[pos + 1])) {
-            string hexByte = input.Substring(pos, 2);
-            bytes.Add(Convert.ToByte(hexByte, 16));
+            bytes.Add(byte.Parse(input.AsSpan(pos, 2), NumberStyles.HexNumber));
             pos += 2;
         }
 
@@ -442,10 +438,20 @@ internal class SNBTParser {
 
     private string parseKey() {
         skipWhitespace();
-        return peek() == '"' ? parseQuotedString() : parseUnquotedKey();
+        if (peek() == '"') {
+            return parseQuotedString();
+        }
+
+        var span = scanUnquotedToken();
+        if (span.Length == 0) {
+            throw new FormatException($"Expected key at position {pos}");
+        }
+
+        return span.ToString();
     }
 
-    private string parseUnquotedKey() {
+    /** advances pos over an unquoted token, returns a span into the input */
+    private ReadOnlySpan<char> scanUnquotedToken() {
         int start = pos;
         while (pos < input.Length) {
             char c = input[pos];
@@ -457,15 +463,14 @@ internal class SNBTParser {
             }
         }
 
-        if (pos == start) {
-            throw new FormatException($"Expected key at position {pos}");
-        }
-
-        return input.Substring(start, pos - start);
+        return input.AsSpan(start, pos - start);
     }
 
     private NBTTag parseUnquotedValue(string? name) {
-        string token = parseUnquotedKey();
+        var token = scanUnquotedToken();
+        if (token.Length == 0) {
+            throw new FormatException($"Expected value at position {pos}");
+        }
 
         // Try to parse as number with suffix
         if (tryParseTypedNumber(token, name, out var numberTag)) {
@@ -473,54 +478,54 @@ internal class SNBTParser {
         }
 
         // It's an unquoted string
-        return new NBTString(name, token);
+        return new NBTString(name, token.ToString());
     }
 
-    private bool tryParseTypedNumber(string token, string? name, out NBTTag result) {
+    private static bool tryParseTypedNumber(ReadOnlySpan<char> token, string? name, out NBTTag result) {
         result = null!;
 
         // Check suffixes from longest to shortest
-        if (token.EndsWith("ub") && isValidInteger(token.AsSpan(0, token.Length - 2))) {
+        if (token.EndsWith("ub") && isValidInteger(token[..^2])) {
             result = new NBTByte(name, byte.Parse(token[..^2]));
             return true;
         }
 
-        if (token.EndsWith("us") && isValidInteger(token.AsSpan(0, token.Length - 2))) {
+        if (token.EndsWith("us") && isValidInteger(token[..^2])) {
             result = new NBTUShort(name, ushort.Parse(token[..^2]));
             return true;
         }
 
-        if (token.EndsWith("uL") && isValidInteger(token.AsSpan(0, token.Length - 2))) {
+        if (token.EndsWith("uL") && isValidInteger(token[..^2])) {
             result = new NBTULong(name, ulong.Parse(token[..^2]));
             return true;
         }
 
-        if (token.EndsWith('b') && isValidInteger(token.AsSpan(0, token.Length - 1))) {
+        if (token.EndsWith("b") && isValidInteger(token[..^1])) {
             result = new NBTByte(name, byte.Parse(token[..^1]));
             return true;
         }
 
-        if (token.EndsWith('s') && isValidInteger(token.AsSpan(0, token.Length - 1))) {
+        if (token.EndsWith("s") && isValidInteger(token[..^1])) {
             result = new NBTShort(name, short.Parse(token[..^1]));
             return true;
         }
 
-        if (token.EndsWith('u') && isValidInteger(token.AsSpan(0, token.Length - 1))) {
+        if (token.EndsWith("u") && isValidInteger(token[..^1])) {
             result = new NBTUInt(name, uint.Parse(token[..^1]));
             return true;
         }
 
-        if (token.EndsWith('L') && isValidInteger(token.AsSpan(0, token.Length - 1))) {
+        if (token.EndsWith("L") && isValidInteger(token[..^1])) {
             result = new NBTLong(name, long.Parse(token[..^1]));
             return true;
         }
 
-        if (token.EndsWith('f') && isValidFloat(token.AsSpan(0, token.Length - 1))) {
+        if (token.EndsWith("f") && isValidFloat(token[..^1])) {
             result = new NBTFloat(name, float.Parse(token[..^1], CultureInfo.InvariantCulture));
             return true;
         }
 
-        if (token.EndsWith('d') && isValidFloat(token.AsSpan(0, token.Length - 1))) {
+        if (token.EndsWith("d") && isValidFloat(token[..^1])) {
             result = new NBTDouble(name, double.Parse(token[..^1], CultureInfo.InvariantCulture));
             return true;
         }
@@ -644,7 +649,7 @@ internal class SNBTParser {
     }
 
     private static bool isValidArrayPrefix(string prefix) {
-        return prefix is "B" or "S" or "US" or "I" or "UI" or "L" or "UL";
+        return prefix is "B" or "SB" or "S" or "US" or "I" or "UI" or "L" or "UL";
     }
 
     private static NBTType? parseTypeName(string name) {
@@ -658,11 +663,31 @@ internal class SNBTParser {
     }
 
     private NBTTag parseArray(string? name, string prefix) {
+        return prefix switch {
+            "B" => new NBTByteArray(name, parseArrayValues<byte>()),
+            "SB" => new NBTSByteArray(name, parseArrayValues<sbyte>()),
+            "S" => new NBTShortArray(name, parseArrayValues<short>()),
+            "US" => new NBTUShortArray(name, parseArrayValues<ushort>()),
+            "I" => new NBTIntArray(name, parseArrayValues<int>()),
+            "UI" => new NBTUIntArray(name, parseArrayValues<uint>()),
+            "L" => new NBTLongArray(name, parseArrayValues<long>()),
+            "UL" => new NBTULongArray(name, parseArrayValues<ulong>()),
+            _ => throw new FormatException($"Unknown array type: {prefix}")
+        };
+    }
+
+    private T[] parseArrayValues<T>() where T : ISpanParsable<T> {
         skipWhitespace();
-        var values = new List<string>();
+        var values = new List<T>();
 
         while (peek() != ']') {
-            values.Add(parseArrayValue());
+            int start = pos;
+            while (pos < input.Length && input[pos] != ',' && input[pos] != ']' && !char.IsWhiteSpace(input[pos])) {
+                pos++;
+            }
+
+            values.Add(T.Parse(input.AsSpan(start, pos - start), CultureInfo.InvariantCulture));
+
             skipWhitespace();
             if (peek() == ',') {
                 next();
@@ -674,26 +699,7 @@ internal class SNBTParser {
         }
 
         next(); // consume ']'
-
-        return prefix switch {
-            "B" => new NBTByteArray(name, Array.ConvertAll(values.ToArray(), byte.Parse)),
-            "S" => new NBTShortArray(name, Array.ConvertAll(values.ToArray(), short.Parse)),
-            "US" => new NBTUShortArray(name, Array.ConvertAll(values.ToArray(), ushort.Parse)),
-            "I" => new NBTIntArray(name, Array.ConvertAll(values.ToArray(), int.Parse)),
-            "UI" => new NBTUIntArray(name, Array.ConvertAll(values.ToArray(), uint.Parse)),
-            "L" => new NBTLongArray(name, Array.ConvertAll(values.ToArray(), long.Parse)),
-            "UL" => new NBTULongArray(name, Array.ConvertAll(values.ToArray(), ulong.Parse)),
-            _ => throw new FormatException($"Unknown array type: {prefix}")
-        };
-    }
-
-    private string parseArrayValue() {
-        int start = pos;
-        while (pos < input.Length && input[pos] != ',' && input[pos] != ']' && !char.IsWhiteSpace(input[pos])) {
-            pos++;
-        }
-
-        return input.Substring(start, pos - start);
+        return values.ToArray();
     }
 
     private NBTTag parseList(string? name) {
@@ -727,8 +733,7 @@ internal class SNBTParser {
                 throw new FormatException($"Mixed types in list: expected {listType}, got {item.id}");
             }
 
-            // the problem is that we're trying to add a NBTTag to a generic list of a specific type..
-            ((dynamic)list).add((dynamic)item);
+            ((INBTList)list).addTag(item);
         }
 
         return list;
@@ -793,7 +798,7 @@ internal class SNBTParser {
             }
         }
 
-        string numStr = input.Substring(start, pos - start);
+        var numStr = input.AsSpan(start, pos - start);
 
         // Check for suffix
         int suffixStart = pos;
@@ -801,7 +806,7 @@ internal class SNBTParser {
             pos++;
         }
 
-        string suffix = pos > suffixStart ? input.Substring(suffixStart, pos - suffixStart) : "";
+        var suffix = input.AsSpan(suffixStart, pos - suffixStart);
 
         // Parse based on suffix
         return suffix switch {

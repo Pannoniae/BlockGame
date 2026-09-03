@@ -793,6 +793,7 @@ public partial class Block {
         LIANA.setModel(BlockModel.makeGrass(LIANA));
         LIANA.transparency();
         LIANA.partialBlock();
+        LIANA.noCollision();
         LIANA.itemLike();
 
         CACTUS = register("cactus", new Cactus("Cactus"));

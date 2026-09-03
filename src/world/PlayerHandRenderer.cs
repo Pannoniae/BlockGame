@@ -270,12 +270,12 @@ public class PlayerHandRenderer {
         const float sc = 1 / 16f;
 
         // interpolate position and rotation
-        var interpPos = Vector3D.Lerp(entity.prevPosition, entity.position, interp);
-        var interpRot = entity.interpRot(interp);
-        var interpBodyRot = entity.interpBodyRot(interp);
+        //var interpPos = Vector3D.Lerp(entity.prevPosition, entity.position, interp);
+        //var interpRot = entity.interpRot(interp);
+        //var interpBodyRot = entity.interpBodyRot(interp);
 
-        var headRotX = interpRot.X - interpBodyRot.X; // pitch diff
-        var headRotY = interpRot.Y - interpBodyRot.Y; // yaw diff
+        //var headRotX = interpRot.X - interpBodyRot.X; // pitch diff
+        //var headRotY = interpRot.Y - interpBodyRot.Y; // yaw diff
 
         // Translate to interpolated position
         //mat.translate((float)interpPos.X, (float)interpPos.Y, (float)interpPos.Z);
@@ -317,14 +317,14 @@ public class PlayerHandRenderer {
 
         //mat.translate(sinSwingSqrt * -0.35f, 0, sinSwing * -0.2f);
         //mat.translate(sinSwingSqrtish * 0.7f + sinSwing * -0.6f, 0, sinSwing * -0.5f);
-        mat.translate(sinSwingSqrt * -0.1f, ((float)-getLower(interp) + circleishThing) * 0.2f, sinSwing * 0.1f);
+        mat.translate(sinSwingSqrt * -0.1f, ((float)-getLower(interp) + circleishThing) * 0.2f, sinSwing * 0.05f);
 
-        //mat.rotate(-45 - 5, 1, 0, 0);
+        //mat.translate(0f, -0.2f, 0);
+        mat.rotate(15, 0, 1, 0);
         // we cheat a bit, we need to change the base
-        mat.translate(0, 0.2f, 0);
         mat.rotate(sinSwingSqrt * 50, 0, 0, 1);
-        mat.translate(0, -0.2f, 0);
-        //mat.rotate(-(-45 - 5), 1, 0, 0);
+        mat.rotate(-15, 0, 1, 0);
+        //mat.translate(0f, 0.2f, 0);
         //mat.rotate(sinSwing * 20, 0, 1, 0);
 
         //mat.rotate(sinSwingSqrt * 20, 1, 0, 0);
@@ -335,9 +335,11 @@ public class PlayerHandRenderer {
 
         // we rotate the item "into place"
         mat.rotate(-45 - 5, 1, 0, 0);
-        mat.rotate(60 + 15, 0, 0, 1);
+        mat.rotate(60 + 15 - 90, 0, 0, 1);
 
         mat.rotate(-90 + 10, 1, 0, 0);
+
+        mat.translate(0.4f, 0, 0);
 
         // apply head pitch!!
         //mat.rotate(-headRotX, 1, 0, 0);

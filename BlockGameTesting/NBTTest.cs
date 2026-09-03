@@ -8,6 +8,100 @@ using NUnit.Framework;
 
 public class NBTTest {
     [Test]
+    public void TestStreamingWriterMatchesTree() {
+        // tree version
+        var root = new NBTCompound("");
+        root.addInt("posX", -3);
+        root.addByte("status", 5);
+        root.addULong("lastSaved", 123456789UL);
+
+        var sections = new NBTList<NBTCompound>(NBTType.TAG_Compound, "sections");
+        var section = new NBTCompound();
+        section.addByte("inited", 1);
+        var palette = new NBTCompound("palette");
+        var ids = new NBTList<NBTString>(NBTType.TAG_String, "ids");
+        ids.add(new NBTString(null, "air"));
+        ids.add(new NBTString(null, "grass"));
+        palette.addListTag("ids", ids);
+        var meta = new NBTList<NBTByte>(NBTType.TAG_Byte, "meta");
+        meta.add(new NBTByte(null, 0));
+        meta.add(new NBTByte(null, 7));
+        palette.addListTag("meta", meta);
+        section.addCompoundTag("palette", palette);
+        section.addByteArray("blocks", [0, 1, 1, 0]);
+        sections.add(section);
+        var empty = new NBTCompound();
+        empty.addByte("inited", 0);
+        sections.add(empty);
+        root.addListTag("sections", sections);
+
+        var entities = new NBTList<NBTCompound>(NBTType.TAG_Compound, "entities");
+        var entity = new NBTCompound();
+        entity.addString("type", "dodo");
+        var data = new NBTCompound("data");
+        data.addDouble("x", 1.5);
+        entity.add(data);
+        entities.add(entity);
+        root.addListTag("entities", entities);
+
+        root.addSByteArray("biomeTemp", [-5, 100]);
+
+        using var treeMs = new MemoryStream();
+        using (var bw = new BinaryWriter(treeMs, System.Text.Encoding.UTF8, true)) {
+            NBTTag.write(root, bw);
+        }
+
+        // streaming version
+        using var streamMs = new MemoryStream();
+        var w = new NBTWriter(streamMs);
+        w.beginCompound(null);
+        w.writeInt("posX", -3);
+        w.writeByte("status", 5);
+        w.writeULong("lastSaved", 123456789UL);
+
+        w.beginList("sections", NBTType.TAG_Compound, 2);
+        w.beginCompound(null);
+        w.writeByte("inited", 1);
+        w.beginCompound("palette");
+        w.beginList("ids", NBTType.TAG_String, 2);
+        w.writeString(null, "air");
+        w.writeString(null, "grass");
+        w.endList();
+        w.beginList("meta", NBTType.TAG_Byte, 2);
+        w.writeByte(null, 0);
+        w.writeByte(null, 7);
+        w.endList();
+        w.endCompound();
+        w.writeByteArray("blocks", [0, 1, 1, 0]);
+        w.endCompound();
+        w.beginCompound(null);
+        w.writeByte("inited", 0);
+        w.endCompound();
+        w.endList();
+        
+        w.beginList("entities", NBTType.TAG_Compound, 1);
+        w.writeTag(entity);
+        w.endList();
+
+        w.writeSByteArray("biomeTemp", [-5, 100]);
+        w.endCompound();
+        w.flush();
+
+        var rereadTree = NBT.read(treeMs.ToArray());
+        var rereadStream = NBT.read(streamMs.ToArray());
+        Assert.That(NBT.write(rereadStream), Is.EqualTo(NBT.write(rereadTree)));
+
+        Assert.That(rereadStream, Is.TypeOf<NBTCompound>());
+        var c = (NBTCompound)rereadStream;
+        Assert.That(c.getInt("posX"), Is.EqualTo(-3));
+        Assert.That(c.getListTag<NBTCompound>("sections").get(0).getCompoundTag("palette")
+            .getListTag<NBTString>("ids").get(1).data, Is.EqualTo("grass"));
+        Assert.That(c.getListTag<NBTCompound>("entities").get(0).getCompoundTag("data")
+            .getDouble("x"), Is.EqualTo(1.5));
+        Assert.That(c.getSByteArray("biomeTemp"), Is.EqualTo(new sbyte[] { -5, 100 }));
+    }
+
+    [Test]
     public void TestPrimitives() {
         // Test all primitive types
         using (Assert.EnterMultipleScope()) {

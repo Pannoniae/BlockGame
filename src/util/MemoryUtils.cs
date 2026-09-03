@@ -44,7 +44,6 @@ public static partial class MemoryUtils {
         PaletteBlockData.arrayPool.clear();
         PaletteBlockData.arrayPoolU.clear();
         PaletteBlockData.arrayPoolUS.clear();
-        WorldIO.saveBlockPool.clear();
         HeightMap.heightPool.clear();
         // probably a noop
         // it doesn't do shit except crashing some games?

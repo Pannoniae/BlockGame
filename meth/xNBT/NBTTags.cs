@@ -298,67 +298,12 @@ public interface INBTList {
     public NBTType listType { get; }
 
     public int count();
-}
 
-public class NBTList : NBTTag, INBTList {
-    public readonly XList<NBTTag> list;
+    /** untyped element access */
+    public NBTTag getTag(int index);
 
-    public NBTType listType { get; set; }
-
-    public override NBTType id => NBTType.TAG_List;
-
-    public NBTList(NBTType listType, string? name) : base(name) {
-        list = [];
-        this.listType = listType;
-    }
-
-    public override void writeContents(BinaryWriter stream) {
-        // empty list so type END
-        listType = list.Count == 0 ? NBTType.TAG_End : list[0].id;
-        // write type and length
-        stream.Write(list.Count);
-        foreach (var t in list) {
-            t.writeContents(stream);
-        }
-    }
-
-    public override void readContents(BinaryReader stream) {
-        // read type and length
-        var length = stream.ReadInt32();
-
-        // resize the list to be `length` long
-        list.Clear();
-
-        for (int i = 0; i < length; ++i) {
-            var tag = createTag(listType, null);
-            tag.readContents(stream);
-            list.Add(tag);
-        }
-    }
-
-    public void add(NBTTag value) {
-        list.Add(value);
-    }
-
-    public void remove(NBTTag value) {
-        list.Remove(value);
-    }
-
-    public void removeAt(int index) {
-        list.RemoveAt(index);
-    }
-
-    public NBTTag get(int index) {
-        return list[index];
-    }
-
-    public int count() {
-        return list.Count;
-    }
-
-    public override String ToString() {
-        return list.Count + " entries of type " + getTypeName(listType);
-    }
+    /** untyped add - throws InvalidCastException on a type mismatch, which is what you deserve for fucking it up */
+    public void addTag(NBTTag tag);
 }
 
 public class NBTList<T> : NBTTag, INBTList where T : NBTTag {
@@ -421,6 +366,14 @@ public class NBTList<T> : NBTTag, INBTList where T : NBTTag {
 
     public int count() {
         return list.Count;
+    }
+
+    public NBTTag getTag(int index) {
+        return list[index];
+    }
+
+    public void addTag(NBTTag tag) {
+        list.Add((T)tag);
     }
 
     public override string ToString() {
@@ -560,19 +513,6 @@ public class NBTCompound : NBTTag {
 
     public void addListTag<T>(string name, NBTList<T> value) where T : NBTTag {
         dict.Add(name, value);
-    }
-
-    // Direct list writing (fastpath for chunk serialization)
-    public void addStringListUnsafe(string name, XUList<string> values) {
-        dict.Add(name, new NBTDStringList(name, values.ToArray()));
-    }
-
-    public void addByteListUnsafe(string name, XUList<byte> values) {
-        dict.Add(name, new NBTDByteList(name, values.ToArray()));
-    }
-
-    public void addUIntListUnsafe(string name, XUList<uint> values) {
-        dict.Add(name, new NBTDUIntList(name, values.ToArray()));
     }
 
     // Get functions
@@ -1069,95 +1009,6 @@ public class NBTULongArray : NBTTag {
 
     public override string ToString() {
         return "[" + data.Length + " ulongs]";
-    }
-}
-
-public class NBTDStringList : NBTTag, INBTList {
-    private readonly string[] data;
-
-    public NBTType listType => NBTType.TAG_String;
-    public override NBTType id => NBTType.TAG_List;
-
-    public int count() => data.Length;
-
-    public NBTDStringList(string? name, string[] source) : base(name) {
-        data = source;
-    }
-
-    public override void writeContents(BinaryWriter stream) {
-        stream.Write(data.Length);
-        foreach (var s in data) {
-            if (s == null) {
-                throw new InvalidOperationException("Palette contains null string");
-            }
-
-            stream.Write(s);
-        }
-    }
-
-    public override void readContents(BinaryReader stream) {
-        throw new NotSupportedException("NBTDStringList is write-only");
-    }
-
-    public override string ToString() {
-        return "[" + data.Length + " strings]";
-    }
-}
-
-public class NBTDByteList : NBTTag, INBTList {
-    private readonly byte[] data;
-
-    public NBTType listType => NBTType.TAG_Byte;
-    public override NBTType id => NBTType.TAG_List;
-
-    public int count() => data.Length;
-
-    public NBTDByteList(string? name, byte[] source) : base(name) {
-        data = source;
-    }
-
-    public override void writeContents(BinaryWriter stream) {
-        stream.Write(data.Length);
-        stream.Write(data);
-    }
-
-    public override void readContents(BinaryReader stream) {
-        throw new NotSupportedException("NBTDByteList is write-only");
-    }
-
-    public override string ToString() {
-        return "[" + data.Length + " bytes]";
-    }
-}
-
-public class NBTDUIntList : NBTTag, INBTList {
-    private readonly uint[] data;
-
-    public NBTType listType => NBTType.TAG_UInt;
-    public override NBTType id => NBTType.TAG_List;
-
-    public int count() => data.Length;
-
-    public NBTDUIntList(string? name, uint[] source) : base(name) {
-        data = source;
-    }
-
-    public override void writeContents(BinaryWriter stream) {
-        stream.Write(data.Length);
-        var values = new Span<uint>(data);
-        if (!BitConverter.IsLittleEndian) {
-            BinaryPrimitives.ReverseEndianness(values, values);
-        }
-
-        stream.Write(MemoryMarshal.AsBytes(values));
-    }
-
-    public override void readContents(BinaryReader stream) {
-        throw new NotSupportedException("NBTDUIntList is write-only");
-    }
-
-    public override string ToString() {
-        return "[" + data.Length + " uints]";
     }
 }
 

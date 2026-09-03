@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text;
 
 namespace BlockGame.util.xNBT;
@@ -25,12 +26,47 @@ public abstract class NBTTag : IEquatable<NBTTag> {
         this.name = name ?? "";
     }
 
+    private static readonly ConcurrentDictionary<string, string> names = new();
+
+    private static string readName(BinaryReader stream) {
+        int byteLen = stream.Read7BitEncodedInt();
+        if (byteLen == 0) {
+            return "";
+        }
+
+        // long names are rare, don't bother caching
+        if (byteLen > 128) {
+            var buf = new byte[byteLen];
+            stream.BaseStream.ReadExactly(buf);
+            return Encoding.UTF8.GetString(buf);
+        }
+
+        Span<byte> bytes = stackalloc byte[128];
+        var b = bytes[..byteLen];
+        stream.BaseStream.ReadExactly(b);
+        Span<char> chars = stackalloc char[128];
+        int charLen = Encoding.UTF8.GetChars(b, chars);
+        var span = chars[..charLen];
+
+        var alt = names.GetAlternateLookup<ReadOnlySpan<char>>();
+        if (alt.TryGetValue(span, out string? cached)) {
+            return cached;
+        }
+
+        string s = new string(span);
+        if (names.Count < 4096) {
+            names.TryAdd(s, s);
+        }
+
+        return s;
+    }
+
     public static NBTTag read(BinaryReader stream) {
         NBTType type = (NBTType)stream.ReadByte();
         if (type == NBTType.TAG_End) {
             return new NBTEnd();
         }
-        string name = stream.ReadString();
+        string name = readName(stream);
         // lists have a type
         NBTTag tag;
         if (type == NBTType.TAG_List) {
@@ -56,20 +92,6 @@ public abstract class NBTTag : IEquatable<NBTTag> {
             stream.Write((byte)listType);
         }
         tag.writeContents(stream);
-    }
-
-    public static NBTTag readS(string s) {
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(s));
-        using var reader = new BinaryReader(stream);
-        return read(reader);
-    }
-    
-    public static string writeS(NBTTag tag) {
-        using var stream = new MemoryStream();
-        using var writer = new BinaryWriter(stream);
-        write(tag, writer);
-        writer.Flush();
-        return Encoding.UTF8.GetString(stream.ToArray());
     }
 
     public static NBTTag createTag(NBTType tag, string? name) {
@@ -115,6 +137,8 @@ public abstract class NBTTag : IEquatable<NBTTag> {
             NBTType.TAG_Float => new NBTList<NBTFloat>(listType, name),
             NBTType.TAG_Double => new NBTList<NBTDouble>(listType, name),
             NBTType.TAG_String => new NBTList<NBTString>(listType, name),
+            // EMPTY lists of lists roundtrip fine; non-empty nested lists were always fucked, shit never worked properly
+            // wrap them in compounds instead...
             NBTType.TAG_List => new NBTList<NBTList<NBTTag>>(listType, name),
             NBTType.TAG_Compound => new NBTList<NBTCompound>(listType, name),
             NBTType.TAG_Byte_Array => new NBTList<NBTByteArray>(listType, name),
