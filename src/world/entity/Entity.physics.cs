@@ -30,23 +30,14 @@ public partial class Entity {
             foreach (Vector3I target in targets) {
                 // first, collide with the block the player is in
                 var blockPos2 = feetPosition.toBlockPos();
-                world.getAABBsCollision(AABBList, blockPos2.X, blockPos2.Y, blockPos2.Z);
-
-                // for each AABB of the block the player is in
-                foreach (AABB aa in AABBList) {
-                    collisions.Add(aa);
-                }
+                world.getAABBsCollision(collisions, blockPos2.X, blockPos2.Y, blockPos2.Z);
 
                 // gather neighbouring blocks
                 World.getBlocksInBox(neighbours, target + new Vector3I(-1, -1, -1),
                     target + new Vector3I(1, 1, 1));
                 // for each neighbour block
                 foreach (var neighbour in neighbours) {
-                    var block = world.getBlock(neighbour);
-                    world.getAABBsCollision(AABBList, neighbour.X, neighbour.Y, neighbour.Z);
-                    foreach (AABB aa in AABBList) {
-                        collisions.Add(aa);
-                    }
+                    world.getAABBsCollision(collisions, neighbour.X, neighbour.Y, neighbour.Z);
                 }
             }
         }

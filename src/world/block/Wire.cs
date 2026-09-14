@@ -75,7 +75,7 @@ public class Wire : Block {
         return metadata != 0 ? tex + 3 : tex;
     }
 
-    public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
+    public override void render(BlockRenderer br, int x, int y, int z, XList<BlockVertexPacked> vertices) {
         x &= 15;
         y &= 15;
         z &= 15;

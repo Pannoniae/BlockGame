@@ -111,7 +111,6 @@ public class Carpet : Block {
     }
 
     public override void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
-        aabbs.Clear();
         byte orientation = getOrientation(metadata);
         const float t = 1f / 16f; // thickness
 
@@ -126,7 +125,7 @@ public class Carpet : Block {
         });
     }
 
-    public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
+    public override void render(BlockRenderer br, int x, int y, int z, XList<BlockVertexPacked> vertices) {
         base.render(br, x, y, z, vertices);
 
         x &= 15;

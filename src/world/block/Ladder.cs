@@ -98,7 +98,7 @@ public class Ladder : Block {
         e.onLadder = true;
     }
 
-    public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
+    public override void render(BlockRenderer br, int x, int y, int z, XList<BlockVertexPacked> vertices) {
         base.render(br, x, y, z, vertices);
         x &= 15;
         y &= 15;
@@ -154,7 +154,6 @@ public class Ladder : Block {
     }
 
     public override void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
-        aabbs.Clear();
         var facing = getFacing(metadata);
         const float t = 1f / 16f;
 

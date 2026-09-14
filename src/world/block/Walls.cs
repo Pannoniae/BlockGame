@@ -89,7 +89,7 @@ public class Walls : Block {
         }
     }
 
-    public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
+    public override void render(BlockRenderer br, int x, int y, int z, XList<BlockVertexPacked> vertices) {
         base.render(br, x, y, z, vertices);
 
         x &= 15;
@@ -130,7 +130,6 @@ public class Walls : Block {
     }
 
     public override void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
-        aabbs.Clear();
         var back = isBack(metadata);
         var doubleWall = isDouble(metadata);
         var xAxis = isXAxis(metadata);

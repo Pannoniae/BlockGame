@@ -667,7 +667,7 @@ public class Liquid : Block {
      *
      * The drawback is that now no one understands this code except God himself! but oh well, if you don't touch it, it can't hurt you
      */
-    public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
+    public override void render(BlockRenderer br, int x, int y, int z, XList<BlockVertexPacked> vertices) {
         base.render(br, x, y, z, vertices);
 
         var block = br.getBlock();

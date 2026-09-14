@@ -69,7 +69,7 @@ public class MeshBlock : Ladder {
         }
     }
 
-    public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
+    public override void render(BlockRenderer br, int x, int y, int z, XList<BlockVertexPacked> vertices) {
         base.render(br, x, y, z, vertices);
         x &= 15;
         y &= 15;

@@ -53,7 +53,7 @@ public partial class BlockRenderer {
     public UVPair forceTex = new UVPair(-1, -1);
 
     /** Hack to convert between vertices. */
-    private readonly List<BlockVertexPacked> _listHack = new(24);
+    private readonly XList<BlockVertexPacked> _listHack = new(24);
 
     public bool smoothLighting;
     public bool AO;
@@ -374,7 +374,7 @@ public partial class BlockRenderer {
         return Vector128.Create(uMin * factor.X, vMin * factor.Y, uMax * factor.X, vMax * factor.Y);
     }
 
-    public void quad(List<BlockVertexPacked> vertices, int bx, int by, int bz,
+    public void quad(XList<BlockVertexPacked> vertices, int bx, int by, int bz,
         float x0, float y0, float z0,
         float x1, float y1, float z1,
         float x2, float y2, float z2,
@@ -402,7 +402,7 @@ public partial class BlockRenderer {
     /// Single quad primitive. Positions in local block coords (0-1 range).
     /// Winding order: p0→p1→p2→p3 should be counter-clockwise when viewed from front.
     /// </summary>
-    public void quad(List<BlockVertexPacked> vertices, int bx, int by, int bz,
+    public void quad(XList<BlockVertexPacked> vertices, int bx, int by, int bz,
         float x0, float y0, float z0,
         float x1, float y1, float z1,
         float x2, float y2, float z2,
@@ -426,7 +426,7 @@ public partial class BlockRenderer {
     /// <summary>
     /// Double-sided quad (renders both front and back faces).
     /// </summary>
-    public void quadDouble(List<BlockVertexPacked> vertices, int bx, int by, int bz,
+    public void quadDouble(XList<BlockVertexPacked> vertices, int bx, int by, int bz,
         float x0, float y0, float z0,
         float x1, float y1, float z1,
         float x2, float y2, float z2,
@@ -450,7 +450,7 @@ public partial class BlockRenderer {
     /// <summary>
     /// Box with texture stretched to fit each face.
     /// </summary>
-    public void boxStretched(List<BlockVertexPacked> vertices, int bx, int by, int bz,
+    public void boxStretched(XList<BlockVertexPacked> vertices, int bx, int by, int bz,
         float x0, float y0, float z0, float x1, float y1, float z1,
         float u0, float v0, float u1, float v1) {
         // WEST (-X)
@@ -488,7 +488,7 @@ public partial class BlockRenderer {
     /// Box with UV region proportional to face dimensions.
     /// u0,v0,u1,v1 defines the full texture tile; each face samples a subsection.
     /// </summary>
-    public void boxProportional(List<BlockVertexPacked> vertices, int bx, int by, int bz,
+    public void boxProportional(XList<BlockVertexPacked> vertices, int bx, int by, int bz,
         float x0, float y0, float z0, float x1, float y1, float z1,
         float u0, float v0, float u1, float v1) {
         float du = u1 - u0;
@@ -541,7 +541,7 @@ public partial class BlockRenderer {
     /// Render a quad face with custom geometry, full lighting, AO, and advanced features.
     /// Positions are in local block coordinates (0-1 range typically).
     /// </summary>
-    public void renderQuadCull(List<BlockVertexPacked> vertices, RawDirection dir, int x, int y, int z,
+    public void renderQuadCull(XList<BlockVertexPacked> vertices, RawDirection dir, int x, int y, int z,
         float x1, float y1, float z1, float x2, float y2, float z2,
         float x3, float y3, float z3, float x4, float y4, float z4,
         float uMin, float vMin, float uMax, float vMax) {
@@ -578,7 +578,7 @@ public partial class BlockRenderer {
     /// Render a quad face with custom geometry, full lighting, AO, and advanced features.
     /// Positions are in local block coordinates (0-1 range typically).
     /// </summary>
-    public void renderQuad(List<BlockVertexPacked> vertices, RawDirection dir, int x, int y, int z,
+    public void renderQuad(XList<BlockVertexPacked> vertices, RawDirection dir, int x, int y, int z,
         float x1, float y1, float z1, float x2, float y2, float z2,
         float x3, float y3, float z3, float x4, float y4, float z4,
         float uMin, float vMin, float uMax, float vMax) {
@@ -596,7 +596,7 @@ public partial class BlockRenderer {
     /// <summary>
     /// Render a double-sided quad (visible from both sides).
     /// </summary>
-    public void renderQuadDoubleSided(List<BlockVertexPacked> vertices, RawDirection dir, int x, int y, int z,
+    public void renderQuadDoubleSided(XList<BlockVertexPacked> vertices, RawDirection dir, int x, int y, int z,
         float x1, float y1, float z1, float x2, float y2, float z2,
         float x3, float y3, float z3, float x4, float y4, float z4,
         float uMin, float vMin, float uMax, float vMax) {
@@ -742,9 +742,7 @@ public partial class BlockRenderer {
     /// Finish building the current face and add vertices to the output list.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    // i have no idea why it complains about redundant span creation (it's very much not redundant) but now it won't!
-    [SuppressMessage("ReSharper", "RedundantExplicitParamsArrayCreation")]
-    public void end(List<BlockVertexPacked> vertices) {
+    public void end(XList<BlockVertexPacked> vertices) {
         ref var vertexCache = ref ctx.vertexCache;
         if (ctx.shouldFlipVertices) {
             // apply AO flip - reorder vertices: 0,1,2,3 -> 3,0,1,2
@@ -768,8 +766,7 @@ public partial class BlockRenderer {
     /// <summary>
     /// Finish building the current face and add both front and back faces (double-sided).
     /// </summary>
-    [SuppressMessage("ReSharper", "RedundantExplicitParamsArrayCreation")]
-    public void endTwo(List<BlockVertexPacked> vertices) {
+    public void endTwo(XList<BlockVertexPacked> vertices) {
         ref var vertexCache = ref ctx.vertexCache;
 
         // front face
@@ -798,7 +795,7 @@ public partial class BlockRenderer {
     /// <summary>
     /// Core block rendering method that handles both world and GUI stuff.
     /// </summary>
-    public void renderBlock(Block block, byte metadata, Vector3I worldPos, List<BlockVertexPacked> vertices,
+    public void renderBlock(Block block, byte metadata, Vector3I worldPos, XList<BlockVertexPacked> vertices,
         byte lightOverride = 255,
         Color tintOverride = default) {
         ctx = default;
@@ -858,7 +855,7 @@ public partial class BlockRenderer {
         }
     }
 
-    public void renderBlock(Block block, byte metadata, Vector3I worldPos, List<BlockVertexTinted> vertices,
+    public void renderBlock(Block block, byte metadata, Vector3I worldPos, XList<BlockVertexTinted> vertices,
         byte lightOverride = 255,
         Color tintOverride = default) {
         renderBlock(block, metadata, worldPos, _listHack, lightOverride, tintOverride);
@@ -886,7 +883,7 @@ public partial class BlockRenderer {
     }
 
 
-    private void renderBlockSwitch(Block bl, int x, int y, int z, byte metadata, List<BlockVertexPacked> vertices) {
+    private void renderBlockSwitch(Block bl, int x, int y, int z, byte metadata, XList<BlockVertexPacked> vertices) {
         switch (Block.renderType[bl.getID()]) {
             case RenderType.CUBE:
                 // standard cube using static texture
@@ -943,7 +940,7 @@ public partial class BlockRenderer {
         return true;
     }
 
-    public void build(SubChunk subChunk, List<BlockVertexPacked> solid, List<BlockVertexPacked> blocks, bool doTrans) {
+    public void build(SubChunk subChunk, XList<BlockVertexPacked> solid, XList<BlockVertexPacked> blocks, bool doTrans) {
         ctx = default;
 
         constructVertices(subChunk, RenderLayer.SOLID, solid);
@@ -957,14 +954,14 @@ public partial class BlockRenderer {
     }
 
     /** Vertices -> GL. main thread only!! (until we figure out a way to cheat this) */
-    public static void upload(SubChunk subChunk, List<BlockVertexPacked> solid, List<BlockVertexPacked> trans) {
+    public static void upload(SubChunk subChunk, XList<BlockVertexPacked> solid, XList<BlockVertexPacked> trans) {
         if (solid.Count > 0) {
             subChunk.hasRenderOpaque = true;
 
             // actually we dont need a *new* vao....
             var vao = subChunk.vao ??= new SharedBlockVAO(Game.renderer.chunkVAO);
             vao.bindVAO();
-            var finalVertices = CollectionsMarshal.AsSpan(solid);
+            var finalVertices = solid.AsSpan();
             vao.upload(finalVertices, (uint)finalVertices.Length);
         }
         else {
@@ -979,7 +976,7 @@ public partial class BlockRenderer {
             var wvao = subChunk.watervao ??= new SharedBlockVAO(Game.renderer.chunkVAO);
             wvao.bindVAO();
 
-            var tFinalVertices = CollectionsMarshal.AsSpan(trans);
+            var tFinalVertices = trans.AsSpan();
             wvao.upload(tFinalVertices, (uint)tFinalVertices.Length);
         }
         else {
@@ -1011,8 +1008,8 @@ public partial class BlockRenderer {
             return;
         }
 
-        var solid = new List<BlockVertexPacked>();
-        var blocks = new List<BlockVertexPacked>();
+        var solid = new XList<BlockVertexPacked>();
+        var blocks = new XList<BlockVertexPacked>();
         build(subChunk, solid, blocks, needsTranslucent(subChunk));
         upload(subChunk, solid, blocks);
 
@@ -1144,7 +1141,7 @@ public partial class BlockRenderer {
     // sorry for this mess
     [SkipLocalsInit]
     //[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private unsafe void constructVertices(SubChunk subChunk, RenderLayer layer, List<BlockVertexPacked> vertices) {
+    private unsafe void constructVertices(SubChunk subChunk, RenderLayer layer, XList<BlockVertexPacked> vertices) {
         vertices.Clear();
 
         Span<uint> nba = stackalloc uint[6];
@@ -1434,7 +1431,7 @@ public partial class BlockRenderer {
 
     [SkipLocalsInit]
     private void renderCubeFast(int x, int y, int z, ref uint neighbourRef, ref byte lightRef, UVPair tx,
-        Vector128<float> texFactor, List<BlockVertexPacked> vertices) {
+        Vector128<float> texFactor, XList<BlockVertexPacked> vertices) {
         // (coord + 16) << 8 is the position encoding, corner offsets add 0/256(16*16)
         var pbx = Vector128.Create((uint)((x + 16) << 8));
         var pby = Vector128.Create((uint)((y + 16) << 8));
@@ -1610,10 +1607,10 @@ public partial class BlockRenderer {
      * TODO probably should be a util or we should just use XList?
      */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static ref BlockVertexPacked reserve4(List<BlockVertexPacked> list) {
+    private static ref BlockVertexPacked reserve4(XList<BlockVertexPacked> list) {
         int n = list.Count;
-        CollectionsMarshal.SetCount(list, n + 4);
-        return ref Unsafe.Add(ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(list)), n);
+        list.SetCount(n + 4);
+        return ref Unsafe.Add(ref MemoryMarshal.GetReference(list.AsSpan()), n);
     }
 
     /** Widen the four light bytes of a FourBytes into four uints */

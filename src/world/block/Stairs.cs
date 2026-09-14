@@ -89,7 +89,7 @@ public class Stairs : Block {
     public static bool isStairs(ushort id) => get(id) is Stairs;
     public static bool isPerpendicular(byte f1, byte f2) => (f1 <= 1) != (f2 <= 1);
 
-    public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
+    public override void render(BlockRenderer br, int x, int y, int z, XList<BlockVertexPacked> vertices) {
         base.render(br, x, y, z, vertices);
 
         var meta = br.getBlock().getMetadata();
@@ -121,7 +121,7 @@ public class Stairs : Block {
         }
     }
 
-    static void renderStairTop(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices,
+    static void renderStairTop(BlockRenderer br, int x, int y, int z, XList<BlockVertexPacked> vertices,
         byte facing, int cornerType, int cornerDir, float u0, float v0, float u1, float v1, bool flipped) {
 
         float yLo = flipped ? 0f : 0.5f;
@@ -154,7 +154,7 @@ public class Stairs : Block {
     }
 
     // renders a partial cube, optionally rotating UP/DOWN face UVs for N/S stairs
-    static void renderStepCube(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices,
+    static void renderStepCube(BlockRenderer br, int x, int y, int z, XList<BlockVertexPacked> vertices,
         float x0, float y0, float z0, float x1, float y1, float z1,
         float u0, float v0, float u1, float v1, bool rotateTop) {
 
@@ -292,7 +292,6 @@ public class Stairs : Block {
     }
 
     public override void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
-        aabbs.Clear();
         var facing = getFacing(metadata);
         var flipped = isFlipped(metadata);
         var (cornerType, cornerDir) = detectCorner(world, x, y, z, facing);

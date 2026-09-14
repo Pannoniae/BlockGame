@@ -1561,7 +1561,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     /** Stores the chunk positions! */
     private List<Vector4> chunkData = null!;
 
-    private List<BlockVertexTinted> breakVertices = [];
+    private XList<BlockVertexTinted> breakVertices = [];
 
     private static readonly List<AABB> AABBList = [];
 
@@ -1587,6 +1587,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
 
         var targetPos = Game.raycast.block;
+        AABBList.Clear();
         world.getAABBs(AABBList, targetPos.X, targetPos.Y, targetPos.Z);
 
         if (AABBList.Count == 0) {

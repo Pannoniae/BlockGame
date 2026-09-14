@@ -70,7 +70,6 @@ public class Farmland : Block {
     }
 
     public override void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
-        aabbs.Clear();
         aabbs.Add(new AABB(x + 0, y + 0, z + 0, x + 1, y + 15 / 16f, z + 1)); // 15/16 height
     }
 
@@ -86,7 +85,7 @@ public class Farmland : Block {
         return 1;
     }
 
-    public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
+    public override void render(BlockRenderer br, int x, int y, int z, XList<BlockVertexPacked> vertices) {
         x &= 15;
         y &= 15;
         z &= 15;

@@ -11,8 +11,8 @@ public sealed class MeshJob : XJob {
     public SubChunkCoord coord;
     public bool doTranslucent;
 
-    public readonly List<BlockVertexPacked> opaque = new(2048);
-    public readonly List<BlockVertexPacked> translucent = new(512);
+    public readonly XList<BlockVertexPacked> opaque = new(2048);
+    public readonly XList<BlockVertexPacked> translucent = new(512);
 
     public override void run() {
         br.build(section!, opaque, translucent, doTranslucent);

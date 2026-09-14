@@ -71,9 +71,6 @@ public partial class Block {
 
     public static BlockTextureAtlas atlas;
 
-    [ThreadStatic] private static List<AABB>? _AABBList;
-    protected static List<AABB> AABBList => _AABBList ??= [];
-
     // atlas dimensions - updated when texture pack is loaded
     public static Vector2I atlasSize = new Vector2I(512, 512);
     public const int textureSize = 16;
@@ -358,7 +355,7 @@ public partial class Block {
     }
 
     [ClientOnly]
-    public virtual void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
+    public virtual void render(BlockRenderer br, int x, int y, int z, XList<BlockVertexPacked> vertices) {
         // setup
         //br.setupWorld();
     }

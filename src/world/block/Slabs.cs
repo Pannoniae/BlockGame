@@ -83,7 +83,7 @@ public class Slabs : Block {
         return relativeY > 0.5;
     }
 
-    public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
+    public override void render(BlockRenderer br, int x, int y, int z, XList<BlockVertexPacked> vertices) {
         base.render(br, x, y, z, vertices);
 
         x &= 15;
@@ -125,7 +125,6 @@ public class Slabs : Block {
     }
 
     public override void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
-        aabbs.Clear();
         var top = isTop(metadata);
         var doubleSlab = isDouble(metadata);
 

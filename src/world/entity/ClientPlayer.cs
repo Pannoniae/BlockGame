@@ -722,9 +722,13 @@ public class ClientPlayer : Player {
         };
     }
 
+    // placement checks only!!
+    private readonly List<AABB> placeAABBs = [];
+
     private bool wouldCollideWithPlayer(Block block, Vector3I pos, byte metadata) {
-        world.getAABBsCollision(AABBList, pos.X, pos.Y, pos.Z);
-        foreach (var aabb in AABBList) {
+        placeAABBs.Clear();
+        world.getAABBsCollision(placeAABBs, pos.X, pos.Y, pos.Z);
+        foreach (var aabb in placeAABBs) {
             if (AABB.isCollision(aabb, this.aabb)) {
                 return true;
             }
@@ -737,10 +741,11 @@ public class ClientPlayer : Player {
             return false;
         }
 
-        block.getAABBs(world, pos.X, pos.Y, pos.Z, metadata, AABBList);
+        placeAABBs.Clear();
+        block.getAABBs(world, pos.X, pos.Y, pos.Z, metadata, placeAABBs);
         var entities = new List<Entity>();
 
-        foreach (var aabb in AABBList) {
+        foreach (var aabb in placeAABBs) {
             entities.Clear();
             world.getEntitiesInBox(entities, aabb.min.toBlockPos(), aabb.max.toBlockPos() + 1);
             foreach (var entity in entities) {

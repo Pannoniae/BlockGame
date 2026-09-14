@@ -70,6 +70,16 @@ public class XUList<T> : IList<T> {
         arr[cnt++] = item;
     }
 
+    /** span overload */
+    public void AddRange(ReadOnlySpan<T> items) {
+        int newCnt = cnt + items.Length;
+        if (newCnt > arr.Length) {
+            GrowTo(newCnt);
+        }
+        items.CopyTo(arr.AsSpan(cnt));
+        cnt = newCnt;
+    }
+
     public void AddRange(IEnumerable<T> collection) {
         if (collection is ICollection<T> col) {
             int newCnt = cnt + col.Count;
@@ -278,5 +288,24 @@ public class XUList<T> : IList<T> {
         public void Reset() {
             idx = -1;
         }
+    }
+
+    /**
+     * unsafe!!
+     */
+    public void SetCount(int i) {
+        if (i < 0 || i > arr.Length) {
+            throwException();
+        }
+
+        cnt = i;
+    }
+
+    public void SetCountUnsafe(int i) {
+        cnt = i;
+    }
+
+    public static void throwException() {
+        throw new IndexOutOfRangeException("Count must be between 0 and the capacity of the list.");
     }
 }

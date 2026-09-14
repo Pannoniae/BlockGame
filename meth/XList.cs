@@ -93,6 +93,16 @@ public class XList<T> : IList<T> {
         arr[cnt++] = item;
     }
 
+    /** span overload */
+    public void AddRange(ReadOnlySpan<T> items) {
+        int newCnt = cnt + items.Length;
+        if (newCnt > arr.Length) {
+            GrowTo(newCnt);
+        }
+        items.CopyTo(arr.AsSpan(cnt));
+        cnt = newCnt;
+    }
+
     public void AddRange(IEnumerable<T> collection) {
         if (collection is ICollection<T> col) {
             int newCnt = cnt + col.Count;
@@ -298,5 +308,17 @@ public class XList<T> : IList<T> {
         public void Reset() {
             idx = -1;
         }
+    }
+
+    /** unsafe!! */
+    public void SetCount(int i) {
+        if (i < 0 || i > arr.Length) {
+            ThrowIndexOutOfRange();
+        }
+        cnt = i;
+    }
+
+    public void SetCountUnsafe(int i) {
+        cnt = i;
     }
 }

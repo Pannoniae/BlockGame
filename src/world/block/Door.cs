@@ -179,7 +179,7 @@ public class Door : Block {
         return upper((byte)metadata) ? uvs[0] : uvs[1];
     }
 
-    public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
+    public override void render(BlockRenderer br, int x, int y, int z, XList<BlockVertexPacked> vertices) {
         base.render(br, x, y, z, vertices);
 
         var m = br.getBlock().getMetadata();
@@ -328,7 +328,6 @@ public class Door : Block {
     }
 
     public override void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
-        aabbs.Clear();
         var f = facing(metadata);
         var o = open(metadata);
         var h = hinge(metadata);

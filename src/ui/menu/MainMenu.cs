@@ -13,7 +13,7 @@ namespace BlockGame.ui.menu;
 public class MainMenu : Menu {
     public MainMenu() {
         var title = new Image(this, "title", "textures/title.png");
-        title.setPosition(new Vector2I(0, -75));
+        title.setPosition(new Vector2I(0, -80));
         title.centreContents();
         title.setScale(1.5f);
 

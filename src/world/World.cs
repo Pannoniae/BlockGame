@@ -139,9 +139,6 @@ public partial class World : IDisposable {
 
     public NBTCompound? legacyPlayerNBT;
 
-    [ThreadStatic] private static List<AABB>? _listAABB;
-    private static List<AABB> listAABB => _listAABB ??= [];
-
     public World(Side side, string name, int seed, string? displayName = null, string? generatorName = null) {
         this.side = side;
         this.name = name;
@@ -496,6 +493,7 @@ public partial class World : IDisposable {
         );
 
         // check all blocks that could potentially intersect with player AABB
+        var listAABB = new List<AABB>();
         var min = playerAABB.min.toBlockPos();
         var max = playerAABB.max.toBlockPos();
 
@@ -507,6 +505,7 @@ public partial class World : IDisposable {
                         continue;
                     }
 
+                    listAABB.Clear();
                     getAABBsCollision(listAABB, x, y, z);
                     foreach (var aabb in listAABB) {
                         if (AABB.isCollision(playerAABB, aabb)) {

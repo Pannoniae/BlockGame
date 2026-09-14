@@ -5,7 +5,7 @@ using BlockGame.util;
 namespace BlockGame.world.block;
 
 public class Button(string name) : Block(name) {
-    public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
+    public override void render(BlockRenderer br, int x, int y, int z, XList<BlockVertexPacked> vertices) {
         //base.render(br, x, y, z, vertices);
         x &= 15;
         y &= 15;
@@ -82,7 +82,6 @@ public class Button(string name) : Block(name) {
     }
 
     public override void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
-        aabbs.Clear();
 
         // 4x4x2 pixels centered in 16x16x16 block
         const float offset = 6f / 16f;

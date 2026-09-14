@@ -59,7 +59,6 @@ public class Particle {
     private readonly List<AABB> collisionTargets = [];
 
     private readonly List<Vector3I> collisionTargetsList = [];
-    private static readonly List<AABB> AABBList = [];
 
     public Particle(World world, Vector3D position) {
         this.world = world;
@@ -121,11 +120,7 @@ public class Particle {
             blockPos + new Vector3I(1, 1, 1));
         foreach (var neighbour in collisionTargetsList) {
             var block = world.getBlock(neighbour);
-            world.getAABBsCollision(AABBList, neighbour.X, neighbour.Y, neighbour.Z);
-
-            foreach (AABB aabb in AABBList) {
-                collisionTargets.Add(aabb);
-            }
+            world.getAABBsCollision(collisionTargets, neighbour.X, neighbour.Y, neighbour.Z);
         }
 
         // Y axis collision

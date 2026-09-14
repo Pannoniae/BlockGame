@@ -77,7 +77,7 @@ public class CandySlab : Slabs {
         return $"{CandyBlock.colourNames[color]} Candy Slab";
     }
 
-    public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
+    public override void render(BlockRenderer br, int x, int y, int z, XList<BlockVertexPacked> vertices) {
         x &= 15;
         y &= 15;
         z &= 15;

@@ -173,9 +173,7 @@ public partial class Entity(World world, string type) : Persistent {
     /** We kept losing track of which chunk the entity was in, so fuck it let's just store it */
     public SubChunkCoord subChunkCoord;
 
-    [ThreadStatic] private static List<AABB>? _AABBList;
     [ThreadStatic] private static List<ItemStack>? _dropList;
-    protected static List<AABB> AABBList => _AABBList ??= [];
     protected static List<ItemStack> dropList => _dropList ??= [];
 
     // riding system

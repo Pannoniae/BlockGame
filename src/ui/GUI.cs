@@ -54,13 +54,13 @@ public class GUI {
     private readonly StreamingVAO<BlockVertexPacked> buffer;
     private Matrix4x4 ortho;
 
-    private readonly List<BlockVertexPacked> guiBlock;
+    private readonly XList<BlockVertexPacked> guiBlock;
     private int uMVP;
     private int blockTexture = 0;
     private int lightTexture = 0;
 
     private Vector2 backgroundScrollOffset = Vector2.Zero;
-    private static readonly Color bgGray = new Color(192, 192, 192, 255);
+    private static readonly Color bgGray = new Color(96, 96, 96, 255);
     private static readonly Color skyc = Color.CornflowerBlue;
 
     public static bool WIREFRAME = false;
@@ -945,7 +945,7 @@ public class GUI {
 
         Game.graphics.tex(0, Game.textures.blockTexture);
         Game.graphics.tex(1, Game.textures.lightTexture);
-        var sp = CollectionsMarshal.AsSpan(guiBlock);
+        var sp = guiBlock.AsSpan();
         buffer.upload(sp);
 
         //idt.model(mat);

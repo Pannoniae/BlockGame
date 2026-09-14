@@ -268,13 +268,13 @@ public partial class World {
         return result;
     }
 
+    /** APPENDS to result, doesn't clear it*/
     public void getAABBs(List<AABB> result, int x, int y, int z) {
 
         var b = getBlockRaw(x, y, z);
         var id = b.getID();
         var metadata = b.getMetadata();
 
-        result.Clear();
 
         if (Block.customAABB[id]) {
             Block.get(id).getAABBs(this, x, y, z, metadata, result);
@@ -296,13 +296,13 @@ public partial class World {
         return result;
     }
 
+    /** APPENDS to result, doesn't clear it */
     public void getAABBsCollision(List<AABB> result, int x, int y, int z) {
 
         var b = getBlockRaw(x, y, z);
         var id = b.getID();
         var metadata = b.getMetadata();
 
-        result.Clear();
 
         if (!Block.collision[id]) {
             return;

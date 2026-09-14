@@ -9,11 +9,9 @@ using Molten.DoublePrecision;
 namespace BlockGame.world;
 
 public class Raycast {
-    [ThreadStatic] private static List<AABB>? _AABBList;
-    [ThreadStatic] private static List<Entity>? _l;
-
-    private static List<AABB> AABBList => _AABBList ??= [];
-    private static List<Entity> l => _l ??= [];
+    // client only, don't use on server
+    private static readonly List<AABB> AABBList = [];
+    private static readonly List<Entity> l = [];
 
     /// <summary>
     /// This piece of shit raycast breaks when the player goes outside the world. Solution? Don't go outside the world (will be prevented in the future with barriers)
@@ -98,6 +96,7 @@ public class Raycast {
 
             if (world.isSelectableBlock(blockPos.X, blockPos.Y, blockPos.Z) || (type == RaycastType.BLOCKSLIQUIDS && Block.liquid[world.getBlock(blockPos.X, blockPos.Y, blockPos.Z)])) {
                 // we also need to check if it's inside the selection of the block
+                AABBList.Clear();
                 world.getAABBs(AABBList, blockPos.X, blockPos.Y, blockPos.Z);
                 foreach (AABB aabb in AABBList) {
                     if (AABB.isCollision(aabb, currentPos)) {

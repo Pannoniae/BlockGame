@@ -74,7 +74,7 @@ public class CandyStairs : Stairs {
         return $"{CandyBlock.colourNames[color]} Candy Stairs";
     }
 
-    public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
+    public override void render(BlockRenderer br, int x, int y, int z, XList<BlockVertexPacked> vertices) {
         x &= 15; y &= 15; z &= 15;
 
         var block = br.getBlock();

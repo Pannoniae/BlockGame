@@ -121,7 +121,6 @@ public class Crop : Block {
 
     public override void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
         float h = 0.125f + (metadata / (float)(stages - 1)) * 0.875f;
-        aabbs.Clear();
         aabbs.Add(new AABB(x, y, z, x + 1f, y + h, z + 1f));
     }
 

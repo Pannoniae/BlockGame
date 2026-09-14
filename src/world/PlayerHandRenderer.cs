@@ -18,7 +18,7 @@ namespace BlockGame.world;
 public class PlayerHandRenderer {
     public Player player;
     public StreamingVAO<BlockVertexTinted> vao;
-    private readonly List<BlockVertexTinted> vertices = [];
+    private readonly XList<BlockVertexTinted> vertices = [];
 
     private ItemStack handItem;
     private int handSlot;
@@ -78,7 +78,7 @@ public class PlayerHandRenderer {
 
                 vao.bind();
                 Game.renderer.bindQuad();
-                vao.upload(CollectionsMarshal.AsSpan(vertices));
+                vao.upload(vertices.AsSpan());
             }
             else {
                 // render item as flat card using InstantDrawTexture
@@ -392,9 +392,8 @@ public class PlayerHandRenderer {
         const float thickness = 1 / 16f;
         // todo make this dynamic based on atlas size later!
         const int strips = UVPair.ATLASSIZE;
-
-        // if you don't it z-fights?? i dont fully get why tho, its probably because of pixel boundary shit in the uv but idk
-        const float epsilon = 1 / 4096f;
+        
+        const float half = 0.5f / strips;
 
         BTextureAtlas tex;
         // we need to handle the block/item case separately!
@@ -427,7 +426,7 @@ public class PlayerHandRenderer {
         for (int i = 0; i < strips; i++) {
             float r = (float)i / strips;
             float x = r;
-            u = u0 + (u1 - u0) * r + epsilon;
+            u = u0 + (u1 - u0) * (r + half);
 
             addQuad(x, 1, thickness, x, 0, thickness, x, 0, 0, x, 1, 0,
                 u, v0, u, v1, u, v1, u, v0, leftShade);
@@ -438,7 +437,7 @@ public class PlayerHandRenderer {
         for (int i = 0; i < strips; i++) {
             float r = (float)i / strips;
             float x = r + thickness;
-            u = u0 + (u1 - u0) * r + epsilon;
+            u = u0 + (u1 - u0) * (r + half);
 
             addQuad(x, 0, thickness, x, 1, thickness, x, 1, 0, x, 0, 0,
                 u, v1, u, v0, u, v0, u, v1, rightShade);
@@ -449,7 +448,7 @@ public class PlayerHandRenderer {
         for (int i = 0; i < strips; i++) {
             float r = (float)i / strips;
             float y = 1 - r;
-            v = v0 + (v1 - v0) * r + epsilon;
+            v = v0 + (v1 - v0) * (r + half);
 
             addQuad(0, y, thickness, 0, y, 0, 1, y, 0, 1, y, thickness,
                 u0, v, u0, v, u1, v, u1, v, topShade);
@@ -460,7 +459,7 @@ public class PlayerHandRenderer {
         for (int i = 0; i < strips; i++) {
             float r = (float)i / strips;
             float y = (1 - thickness) - r;
-            v = v0 + (v1 - v0) * r + epsilon;
+            v = v0 + (v1 - v0) * (r + half);
 
             addQuad(1, y, thickness, 1, y, 0, 0, y, 0, 0, y, thickness,
                 u1, v, u1, v, u0, v, u0, v, bottomShade);
@@ -508,7 +507,7 @@ public class PlayerHandRenderer {
 
             vao.bind();
             Game.renderer.bindQuad();
-            vao.upload(CollectionsMarshal.AsSpan(vertices));
+            vao.upload(vertices.AsSpan());
         }
         else {
             // render item as flat card using InstantDrawTexture

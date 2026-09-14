@@ -112,7 +112,6 @@ public class SignBlock : EntityBlock {
     }
 
     public override void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
-        aabbs.Clear();
 
         if (isWall(metadata)) {
             // box attached to wall
@@ -154,7 +153,7 @@ public class SignBlock : EntityBlock {
         return true;
     }
 
-    public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
+    public override void render(BlockRenderer br, int x, int y, int z, XList<BlockVertexPacked> vertices) {
         base.render(br, x, y, z, vertices);
         x &= 15;
         y &= 15;

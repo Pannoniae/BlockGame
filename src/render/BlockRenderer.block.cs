@@ -10,7 +10,7 @@ public partial class BlockRenderer {
     /**
      * Cube renderer with dynamic per-face textures based on metadata.
      */
-    public void renderCubeDynamic(Block bl, int x, int y, int z, List<BlockVertexPacked> vertices, byte metadata) {
+    public void renderCubeDynamic(Block bl, int x, int y, int z, XList<BlockVertexPacked> vertices, byte metadata) {
         // render each face with its own texture
         for (int faceIdx = 0; faceIdx < 6; faceIdx++) {
             var tex = bl.getTexture(faceIdx, metadata);
@@ -29,7 +29,7 @@ public partial class BlockRenderer {
     /**
      * Cube renderer with dynamic per-face textures based on metadata. Also applies grass tinting.
      */
-    public void renderGrass(Block bl, int x, int y, int z, List<BlockVertexPacked> vertices, byte metadata) {
+    public void renderGrass(Block bl, int x, int y, int z, XList<BlockVertexPacked> vertices, byte metadata) {
         // render each face with its own texture
         for (int faceIdx = 0; faceIdx < 6; faceIdx++) {
             var tex = bl.getTexture(faceIdx, metadata);
@@ -42,7 +42,7 @@ public partial class BlockRenderer {
         }
     }
 
-    public void renderCrop(Block bl, int x, int y, int z, List<BlockVertexPacked> vertices, byte metadata) {
+    public void renderCrop(Block bl, int x, int y, int z, XList<BlockVertexPacked> vertices, byte metadata) {
         var tex = bl.getTexture(0, metadata);
         var texm = tex + 1;
 
@@ -94,7 +94,7 @@ public partial class BlockRenderer {
     /**
      * Cross renderer for plants and similar blocks.
      */
-    public void renderCross(Block bl, int x, int y, int z, List<BlockVertexPacked> vertices, byte metadata) {
+    public void renderCross(Block bl, int x, int y, int z, XList<BlockVertexPacked> vertices, byte metadata) {
         var tex = bl.getTexture(0, metadata);
         var texm = tex + 1;
 
@@ -142,7 +142,7 @@ public partial class BlockRenderer {
     }
 
     /** 4-plane radial pattern, tapered inward at top */
-    public void renderFire(Block bl, int x, int y, int z, List<BlockVertexPacked> vertices, byte metadata) {
+    public void renderFire(Block bl, int x, int y, int z, XList<BlockVertexPacked> vertices, byte metadata) {
         var tex = bl.getTexture(0, metadata);
         var texm = tex + 1;
 
@@ -260,7 +260,7 @@ public partial class BlockRenderer {
         }
     }
 
-    public static void renderTorchCube(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices,
+    public static void renderTorchCube(BlockRenderer br, int x, int y, int z, XList<BlockVertexPacked> vertices,
         float x0, float y0, float z0, float x1, float y1, float z1,
         float su0, float sv0, float su1, float sv1,
         float tu0, float tv0, float tu1, float tv1,
@@ -366,7 +366,7 @@ public partial class BlockRenderer {
     /**
      * Render a standing sign at the given position.
      */
-    public void renderSign(int x, int y, int z, List<BlockVertexPacked> vertices, float u0, float v0, float u1, float v1, byte rot) {
+    public void renderSign(int x, int y, int z, XList<BlockVertexPacked> vertices, float u0, float v0, float u1, float v1, byte rot) {
         const float width = 1f;
         const float depth = 1f / 16f;
         const float y0 = 6 / 16f;
@@ -482,7 +482,7 @@ public partial class BlockRenderer {
     /**
      * Render a single cube face with culling and lighting.
      */
-    private void renderCubeFace(int x, int y, int z, List<BlockVertexPacked> vertices,
+    private void renderCubeFace(int x, int y, int z, XList<BlockVertexPacked> vertices,
         RawDirection dir, float u0, float v0, float u1, float v1) {
         var vec = Direction.getDirection(dir);
         var nb = getBlockCached(vec.X, vec.Y, vec.Z).getID();
@@ -542,7 +542,7 @@ public partial class BlockRenderer {
      * (Assumptions: the lighting is what you'd expect from the faces, you need a properly culled cube, you don't need extra tint, your texture maps 1:1 with world pixels)
      */
     [SuppressMessage("ReSharper", "CompareOfFloatsByEqualityOperator")]
-    public void renderCube(int x, int y, int z, List<BlockVertexPacked> vertices,
+    public void renderCube(int x, int y, int z, XList<BlockVertexPacked> vertices,
         float x0, float y0, float z0, float x1, float y1, float z1,
         float u0, float v0, float u1, float v1, Lit lit = Lit.Face) {
         var ue = u1 - u0;

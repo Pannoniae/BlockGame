@@ -145,7 +145,6 @@ public class Fence : EntityBlock {
     }
 
     public override void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
-        aabbs.Clear();
         if ((metadata & EAST) != 0) {
             aabbs.Add(new AABB(x + 14f / 16f, y, z, x + 1, y + 1, z + 1));
         }
