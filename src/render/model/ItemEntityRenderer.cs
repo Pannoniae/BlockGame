@@ -12,7 +12,7 @@ using Silk.NET.OpenGL.Legacy;
 namespace BlockGame.render.model;
 
 public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
-    private readonly List<BlockVertexTinted> vertices = [];
+    private readonly XList<BlockVertexTinted> vertices = [];
     private StreamingVAO<BlockVertexTinted>? vao;
 
     public ItemEntityRenderer() {
@@ -92,7 +92,7 @@ public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
             // upload and render vertices using our own VAO
             vao.bind();
             Game.renderer.bindQuad();
-            vao.upload(CollectionsMarshal.AsSpan(vertices));
+            vao.upload(vertices.AsSpan());
 
             Game.graphics.instantTextureShader.use();
 

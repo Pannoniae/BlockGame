@@ -11,7 +11,7 @@ using Molten;
 namespace BlockGame.render.model;
 
 public class FallingBlockEntityRenderer : EntityRenderer<FallingBlockEntity> {
-    private readonly List<BlockVertexTinted> vertices = [];
+    private readonly XList<BlockVertexTinted> vertices = [];
     private readonly StreamingVAO<BlockVertexTinted>? vao;
 
     public FallingBlockEntityRenderer() {
@@ -60,7 +60,7 @@ public class FallingBlockEntityRenderer : EntityRenderer<FallingBlockEntity> {
             // upload and render vertices using our own VAO
             vao.bind();
             Game.renderer.bindQuad();
-            vao.upload(CollectionsMarshal.AsSpan(vertices));
+            vao.upload(vertices.AsSpan());
 
             Game.graphics.instantTextureShader.use();
 
