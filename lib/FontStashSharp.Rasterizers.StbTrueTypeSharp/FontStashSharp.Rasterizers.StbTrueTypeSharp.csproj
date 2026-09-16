@@ -15,8 +15,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\FontStashSharp.Base\FontStashSharp.Base.csproj"/>
-        <PackageReference Include="SixLabors.Fonts" Version="3.1.0" />
-        <PackageReference Include="SixLabors.ImageSharp" Version="4.1.0" />
-        <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="3.1.0" />
+        <PackageReference Include="SixLabors.Fonts" Version="3.1.2" />
+        <PackageReference Include="SixLabors.ImageSharp" Version="4.1.2" />
+        <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="3.1.1" />
     </ItemGroup>
 </Project>
