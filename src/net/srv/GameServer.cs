@@ -1111,11 +1111,11 @@ public class GameServer : INetEventListener {
             maxrd = int.Max(maxrd, conn.renderDistance);
 
             var pc = new ChunkCoord((int)conn.player.position.X >> 4, (int)conn.player.position.Z >> 4);
-            // +1: the edge chunks need a generated neighbour ring or their skylight is wrong
-            world.loadChunksAroundChunk(pc, conn.renderDistance + 1, ChunkStatus.LIGHTED);
+            // +2: we send rd+1 (the visible circle plus one LIGHTED ring)
+            world.loadChunksAroundChunk(pc, conn.renderDistance + 2, ChunkStatus.LIGHTED);
         }
 
-        world.playerRadius = maxrd + 1;
+        world.playerRadius = maxrd + 2;
 
         world.sortChunks();
     }

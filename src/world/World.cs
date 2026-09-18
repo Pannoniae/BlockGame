@@ -701,20 +701,21 @@ public partial class World : IDisposable {
             }
         }
 
-        // execute lighting updates ONLY IN SP
-        SuperluminalPerf.BeginEvent("light");
-        //if (isServer) {
-        processSkyLightRemovalQueue();
-        if (skyLightRemovalQueue.Count == 0) {
-            processSkyLightQueue();
-        }
+        // the client drains its queues synchronously in setBlock, so nothing here may
+        // run after the serverlight for the same tick have landed because we would
+        if (isServer) {
+            SuperluminalPerf.BeginEvent("light");
+            processSkyLightRemovalQueue();
+            if (skyLightRemovalQueue.Count == 0) {
+                processSkyLightQueue();
+            }
 
-        processBlockLightRemovalQueue();
-        if (blockLightRemovalQueue.Count == 0) {
-            processBlockLightQueue();
+            processBlockLightRemovalQueue();
+            if (blockLightRemovalQueue.Count == 0) {
+                processBlockLightQueue();
+            }
+            SuperluminalPerf.EndEvent();
         }
-        //}
-        SuperluminalPerf.EndEvent();
 
         if (isServer) {
             // random block updates!
@@ -761,6 +762,28 @@ public partial class World : IDisposable {
         }
 
         updateEntities(dt);
+
+        updatePendingLight();
+    }
+
+    /**
+     * Client-side light prediction, run right after a block change so our guess is in place before the server's
+     * authoritative lighting overwrites it
+     * If we run this *after* the lighting packet arrives then we've introduced a desync bug so don't
+     */
+    public void processLightFully() {
+        while (skyLightRemovalQueue.Count > 0 || skyLightQueue.Count > 0 ||
+               blockLightRemovalQueue.Count > 0 || blockLightQueue.Count > 0) {
+            processSkyLightRemovalQueue();
+            if (skyLightRemovalQueue.Count == 0) {
+                processSkyLightQueue();
+            }
+
+            processBlockLightRemovalQueue();
+            if (blockLightRemovalQueue.Count == 0) {
+                processBlockLightQueue();
+            }
+        }
 
         updatePendingLight();
     }
@@ -1334,7 +1357,7 @@ public partial class World : IDisposable {
     /// <summary>
     /// Check if all neighbours around a chunk have reached the specified status
     /// </summary>
-    private bool areNeighboursReady(ChunkCoord chunkCoord, ChunkStatus requiredStatus, int radius = 1) {
+    public bool areNeighboursReady(ChunkCoord chunkCoord, ChunkStatus requiredStatus, int radius = 1) {
         for (var dx = -radius; dx <= radius; dx++) {
             for (var dz = -radius; dz <= radius; dz++) {
                 if (dx == 0 && dz == 0) {

@@ -112,8 +112,11 @@ public class ChunkTracker {
 
     /** flush accumulated changes to all subscribers */
     public void flush() {
+        flushBlocks();
         flushLight();
+    }
 
+    private void flushBlocks() {
         if (dirtyBlocks.Count == 0) {
             return; // nothing to send
         }

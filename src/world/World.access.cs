@@ -342,6 +342,10 @@ public partial class World {
         var chunk = getChunk(x, z);
         chunk.setBlock(blockPos.X, blockPos.Y, blockPos.Z, block);
 
+        if (!isServer) {
+            processLightFully();
+        }
+
         // notify listeners
         var pos = new Vector3I(x, y, z);
         dirtyArea(pos, pos);
@@ -355,6 +359,10 @@ public partial class World {
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
         chunk.setBlock(blockPos.X, blockPos.Y, blockPos.Z, block);
+
+        if (!isServer) {
+            processLightFully();
+        }
 
         // notify listeners
         var pos = new Vector3I(x, y, z);
@@ -374,6 +382,10 @@ public partial class World {
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
         chunk.setBlockMetadata(blockPos.X, blockPos.Y, blockPos.Z, block);
+
+        if (!isServer) {
+            processLightFully();
+        }
 
         // notify listeners
         var pos = new Vector3I(x, y, z);
@@ -402,6 +414,10 @@ public partial class World {
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
         chunk.setBlockMetadata(blockPos.X, blockPos.Y, blockPos.Z, block);
+
+        if (!isServer) {
+            processLightFully();
+        }
 
         // notify listeners
         var pos = new Vector3I(x, y, z);

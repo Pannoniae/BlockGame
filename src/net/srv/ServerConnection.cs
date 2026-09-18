@@ -72,9 +72,10 @@ public class ServerConnection {
 
     // chunk loading
     public bool sendChunk(ChunkCoord coord) {
-        var succ = GameServer.instance.world.getChunkMaybe(coord, out var chunk);
-        if (!succ || chunk == null || chunk.status < ChunkStatus.LIGHTED) {
-            //Console.Out.WriteLine("not ready!");
+        var world = GameServer.instance.world;
+        var succ = world.getChunkMaybe(coord, out var chunk);
+        if (!succ || chunk == null || chunk.status < ChunkStatus.LIGHTED ||
+            !world.areNeighboursReady(coord, ChunkStatus.LIGHTED)) {
             return false; // chunk not ready yet
         }
 
@@ -180,14 +181,23 @@ public class ServerConnection {
         pending.RemoveRange(w, pending.Count - w);
     }
 
-    private void rebuildPending(ChunkCoord playerChunk) {
-        var send = renderDistance + 1;
-        var rdSq = send * send;
+    private bool shouldSend(ChunkCoord coord, ChunkCoord playerChunk) {
+        var rdSq = renderDistance * renderDistance;
+        for (var dx = -1; dx <= 1; dx++) {
+            for (var dz = -1; dz <= 1; dz++) {
+                if (new ChunkCoord(coord.x + dx, coord.z + dz).distanceSq(playerChunk) <= rdSq) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
+    private void rebuildPending(ChunkCoord playerChunk) {
         // drop anything that fell out of range
         toUnload.Clear();
         foreach (var coord in loadedChunks) {
-            if (coord.distanceSq(playerChunk) > rdSq) {
+            if (!shouldSend(coord, playerChunk)) {
                 toUnload.Add(coord);
             }
         }
@@ -196,12 +206,11 @@ public class ServerConnection {
         }
 
         pending.Clear();
+        var send = renderDistance + 1;
         for (var dx = -send; dx <= send; dx++) {
             for (var dz = -send; dz <= send; dz++) {
                 var coord = new ChunkCoord(playerChunk.x + dx, playerChunk.z + dz);
-
-                // circle
-                if (coord.distanceSq(playerChunk) <= rdSq && !loadedChunks.Contains(coord)) {
+                if (!loadedChunks.Contains(coord) && shouldSend(coord, playerChunk)) {
                     pending.Add(coord);
                 }
             }

@@ -1609,7 +1609,8 @@ public partial class BlockRenderer {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static ref BlockVertexPacked reserve4(XList<BlockVertexPacked> list) {
         int n = list.Count;
-        list.SetCount(n + 4);
+        list.EnsureCapacity(n + 4);
+        list.SetCountUnsafe(n + 4);
         return ref Unsafe.Add(ref MemoryMarshal.GetReference(list.AsSpan()), n);
     }
 

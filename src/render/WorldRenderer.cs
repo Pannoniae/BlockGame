@@ -98,6 +98,11 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
     public readonly HashSet<SubChunkCoord> chunksToMesh = [];
 
+    /**
+     * Polite queue for chunksections we wanted to mesh but couldn't because a neighbour chunk wasn't here yet
+     */
+    private readonly HashSet<SubChunkCoord> waiting = [];
+
     private readonly Dictionary<ChunkCoord, bool> readyCache = [];
 
     private readonly MeshJob[] jobs = makeJobs();
@@ -211,6 +216,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     }
 
     public void onWorldUnload() {
+        waiting.Clear();
     }
 
     public void onWorldTick(float delta) {
@@ -220,7 +226,18 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     }
 
     public void onChunkLoad(ChunkCoord coord) {
-        // added in meshChunk
+        // a neighbour showed up, retry
+        if (waiting.Count == 0) {
+            return;
+        }
+
+        foreach (var s in waiting) {
+            if (int.Abs(s.x - coord.x) <= 1 && int.Abs(s.z - coord.z) <= 1) {
+                chunksToMesh.Add(s);
+            }
+        }
+
+        waiting.ExceptWith(chunksToMesh);
     }
 
     public void onChunkUnload(ChunkCoord coord) {
@@ -230,6 +247,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             subChunk.vao = null;
             subChunk.watervao = null;
             subChunk.meshed = false;
+            waiting.Remove(subChunk.coord);
         }
     }
 
@@ -740,8 +758,11 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             // in multiplayer, wait for neighbours before meshing
             // otherwise we mesh against air/null and create holes
             if (!Game.world.isServer && !neighboursReady(new ChunkCoord(sectionCoord.x, sectionCoord.z))) {
+                waiting.Add(sectionCoord);
                 continue;
             }
+
+            waiting.Remove(sectionCoord);
 
             var sec = world.getSubChunk(sectionCoord);
             var job = jobs[n];
@@ -750,7 +771,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             if (!job.br.collect(sec)) {
                 BlockRenderer.clearMesh(sec);
                 Game.metrics.chunksUpdated++;
-                finishSection(sec, sectionCoord);
                 continue;
             }
 
@@ -778,43 +798,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
             BlockRenderer.upload(job.section!, job.opaque, job.translucent);
             Game.metrics.chunksUpdated++;
-            finishSection(job.section!, job.coord);
             job.section = null;
         }
 
         return n == jobs.Length;
-    }
-
-    /** promote the chunk to MESHED once every one of its sections has been */
-    private void finishSection(SubChunk section, SubChunkCoord sectionCoord) {
-        var chunk = section.chunk;
-
-        // update chunk status to MESHED (once per chunk, not per subchunk)
-        // this makes the chunk visible in the renderer
-        // todo this breaks the frame limiting in singleplayer. Why? I have no fucking idea. Fix later.
-        //  for now we'll just restrict it to the MP client where we definitely don't generate anything.
-        //  In SP we shouldn't set any chunk status here anyway because it's done in World.loadChunk().
-        if (Game.world.isServer || chunk.status >= ChunkStatus.MESHED) {
-            return;
-        }
-
-        // don't set MESHED status unless chunk has been properly lighted
-        if (chunk.status < ChunkStatus.LIGHTED) {
-            // chunk not ready for meshing, re-queue for later
-            chunksToMesh.Add(sectionCoord);
-            return;
-        }
-
-        // check if ALL subchunks in this chunk are now meshed
-        for (int i = 0; i < Chunk.CHUNKHEIGHT; i++) {
-            if (!chunk.subChunks[i].isMeshed()) {
-                // requeue for next time
-                chunksToMesh.Add(new SubChunkCoord(sectionCoord.x, i, sectionCoord.z));
-                return;
-            }
-        }
-
-        chunk.status = ChunkStatus.MESHED;
     }
 
     /** NOTE: read <see cref="CommandBuffer"/> for NV_command_list-specific noobtraps and shit.*/
@@ -915,10 +902,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         var noCulling = !Settings.instance.frustumCulling;
 
+        var minStatus = world.isServer ? ChunkStatus.MESHED : ChunkStatus.LIGHTED;
+
         // gather chunks to render
         for (int i = 0; i < chunkList.Length; i++) {
             Chunk chunk = chunkList[i];
-            var test = !chunk.destroyed && (chunk.status >= ChunkStatus.MESHED) && (noCulling || chunk.isVisible(frustum));
+            var test = !chunk.destroyed && (chunk.status >= minStatus) && (noCulling || chunk.isVisible(frustum));
             chunk.isRendered = test;
             if (test) {
                 // updates isRendered
@@ -1525,13 +1514,14 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         GL.DepthMask(false);
         GL.Enable(EnableCap.PolygonOffsetFill);
 
+        var cam = Game.camera.renderPosition(interp);
         var mat = Game.graphics.model;
         mat.push();
         mat.loadIdentity();
-        mat.translate(pos.X, pos.Y, pos.Z);
+        mat.translate((float)(pos.X - cam.X), (float)(pos.Y - cam.Y), (float)(pos.Z - cam.Z));
 
         // setup matrices
-        var view = Game.camera.getViewMatrix(interp);
+        var view = Game.camera.getStaticViewMatrix(interp);
         var projection = Game.camera.getProjectionMatrix();
 
         // use idt to render BlockVertexTinted vertices

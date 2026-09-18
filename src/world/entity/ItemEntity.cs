@@ -44,6 +44,11 @@ public class ItemEntity : Entity {
         age++;
     }
 
+    protected override void updateVisualTimers(double dt) {
+        base.updateVisualTimers(dt);
+        age++;
+    }
+
     protected override bool shouldContinueUpdate(double dt) {
         plotArmour--;
 

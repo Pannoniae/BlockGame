@@ -403,14 +403,7 @@ public class ClientPacketHandler : PacketHandler {
         if (ClientConnection.instance != null && !ClientConnection.instance.initialChunksLoaded) {
             if (ClientConnection.instance.hasMinimumChunks()) {
                 ClientConnection.instance.initialChunksLoaded = true;
-                Log.info("Minimum chunks loaded, re-meshing...");
-
-                // re-dirty all loaded chunks to ensure clean meshing
-                foreach (var loadedChunk in Game.world.chunkList) {
-                    for (int y = 0; y < Chunk.CHUNKHEIGHT; y++) {
-                        Game.world.dirtyChunk(new SubChunkCoord(loadedChunk.coord.x, y, loadedChunk.coord.z));
-                    }
-                }
+                Log.info("Minimum chunks loaded");
             }
             else {
                 // debug: log why we're stuck

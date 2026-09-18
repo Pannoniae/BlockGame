@@ -609,17 +609,21 @@ public class GameScreen : Screen {
         foreach (var chunk in world.chunks) {
             // don't set chunk if not loaded yet, else we will have broken chunkgen/lighting errors
             if (chunk.status >= ChunkStatus.LIGHTED) {
-                // mark for remeshing by clearing VAOs and dirtying
                 for (int y = 0; y < Chunk.CHUNKHEIGHT; y++) {
                     var subChunk = chunk.subChunks[y];
-                    subChunk.vao?.Dispose();
-                    subChunk.vao = null;
-                    subChunk.watervao?.Dispose();
-                    subChunk.watervao = null;
+                    // on the client the old mesh stays up until the new one replaces it
+                    if (world.isServer) {
+                        subChunk.vao?.Dispose();
+                        subChunk.vao = null;
+                        subChunk.watervao?.Dispose();
+                        subChunk.watervao = null;
+                    }
                     world.dirtyChunk(new SubChunkCoord(chunk.coord.x, y, chunk.coord.z));
                 }
 
-                chunk.status = ChunkStatus.LIGHTED;
+                if (world.isServer) {
+                    chunk.status = ChunkStatus.LIGHTED;
+                }
             }
         }
 
