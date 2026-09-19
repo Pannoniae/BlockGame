@@ -33,6 +33,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public World? world;
     private int currentAnisoLevel = -1;
     private int currentMSAA = -1;
+    private bool currentPerSample;
     private bool currentAffineMapping;
     private bool currentVertexJitter;
 
@@ -311,7 +312,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var defs = new List<Definition> {
             new("ANISO_LEVEL", anisoLevel.ToString()),
             new("DEBUG_ANISO", "0"),
-            new("ALPHA_TO_COVERAGE", Settings.instance.msaa > 1 && false ? "1" : "0"),
+            new("PER_SAMPLE", settings.perSample && settings.msaa > 1 ? "1" : "0"),
             new("AFFINE_MAPPING", settings.affineMapping ? "1" : "0"),
             new("VERTEX_JITTER", settings.vertexJitter ? "1" : "0")
         };
@@ -326,6 +327,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var defs = new List<Definition> {
             new("ANISO_LEVEL", settings.anisotropy.ToString()),
             new("DEBUG_ANISO", "0"),
+            new("PER_SAMPLE", settings.perSample && settings.msaa > 1 ? "1" : "0"),
             new("AFFINE_MAPPING", settings.affineMapping ? "1" : "0"),
             new("VERTEX_JITTER", settings.vertexJitter ? "1" : "0")
         };
@@ -529,16 +531,18 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var settings = Settings.instance;
         var anisoLevel = settings.anisotropy;
         var msaa = settings.msaa;
+        var perSample = settings.perSample;
         var affineMapping = settings.affineMapping;
         var vertexJitter = settings.vertexJitter;
 
-        if (currentAnisoLevel != anisoLevel || currentMSAA != msaa || currentAffineMapping != affineMapping || currentVertexJitter != vertexJitter) {
+        if (currentAnisoLevel != anisoLevel || currentMSAA != msaa || currentPerSample != perSample || currentAffineMapping != affineMapping || currentVertexJitter != vertexJitter) {
             // reload worldShader
             worldShader?.Dispose();
             worldShader = createWorldShader();
 
             currentAnisoLevel = anisoLevel;
             currentMSAA = msaa;
+            currentPerSample = perSample;
             currentAffineMapping = affineMapping;
             currentVertexJitter = vertexJitter;
 
@@ -826,17 +830,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         renderSky(interp);
         GL.DepthMask(true);
-
-        // no blending solid shit!
-        //GL.Disable(EnableCap.Blend);
-
-        // Enable A2C whenever MSAA is active for alpha-tested geometry (leaves)
-        /*if (Settings.instance.msaa > 1) {
-            GL.Disable(EnableCap.SampleAlphaToCoverage);
-        }
-        else {
-            GL.Disable(EnableCap.SampleAlphaToCoverage);
-        }*/
 
         //worldShader.use();
 

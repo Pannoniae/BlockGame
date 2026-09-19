@@ -498,8 +498,8 @@ public class IngameMenu : Menu, IDisposable {
 
             // show FB info
             if (Settings.instance.framebufferEffects) {
-                var fbw = Game.width * Settings.instance.ssaa;
-                var fbh = Game.height * Settings.instance.ssaa;
+                var fbw = (int)(Game.width * Settings.instance.resolutionScale);
+                var fbh = (int)(Game.height * Settings.instance.resolutionScale);
                 debugStr.AppendFormat("FB:{0}x{1} ({2})\n", fbw, fbh, Settings.instance.getAAText());
             }
             else {

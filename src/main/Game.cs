@@ -773,11 +773,6 @@ public partial class Game {
         graphics.fxaaShader.setUniform(g_fxaa_minReduceLocation, 1.0f / g_minReduceReciprocal);
         graphics.fxaaShader.setUniform(g_fxaa_maxSpanLocation, g_maxSpan);
         
-        // Initialize SSAA shader uniforms
-        g_ssaa_texelStepLocation = graphics.ssaaShader.getUniformLocation("u_texelStep");
-        g_ssaa_factorLocation = graphics.ssaaShader.getUniformLocation("u_ssaaFactor");
-        g_ssaa_modeLocation = graphics.ssaaShader.getUniformLocation("u_ssaaMode");
-        
         // Initialize CRT shader uniforms
         //g_crt_maskTypeLocation = graphics.crtShader.getUniformLocation("u_maskType");
         g_crt_curveLocation = graphics.crtShader.getUniformLocation("u_curve");
@@ -1404,11 +1399,11 @@ public partial class Game {
         // otherwise it won't clean shit
         currentScreen.clear(dt, interp);
 
-        // Set viewport for SSAA/MSAA rendering
+        // Set viewport for the scaled framebuffer
         if (Settings.instance.framebufferEffects && currentScreen == Screen.GAME_SCREEN) {
-            var ssaaWidth = (int)(width * Settings.instance.resolutionScale * Settings.instance.effectiveScale);
-            var ssaaHeight = (int)(height * Settings.instance.resolutionScale * Settings.instance.effectiveScale);
-            GL.Viewport(0, 0, (uint)ssaaWidth, (uint)ssaaHeight);
+            var fbWidth = (int)(width * Settings.instance.resolutionScale);
+            var fbHeight = (int)(height * Settings.instance.resolutionScale);
+            GL.Viewport(0, 0, (uint)fbWidth, (uint)fbHeight);
         }
 
         if (currentScreen == Screen.GAME_SCREEN) {
@@ -1429,15 +1424,15 @@ public partial class Game {
 
         profiler.section(ProfileSectionName.PostFX);
         if (Settings.instance.framebufferEffects && currentScreen == Screen.GAME_SCREEN) {
-            var ssaaWidth = (int)(width * Settings.instance.resolutionScale * Settings.instance.effectiveScale);
-            var ssaaHeight = (int)(height * Settings.instance.resolutionScale * Settings.instance.effectiveScale);
+            var fbWidth = (int)(width * Settings.instance.resolutionScale);
+            var fbHeight = (int)(height * Settings.instance.resolutionScale);
 
             // Handle MSAA resolve if needed
             if (Settings.instance.msaa > 1) {
                 // Resolve MSAA framebuffer to regular texture (FBO→FBO, keep sRGB disabled)
                 GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, fbo);
                 GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, resolveFbo);
-                GL.BlitFramebuffer(0, 0, ssaaWidth, ssaaHeight, 0, 0, ssaaWidth, ssaaHeight,
+                GL.BlitFramebuffer(0, 0, fbWidth, fbHeight, 0, 0, fbWidth, fbHeight,
                     ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Nearest);
 
                 // Use resolve texture for post-processing
@@ -1459,8 +1454,8 @@ public partial class Game {
         }
 
         if (Settings.instance.framebufferEffects && currentScreen == Screen.GAME_SCREEN) {
-            var ssaaWidth = (int)(width * Settings.instance.resolutionScale * Settings.instance.effectiveScale);
-            var ssaaHeight = (int)(height * Settings.instance.resolutionScale * Settings.instance.effectiveScale);
+            var fbWidth = (int)(width * Settings.instance.resolutionScale);
+            var fbHeight = (int)(height * Settings.instance.resolutionScale);
             // Select the appropriate post-processing shader
             if (Settings.instance.crtEffect) {
                 graphics.crtShader.use();
@@ -1478,8 +1473,6 @@ public partial class Game {
                 graphics.crtShader.setUniform(g_crt_scanlineResLocation, height <= 1080 ? 240.0f : 360.0f); // 240 lines for 1080p, 360 for 1440p and stuff
             } else if (Settings.instance.fxaa) {
                 graphics.fxaaShader.use();
-            } else if (Settings.instance.ssaa > 1) {
-                graphics.ssaaShader.use();
             } else {
                 //graphics.simplePostShader.use();
 
@@ -1487,7 +1480,7 @@ public partial class Game {
                 GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, Settings.instance.msaa > 1 ? resolveFbo : fbo);
 
                 GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
-                GL.BlitFramebuffer(0, 0, ssaaWidth, ssaaHeight, 0, 0, width, height,
+                GL.BlitFramebuffer(0, 0, fbWidth, fbHeight, 0, 0, width, height,
                     ClearBufferMask.ColorBufferBit, Settings.instance.resolutionScaleLinear ? BlitFramebufferFilter.Linear : BlitFramebufferFilter.Nearest);
                 goto esc;
             }

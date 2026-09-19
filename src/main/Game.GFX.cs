@@ -62,11 +62,6 @@ public partial class Game {
     private int g_fxaa_minReduceLocation;
     private int g_fxaa_maxSpanLocation;
 
-    // SSAA shader uniforms
-    private int g_ssaa_texelStepLocation;
-    private int g_ssaa_factorLocation;
-    private int g_ssaa_modeLocation;
-
     // CRT shader uniforms
     private int g_crt_maskTypeLocation;
     private int g_crt_curveLocation;
@@ -145,11 +140,11 @@ public partial class Game {
             height = 12;
         }
 
-        var ssaaWidth = (int)(width * Settings.instance.resolutionScale * Settings.instance.effectiveScale);
-        var ssaaHeight = (int)(height * Settings.instance.resolutionScale * Settings.instance.effectiveScale);
+        var fbWidth = (int)(width * Settings.instance.resolutionScale);
+        var fbHeight = (int)(height * Settings.instance.resolutionScale);
         var samples = Settings.instance.msaa;
 
-        //GL.Viewport(0, 0, (uint)ssaaWidth, (uint)ssaaHeight);
+        //GL.Viewport(0, 0, (uint)fbWidth, (uint)fbHeight);
 
         if (samples > 1) {
             // Create MSAA framebuffer
@@ -159,7 +154,7 @@ public partial class Game {
             GL.DeleteTexture(FBOtex);
             FBOtex = GL.CreateTexture(TextureTarget.Texture2DMultisample);
             GL.TextureStorage2DMultisample(FBOtex, (uint)samples, SizedInternalFormat.Rgba16f,
-                (uint)ssaaWidth, (uint)ssaaHeight, true);
+                (uint)fbWidth, (uint)fbHeight, true);
 
             // Create multisampled depth buffer
             GL.DeleteRenderbuffer(depthBuffer);
@@ -168,7 +163,7 @@ public partial class Game {
                 ? InternalFormat.DepthComponent32f
                 : InternalFormat.DepthComponent;
             GL.NamedRenderbufferStorageMultisample(depthBuffer, (uint)samples,
-                depthFormat, (uint)ssaaWidth, (uint)ssaaHeight);
+                depthFormat, (uint)fbWidth, (uint)fbHeight);
 
             // Attach to MSAA framebuffer
             GL.NamedFramebufferTexture(fbo, FramebufferAttachment.ColorAttachment0, FBOtex, 0);
@@ -184,7 +179,7 @@ public partial class Game {
 
             GL.DeleteTexture(resolveTex);
             resolveTex = GL.CreateTexture(TextureTarget.Texture2D);
-            GL.TextureStorage2D(resolveTex, 1, SizedInternalFormat.Rgba16f, (uint)ssaaWidth, (uint)ssaaHeight);
+            GL.TextureStorage2D(resolveTex, 1, SizedInternalFormat.Rgba16f, (uint)fbWidth, (uint)fbHeight);
             GL.TextureParameter(resolveTex, TextureParameterName.TextureBaseLevel, 0);
             GL.TextureParameter(resolveTex, TextureParameterName.TextureMaxLevel, 0);
             var filter = Settings.instance.resolutionScaleLinear ? (int)GLEnum.Linear : (int)GLEnum.Nearest;
@@ -206,7 +201,7 @@ public partial class Game {
 
             GL.DeleteTexture(FBOtex);
             FBOtex = GL.CreateTexture(TextureTarget.Texture2D);
-            GL.TextureStorage2D(FBOtex, 1, SizedInternalFormat.Rgba16f, (uint)ssaaWidth, (uint)ssaaHeight);
+            GL.TextureStorage2D(FBOtex, 1, SizedInternalFormat.Rgba16f, (uint)fbWidth, (uint)fbHeight);
             GL.TextureParameter(FBOtex, TextureParameterName.TextureBaseLevel, 0);
             GL.TextureParameter(FBOtex, TextureParameterName.TextureMaxLevel, 0);
             var filter = Settings.instance.resolutionScaleLinear ? (int)GLEnum.Linear : (int)GLEnum.Nearest;
@@ -220,8 +215,8 @@ public partial class Game {
             var depthFormat = Settings.instance.reverseZ
                 ? InternalFormat.DepthComponent32f
                 : InternalFormat.DepthComponent;
-            GL.NamedRenderbufferStorage(depthBuffer, depthFormat, (uint)ssaaWidth,
-                (uint)ssaaHeight);
+            GL.NamedRenderbufferStorage(depthBuffer, depthFormat, (uint)fbWidth,
+                (uint)fbHeight);
 
             GL.NamedFramebufferTexture(fbo, FramebufferAttachment.ColorAttachment0, FBOtex, 0);
             GL.NamedFramebufferRenderbuffer(fbo, FramebufferAttachment.DepthAttachment,
@@ -235,14 +230,10 @@ public partial class Game {
             resolveTex = 0;
         }
 
-        graphics.fxaaShader.setUniform(g_fxaa_texelStepLocation, new Vector2(1.0f / ssaaWidth, 1.0f / ssaaHeight));
+        graphics.fxaaShader.setUniform(g_fxaa_texelStepLocation, new Vector2(1.0f / fbWidth, 1.0f / fbHeight));
 
-        graphics.ssaaShader.setUniform(g_ssaa_texelStepLocation, new Vector2(1.0f / ssaaWidth, 1.0f / ssaaHeight));
-        graphics.ssaaShader.setUniform(g_ssaa_factorLocation, Settings.instance.ssaa);
-        graphics.ssaaShader.setUniform(g_ssaa_modeLocation, Settings.instance.ssaaMode);
-
-        // Set sample shading state based on settings
-        if (Settings.instance.ssaaMode == 2 && Settings.instance.msaa > 1 && sampleShadingSupported) {
+        // SSAA = per-sample shading
+        if (Settings.instance.perSample && Settings.instance.msaa > 1 && sampleShadingSupported) {
             GL.Enable(EnableCap.SampleShading);
             GL.MinSampleShading(1.0f); // force per-sample shading
             sampleShadingEnabled = true;
@@ -252,6 +243,7 @@ public partial class Game {
             sampleShadingEnabled = false;
         }
 
+        textures?.blockTexture?.getLodBias();
 
         throwawayVAO = GL.CreateVertexArray();
     }

@@ -40,17 +40,21 @@ uniform vec3 uChunkPos;
 
 // note for debugging: this only happens when the normal and nopersp texcoords are mix()'ed together, it works separately. we're probably enabling some different mode when compiling the shader with that..
 // note: identity mix also works (affine, affine), it needs to be a different value
+#include "/shaders/inc/tc.inc.glsl"
+
 #if AFFINE_MAPPING == 1
 #ifdef NV_EXTENSIONS
-noperspective centroid out vec2 affineCoords;
+noperspective TC_QUAL out vec2 affineCoords;
 #else
 noperspective out vec2 affineCoords;
 #endif
-centroid out vec2 texCoords; // perspective-correct
+TC_QUAL out vec2 texCoords; // perspective-correct
 out vec3 worldPos;
 #else
-centroid out vec2 texCoords;
+TC_QUAL out vec2 texCoords;
 #endif
+// texCoords but no centroid/sample because the derivatives are garbage at the edge uvs
+out vec2 dTexCoords;
 out vec4 tint;
 out vec4 lightColour;
 out float vertexDist;
@@ -85,6 +89,7 @@ void main() {
 #endif
 
     texCoords = texCoord * n;
+    dTexCoords = texCoords;
 #if AFFINE_MAPPING == 1
     affineCoords = texCoords;
     worldPos = pos;

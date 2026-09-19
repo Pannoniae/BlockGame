@@ -33,11 +33,10 @@ public class Settings {
     public int renderDistance = 8;
     public float FOV = 75;
     public int mipmapping = 0;
-    public int anisotropy = 0; // 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024
+    public int anisotropy = 0; // 0, 2, 4, 8, 16, 32
     public bool fxaaEnabled = false;
     public int msaaSamples = 1; // 1, 2, 4, 8, 16, 32
-    public int ssaaScale = 1; // 1, 2 (2x2), 4 (4x4), 8 (8x8)
-    public int ssaaMode = 0; // 0=Normal, 1=Weighted, 2=Per-sample
+    public int ssaaSamples = 1; // 1, 2, 4, 8
     public float resolutionScale = 1.0f; // 0.25, 0.5, 0.75, 1.0
     public bool resolutionScaleLinear = true; // true = linear filtering, false = nearest
     public FullscreenState fullscreen = FullscreenState.WINDOWED;
@@ -74,7 +73,7 @@ public class Settings {
     /// <summary>
     /// Whether to use framebuffer effects.
     /// </summary>
-    public bool framebufferEffects => fxaaEnabled || msaaSamples > 1 || ssaaScale > 1 || resolutionScale != 1.0f || getActualRendererMode() == RendererMode.CommandList || crtEffect || reverseZ;
+    public bool framebufferEffects => fxaaEnabled || msaaSamples > 1 || ssaaSamples > 1 || resolutionScale != 1.0f || getActualRendererMode() == RendererMode.CommandList || crtEffect || reverseZ;
     
     /// <summary>
     /// Whether FXAA is enabled.
@@ -82,37 +81,20 @@ public class Settings {
     public bool fxaa => fxaaEnabled;
     
     /// <summary>
-    /// SSAA multiplier (1, 2, or 4).
-    /// </summary>
-    public int ssaa {
-        get {
-            // per-sample mode doesn't use traditional SSAA scaling
-            if (ssaaMode == 2) {
-                return 1;
-            }
-
-            return ssaaScale;
-        }
-    }
-
-    /// <summary>
-    /// MSAA sample count (1, 2, 4, 8, 16, 32).
+    /// Framebuffer sample count. SSAA is MSAA with per-sample shading so
+    /// the larger of the two settings applies
     /// </summary>
     public int msaa {
         get {
-            // per-sample mode requires MSAA, force it on if not already enabled
-            if (ssaaMode == 2) {
-                return ssaaScale;
-            }
-            
+            var lvl = int.Max(msaaSamples, ssaaSamples);
             // validate against hardware support
-            if (Game.supportedMSAASamples.Contains(msaaSamples)) {
-                return msaaSamples;
+            if (Game.supportedMSAASamples.Contains(lvl)) {
+                return lvl;
             }
-            
+
             // fallback1
             for (int i = Game.supportedMSAASamples.Length - 1; i >= 0; i--) {
-                if (Game.supportedMSAASamples[i] <= msaaSamples) {
+                if (Game.supportedMSAASamples[i] <= lvl) {
                     return (int)Game.supportedMSAASamples[i];
                 }
             }
@@ -122,9 +104,9 @@ public class Settings {
     }
 
     /// <summary>
-    /// Effective framebuffer scale factor for rendering (1 for per-sample mode, ssaa for others)
+    /// Shade every sample (SSAA) rather than once per pixel (MSAA).
     /// </summary>
-    public int effectiveScale => ssaaMode == 2 ? 1 : ssaa;
+    public bool perSample => ssaaSamples > 1 && msaa > 1;
 
     public string getAAText() {
         var parts = new List<string>();
@@ -133,12 +115,11 @@ public class Settings {
             parts.Add("FXAA");
         }
 
-        if (msaaSamples > 1) {
-            parts.Add($"{msaaSamples}x MSAA");
+        if (ssaaSamples > 1) {
+            parts.Add($"{msaa}x SSAA");
         }
-
-        if (ssaaScale > 1) {
-            parts.Add($"{ssaaScale}x SSAA");
+        else if (msaaSamples > 1) {
+            parts.Add($"{msaa}x MSAA");
         }
 
         return parts.Count > 0 ? string.Join(" + ", parts) : "Off";
@@ -182,8 +163,7 @@ public class Settings {
         tag.addInt("anisotropy", anisotropy);
         tag.addByte("fxaaEnabled", (byte)(fxaaEnabled ? 1 : 0));
         tag.addInt("msaaSamples", msaaSamples);
-        tag.addInt("ssaaScale", ssaaScale);
-        tag.addInt("ssaaMode", ssaaMode);
+        tag.addInt("ssaaSamples", ssaaSamples);
         tag.addFloat("resolutionScale", resolutionScale);
         tag.addByte("resolutionScaleLinear", (byte)(resolutionScaleLinear ? 1 : 0));
         tag.addByte("fullscreen", (byte)(fullscreen));
@@ -230,8 +210,8 @@ public class Settings {
             anisotropy = tag.getInt("anisotropy");
             fxaaEnabled = tag.getByte("fxaaEnabled") != 0;
             msaaSamples = tag.getInt("msaaSamples");
-            ssaaScale = tag.getInt("ssaaScale");
-            ssaaMode = tag.getInt("ssaaMode");
+            ssaaSamples = tag.getInt("ssaaSamples", 1);
+            anisotropy = anisotropy < 2 ? 0 : int.Min(anisotropy, 32);
             if (tag.has("resolutionScale")) {
                 resolutionScale = tag.getFloat("resolutionScale");
             }

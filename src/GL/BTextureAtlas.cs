@@ -12,14 +12,14 @@ using Image = SixLabors.ImageSharp.Image;
 namespace BlockGame.GL;
 
 public class BTextureAtlas : BTexture2D {
-
     public int atlasSize;
 
     public bool firstLoad = true;
 
     public List<DynamicTexture> dtextures = [];
 
-    public Rgba32[] mipmap = null!;
+    // CPU copies of miplevels 1..max
+    private Rgba32[][] mips = [];
 
     // tile positions for stitched atlases (null if loaded from single file)
     public Dictionary<(string source, int tx, int ty), Rectangle>? tilePositions;
@@ -81,28 +81,29 @@ public class BTextureAtlas : BTexture2D {
         return new UVPair(u, v);
     }
 
-    // NEW: Upload pre-loaded image to GPU
-    protected unsafe void uploadToGPU() {
+    private void createTex() {
         var GL = Game.GL;
+        GL.DeleteTexture(handle);
         handle = GL.CreateTexture(TextureTarget.Texture2D);
         GL.TextureParameter(handle, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
         GL.TextureParameter(handle, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
-        GL.TextureParameter(handle, TextureParameterName.TextureMinFilter, (int)GLEnum.NearestMipmapLinear);
+        // NEAREST between levels too cuz linear would bleed alpha0 black pixels
+        // proper fix is emissive in its own texture until then we'll suck it up
+        GL.TextureParameter(handle, TextureParameterName.TextureMinFilter, (int)GLEnum.NearestMipmapNearest);
         GL.TextureParameter(handle, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
-
-        var maxLevel = Settings.instance.mipmapping;
         GL.TextureParameter(handle, TextureParameterName.TextureBaseLevel, 0);
-        GL.TextureParameter(handle, TextureParameterName.TextureMaxLevel, maxLevel);
+        GL.TextureParameter(handle, TextureParameterName.TextureMaxLevel, Settings.instance.mipmapping);
+        getLodBias();
+        GL.TextureStorage2D(handle, 5u, SizedInternalFormat.Srgb8Alpha8, (uint)width, (uint)height);
+    }
 
-        const uint maxPossibleLevels = 5u;
-        GL.TextureStorage2D(handle, maxPossibleLevels, SizedInternalFormat.Srgb8Alpha8, (uint)width, (uint)height);
-
+    protected void uploadToGPU() {
+        createTex();
         if (!image.DangerousTryGetSinglePixelMemory(out imageData)) {
             throw new SkillIssueException("Couldn't load the atlas contiguously!");
         }
 
-        mipmap = new Rgba32[width * height];
-        generateMipmaps(imageData.Span, width, height, maxLevel);
+        generateMipmaps(Settings.instance.mipmapping);
 
         if (firstLoad) {
             onFirstLoad();
@@ -111,258 +112,166 @@ public class BTextureAtlas : BTexture2D {
         firstLoad = false;
     }
 
+    /**
+     * supersampling makes it look more detailed so negativebias to make it look sharper...
+     */
+    public void getLodBias() {
+        var bias = Settings.instance.perSample && Settings.instance.msaa > 1 ? -0.5f * float.Log2(Settings.instance.msaa) : 0f;
+        Game.GL.TextureParameter(handle, TextureParameterName.TextureLodBias, bias);
+    }
+
     public void addDynamicTexture(DynamicTexture dt) {
         dtextures.Add(dt);
     }
-    
+
     public void updateTexture(int x, int y, int width, int height, Rgba32[] pixels) {
         // update CPU-side imageData so the fucking mipmaps regenerate correctly
         var span = imageData.Span;
 
         // Validate bounds - if out of range, this is a bug that needs fixing
         if (x < 0 || y < 0 || x + width > image.Width || y + height > image.Height) {
-            throw new InvalidOperationException($"DynamicTexture out of bounds! pos=({x},{y}) size=({width},{height}) atlas=({image.Width},{image.Height}). Protected region was placed incorrectly or atlas is too small.");
+            throw new InvalidOperationException(
+                $"DynamicTexture out of bounds! pos=({x},{y}) size=({width},{height}) atlas=({image.Width},{image.Height}). Protected region was placed incorrectly or atlas is too small.");
         }
 
         for (int py = 0; py < height; py++) {
-            for (int px = 0; px < width; px++) {
-                span[(y + py) * image.Width + (x + px)] = pixels[py * width + px];
-            }
+            pixels.AsSpan(py * width, width).CopyTo(span.Slice((y + py) * image.Width + x, width));
         }
 
-        // update the actual GPU texture
-        updateTexture(pixels, x, y, (uint)width, (uint)height);
-    }
-
-    private static void generateMipmap(int left, int top, int width, int height, Span<Rgba32> mipmap, ReadOnlySpan<Rgba32> prevMipmap) {
-        for (int y = top; y < height; y++) {
-            for (int x = left; x < width; x++) {
-                int xSrc = x * 2;
-                int ySrc = y * 2;
-                int x1 = xSrc + 1;
-                int y1 = ySrc + 1;
-
-                var c00 = prevMipmap[ySrc * width * 2 + xSrc];
-                var c01 = prevMipmap[ySrc * width * 2 + x1];
-                var c10 = prevMipmap[y1 * width * 2 + xSrc];
-                var c11 = prevMipmap[y1 * width * 2 + x1];
-
-                mipmap[y * width + x] = avgColourWeighted(c00, c01, c10, c11);
-            }
+        uploadRegion(0, span, image.Width, x, y, width, height);
+        var maxLevel = Settings.instance.mipmapping;
+        if (maxLevel > 0) {
+            genMipMaps(x, y, width, height, maxLevel);
         }
     }
 
-    /// <summary>
-    /// Average two colours.
-    /// </summary>
-    private static Rgba32 avgColour(Rgba32 c0, Rgba32 c1) {
-        return new Rgba32((byte)((c0.R + c1.R) / 2f), (byte)((c0.G + c1.G) / 2f), (byte)((c0.B + c1.B) / 2f), (byte)((c0.A + c1.A) / 2f));
-    }
-
-    private static Rgba32 avgColour(Rgba32 c0, Rgba32 c1, Rgba32 c2, Rgba32 c3) {
-        return new Rgba32((byte)((c0.R + c1.R + c2.R + c3.R) / 4f),
-            (byte)((c0.G + c1.G + c2.G + c3.G) / 4f),
-            (byte)((c0.B + c1.B + c2.B + c3.B) / 4f),
-            (byte)((c0.A + c1.A + c2.A + c3.A) / 4f));
-    }
-    
-    
-    /**
-     * Same as above, except that it's alpha-weighted by the given colour. i.e. it won't produce black artifacts on alpha because the colour contribution is weighed by the alpha.
-     *
-     * Basically the equivalent of this shader:
-     *
-     * for (float i = something; i &lt; somethingElse; i++) {
-     *   c.rgb += colorSample.rgb * colorSample.a;
-     *   c.a += colorSample.a;
-     * }
-     * c.rgb /= c.a;
-     * c.a /= sampleCount;
-     * 
-     * 
-     */
-    private static float srgbToLinear(float c) {
-        return c <= 0.04045f ? c / 12.92f : MathF.Pow((c + 0.055f) / 1.055f, 2.4f);
-    }
-
-    private static float linearToSrgb(float c) {
-        return c <= 0.0031308f ? c * 12.92f : 1.055f * MathF.Pow(c, 1.0f / 2.4f) - 0.055f;
-    }
-
-    private static Rgba32 avgColourWeighted(Rgba32 c0, Rgba32 c1, Rgba32 c2, Rgba32 c3) {
-        float a0 = c0.A / 255f;
-        float a1 = c1.A / 255f;
-        float a2 = c2.A / 255f;
-        float a3 = c3.A / 255f;
-
-        float totalAlpha = a0 + a1 + a2 + a3;
-
-        if (totalAlpha == 0) {
-            return new Rgba32(0, 0, 0, 0);
-        }
-
-        // linearize RGB before averaging to avoid darkening mipmaps
-        float r0 = srgbToLinear(c0.R / 255f), r1 = srgbToLinear(c1.R / 255f), r2 = srgbToLinear(c2.R / 255f), r3 = srgbToLinear(c3.R / 255f);
-        float g0 = srgbToLinear(c0.G / 255f), g1 = srgbToLinear(c1.G / 255f), g2 = srgbToLinear(c2.G / 255f), g3 = srgbToLinear(c3.G / 255f);
-        float b0 = srgbToLinear(c0.B / 255f), b1 = srgbToLinear(c1.B / 255f), b2 = srgbToLinear(c2.B / 255f), b3 = srgbToLinear(c3.B / 255f);
-
-        float r = (r0 * a0 + r1 * a1 + r2 * a2 + r3 * a3) / totalAlpha;
-        float g = (g0 * a0 + g1 * a1 + g2 * a2 + g3 * a3) / totalAlpha;
-        float b = (b0 * a0 + b1 * a1 + b2 * a2 + b3 * a3) / totalAlpha;
-
-        // re-encode to sRGB for storage
-        return new Rgba32(
-            (byte)(linearToSrgb(r) * 255f + 0.5f),
-            (byte)(linearToSrgb(g) * 255f + 0.5f),
-            (byte)(linearToSrgb(b) * 255f + 0.5f),
-            (byte)(totalAlpha > 0 ? 255 : 0)
-        );
-    }
-
-    public unsafe void generateMipmaps(Span<Rgba32> pixelArray, int imageWidth, int imageHeight, int maxLevel) {
+    private unsafe void uploadRegion(int level, ReadOnlySpan<Rgba32> src, int stride, int x, int y, int w, int h) {
         var GL = Game.GL;
-
-        if (false && Game.isAMDCard) {
-            // old AMD drivers, convert to BGRA
-            var bgra = new Bgra32[pixelArray.Length];
-            for (int i = 0; i < pixelArray.Length; i++) {
-                var p = pixelArray[i];
-                bgra[i] = new Bgra32(p.R, p.G, p.B, p.A);
-            }
-            fixed (Bgra32* pixels = bgra) {
-                GL.TextureSubImage2D(handle, 0, 0, 0, (uint)imageWidth, (uint)imageHeight,
-                    PixelFormat.Bgra, PixelType.UnsignedByte, pixels);
-            }
-
-            // Generate mipmaps
-            var prevMipmap = pixelArray;
-            int lvl;
-            int width = imageWidth;
-            int height = imageHeight;
-
-            for (lvl = 1; lvl <= maxLevel; lvl++) {
-                if (width > 1) {
-                    width /= 2;
-                }
-
-                if (height > 1) {
-                    height /= 2;
-                }
-
-                Span<Rgba32> mipmap = this.mipmap.AsSpan(0, width * height);
-                generateMipmap(0, 0, width, height, mipmap, prevMipmap);
-
-                var bgraMip = new Bgra32[mipmap.Length];
-                for (int i = 0; i < mipmap.Length; i++) {
-                    var p = mipmap[i];
-                    bgraMip[i] = new Bgra32(p.R, p.G, p.B, p.A);
-                }
-                fixed (Bgra32* mipmapPixels = bgraMip) {
-                    GL.TextureSubImage2D(handle, lvl, 0, 0, (uint)width, (uint)height,
-                        PixelFormat.Bgra, PixelType.UnsignedByte, mipmapPixels);
-                }
-                prevMipmap = mipmap;
-            }
+        GL.PixelStore(PixelStoreParameter.UnpackRowLength, stride);
+        fixed (Rgba32* p = &src[y * stride + x]) {
+            GL.TextureSubImage2D(handle, level, x, y, (uint)w, (uint)h, PixelFormat.Rgba, PixelType.UnsignedByte, p);
         }
-        else {
-            fixed (Rgba32* pixels = &pixelArray.GetPinnableReference()) {
-                GL.TextureSubImage2D(handle, 0, 0, 0, (uint)imageWidth, (uint)imageHeight,
-                    PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
-                // Generate mipmaps
-                // we check against 2 so we never generate a mipmap with less pixels than one per texture
-                var prevMipmap = pixelArray;
 
-                int lvl;
-                int width = imageWidth;
-                int height = imageHeight;
+        GL.PixelStore(PixelStoreParameter.UnpackRowLength, 0);
+    }
 
-
-                // no need to clear, we overwrite anyway!
-                //Array.Clear(mipmap);
-                for (lvl = 1; lvl <= maxLevel; lvl++) {
-                    if (width > 1) {
-                        width /= 2;
-                    }
-
-                    if (height > 1) {
-                        height /= 2;
-                    }
-
-                    Span<Rgba32> mipmap = this.mipmap.AsSpan(0, width * height);
-                    generateMipmap(0, 0, width, height, mipmap, prevMipmap);
-                    fixed (Rgba32* mipmapPixels = mipmap) {
-                        GL.TextureSubImage2D(handle, lvl, 0, 0, (uint)width, (uint)height,
-                            PixelFormat.Rgba, PixelType.UnsignedByte, mipmapPixels);
-                    }
-                    prevMipmap = mipmap;
-                }
+    private static void generateMipmap(ReadOnlySpan<Rgba32> src, int srcStride, Span<Rgba32> dst, int dstStride, int x0, int y0, int w, int h) {
+        for (int y = y0; y < y0 + h; y++) {
+            int ySrc = y * 2;
+            for (int x = x0; x < x0 + w; x++) {
+                int xSrc = x * 2;
+                var c00 = src[ySrc * srcStride + xSrc];
+                var c01 = src[ySrc * srcStride + xSrc + 1];
+                var c10 = src[(ySrc + 1) * srcStride + xSrc];
+                var c11 = src[(ySrc + 1) * srcStride + xSrc + 1];
+                dst[y * dstStride + x] = avgopaque(c00, c01, c10, c11);
             }
         }
     }
 
-    public override unsafe void reload() {
+    // sRGB<->linear lut
+    // todo move into meth?
+    private static readonly float[] s2l = buildS2L();
+    private static readonly byte[] l2s = buildL2S();
+
+    private static float[] buildS2L() {
+        var lut = new float[256];
+        for (int i = 0; i < 256; i++) {
+            float c = i / 255f;
+            lut[i] = c <= 0.04045f ? c / 12.92f : float.Pow((c + 0.055f) / 1.055f, 2.4f);
+        }
+
+        return lut;
+    }
+
+    private static byte[] buildL2S() {
+        var lut = new byte[4097];
+        for (int i = 0; i <= 4096; i++) {
+            float c = i / 4096f;
+            float s = c <= 0.0031308f ? c * 12.92f : 1.055f * float.Pow(c, 1.0f / 2.4f) - 0.055f;
+            lut[i] = (byte)(s * 255f + 0.5f);
+        }
+
+        return lut;
+    }
+
+    private static Rgba32 avgopaque(Rgba32 c0, Rgba32 c1, Rgba32 c2, Rgba32 c3) {
+        int w0 = c0.A > 0 ? 1 : 0, w1 = c1.A > 0 ? 1 : 0, w2 = c2.A > 0 ? 1 : 0, w3 = c3.A > 0 ? 1 : 0;
+        int n = w0 + w1 + w2 + w3;
+        if (n == 0) {
+            return default;
+        }
+
+        float inv = 1f / n;
+        float r = (s2l[c0.R] * w0 + s2l[c1.R] * w1 + s2l[c2.R] * w2 + s2l[c3.R] * w3) * inv;
+        float g = (s2l[c0.G] * w0 + s2l[c1.G] * w1 + s2l[c2.G] * w2 + s2l[c3.G] * w3) * inv;
+        float b = (s2l[c0.B] * w0 + s2l[c1.B] * w1 + s2l[c2.B] * w2 + s2l[c3.B] * w3) * inv;
+        int a = (c0.A * w0 + c1.A * w1 + c2.A * w2 + c3.A * w3 + n / 2) / n;
+        return new Rgba32(l2s[(int)(r * 4096f + 0.5f)], l2s[(int)(g * 4096f + 0.5f)], l2s[(int)(b * 4096f + 0.5f)], (byte)a);
+    }
+
+    public void generateMipmaps(int maxLevel) {
+        // todo a texture pack reload can change the atlas size so we reallocate but this should really be conditional + invalidate on texture pack reload
+        mips = new Rgba32[maxLevel][];
+        int w = image.Width, h = image.Height;
+        for (int lvl = 0; lvl < maxLevel; lvl++) {
+            w = int.Max(w / 2, 1);
+            h = int.Max(h / 2, 1);
+            mips[lvl] = new Rgba32[w * h];
+        }
+
+        uploadRegion(0, imageData.Span, image.Width, 0, 0, image.Width, image.Height);
+
+        if (maxLevel > 0) {
+            genMipMaps(0, 0, image.Width, image.Height, maxLevel);
+        }
+    }
+
+    private void genMipMaps(int x, int y, int w, int h, int maxLevel) {
+        ReadOnlySpan<Rgba32> src = imageData.Span;
+        int srcW = image.Width, srcH = image.Height;
+        int x1 = x + w, y1 = y + h;
+        for (int lvl = 1; lvl <= maxLevel; lvl++) {
+            int dstW = int.Max(srcW / 2, 1), dstH = int.Max(srcH / 2, 1);
+            x >>= 1;
+            y >>= 1;
+            x1 = int.Min((x1 + 1) >> 1, dstW);
+            y1 = int.Min((y1 + 1) >> 1, dstH);
+            int rw = int.Max(x1 - x, 1), rh = int.Max(y1 - y, 1);
+
+            var dst = mips[lvl - 1].AsSpan();
+            generateMipmap(src, srcW, dst, dstW, x, y, rw, rh);
+            uploadRegion(lvl, dst, dstW, x, y, rw, rh);
+
+            src = dst;
+            srcW = dstW;
+            srcH = dstH;
+        }
+    }
+
+    public override void reload() {
         // Skip reload for stitched atlases (they're already loaded from memory)
         if (string.IsNullOrEmpty(path)) {
             return;
         }
 
-        var GL = Game.GL;
-        GL.DeleteTexture(handle);
-        handle = GL.CreateTexture(TextureTarget.Texture2D);
-        GL.TextureParameter(handle, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
-        GL.TextureParameter(handle, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
-        GL.TextureParameter(handle, TextureParameterName.TextureMinFilter, (int)GLEnum.NearestMipmapLinear);
-        GL.TextureParameter(handle, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
-        //GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureLodBias, -0.4f);
         image?.Dispose();
         using var s = Assets.open(path!);
         image = Image.Load<Rgba32>(s);
-        var maxLevel = Settings.instance.mipmapping;
-        GL.TextureParameter(handle, TextureParameterName.TextureBaseLevel, 0);
-        GL.TextureParameter(handle, TextureParameterName.TextureMaxLevel, maxLevel);
-        
-        // Calculate maximum possible mipmap levels based on texture dimensions
-        const uint maxPossibleLevels = 5u;
-        GL.TextureStorage2D(handle, maxPossibleLevels, SizedInternalFormat.Srgb8Alpha8, (uint)image.Width, (uint)image.Height);
-        if (!image.DangerousTryGetSinglePixelMemory(out imageData)) {
-            throw new SkillIssueException("Couldn't load the atlas contiguously!");
-        }
-
-        /*fixed (Rgba32* pixels = &memory.Span.GetPinnableReference()) {
-            GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, (uint)image.Width, (uint)image.Height,
-                PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
-        }*/
-
         width = image.Width;
         height = image.Height;
         iwidth = 1.0 / width;
         iheight = 1.0 / height;
 
-        mipmap = new Rgba32[width * height];
-
-        //Console.Out.WriteLine("Loading textures the proper way!");
-        // Load image
-        // Thanks ClassiCube for the idea!
-        generateMipmaps(imageData.Span, image.Width, image.Height, maxLevel);
-
-        if (firstLoad) {
-            onFirstLoad();
-        }
-
-        firstLoad = false;
+        uploadToGPU();
     }
 
     public virtual void onFirstLoad() {
-
     }
 
     public void update(double dt) {
         foreach (var dtexture in dtextures) {
             dtexture.tick();
-        }
-        // update mipmaps
-        if (Settings.instance.mipmapping > 0) {
-            generateMipmaps(imageData.Span, image.Width, image.Height, Settings.instance.mipmapping);
         }
     }
 
@@ -370,24 +279,15 @@ public class BTextureAtlas : BTexture2D {
      * Update atlas from a new stitch result (for texture pack hot-reloading)
      */
     public void updateFromStitch(StitchResult result) {
-        // dispose old image
         image?.Dispose();
-
-        // update tile positions
         tilePositions = result.tilePositions;
 
-        // update dimensions
         width = result.width;
         height = result.height;
         iwidth = 1.0 / width;
         iheight = 1.0 / height;
-
-        // update image
         image = result.image;
 
-        // re-upload to GPU
-        var GL = Game.GL;
-        GL.DeleteTexture(handle);
         uploadToGPU();
     }
 }
@@ -396,11 +296,12 @@ public class BlockTextureAtlas : BTextureAtlas {
     public Dictionary<string, Rectangle>? protectedRegions;
 
     // constructor for loading from file path
-    public BlockTextureAtlas(string path, int atlasSize) : base(path, atlasSize) { }
+    public BlockTextureAtlas(string path, int atlasSize) : base(path, atlasSize) {
+    }
 
     // NEW: constructor for stitched atlases
     public BlockTextureAtlas(StitchResult result)
-        : base(result.image, result.width, result.height, 16, delayInit: true) {
+        : base(result.image, result.width, result.height, 16, delayInit:true) {
         tilePositions = result.tilePositions;
         protectedRegions = result.protectedRegions;
         // Now upload to GPU after protected regions are set
@@ -417,18 +318,6 @@ public class BlockTextureAtlas : BTextureAtlas {
 
         return protectedRegions[name];
     }
-
-    /**
-     * Update from stitch result (for texture pack reloading)
-     */
-    public void updateFromStitch(StitchResult result) {
-        // update protected regions
-        protectedRegions = result.protectedRegions;
-
-        // call base updateFromStitch
-        ((BTextureAtlas)this).updateFromStitch(result);
-    }
-
 
     public override void onFirstLoad() {
         // if we have protected regions, use them to position dynamic textures
@@ -460,5 +349,16 @@ public class BlockTextureAtlas : BTextureAtlas {
             addDynamicTexture(new FlowingLavaTexture(this));
             addDynamicTexture(new FireTexture(this));
         }
+    }
+
+    /**
+     * Update from stitch result (for texture pack reloading)
+     */
+    public void updateFromStitch(StitchResult result) {
+        // update protected regions
+        protectedRegions = result.protectedRegions;
+
+        // call base updateFromStitch
+        ((BTextureAtlas)this).updateFromStitch(result);
     }
 }

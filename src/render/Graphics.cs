@@ -37,7 +37,6 @@ public class Graphics : IDisposable {
     // Post-processing shaders
     public readonly Shader fxaaShader;
 
-    public readonly Shader ssaaShader;
 
     public readonly Shader simplePostShader;
 
@@ -96,8 +95,6 @@ public class Graphics : IDisposable {
 
         fxaaShader =
             new Shader(Game.GL, nameof(fxaaShader), "shaders/postprocess/post.vert", "shaders/postprocess/fxaa_only.frag");
-         ssaaShader =
-             new Shader(Game.GL, nameof(ssaaShader), "shaders/postprocess/post.vert", "shaders/postprocess/ssaa.frag");
          simplePostShader =
              new Shader(Game.GL, nameof(simplePostShader), "shaders/postprocess/post.vert", "shaders/postprocess/simple_post.frag");
          crtShader =
@@ -419,7 +416,6 @@ public class Graphics : IDisposable {
         instantColourShader.Dispose();
         instantEntityShader.Dispose();
         fxaaShader.Dispose();
-        ssaaShader.Dispose();
         simplePostShader.Dispose();
         crtShader.Dispose();
     }

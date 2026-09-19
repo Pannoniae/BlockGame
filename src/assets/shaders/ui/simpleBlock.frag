@@ -1,4 +1,4 @@
-﻿ #version 440 compatibility
+﻿#version 440 compatibility
 
 // don't, glass will be fucked
 //layout(early_fragment_tests) in;
@@ -16,5 +16,5 @@ void main() {
     if (colour.a <= 0) {
         discard;
     }
-    colour.a = max(colour.a, 1);
+    colour.a = 1.0;
 }

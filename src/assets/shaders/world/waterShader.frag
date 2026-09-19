@@ -8,21 +8,23 @@
 #include "/shaders/inc/fog.inc.glsl"
 #include "/shaders/inc/dither.inc.glsl"
 #include "/shaders/inc/af.inc.glsl"
+#include "/shaders/inc/tc.inc.glsl"
 
 layout(early_fragment_tests) in;
 layout(location = 0) out vec4 colour;
 
 #if AFFINE_MAPPING == 1
 #ifdef NV_EXTENSIONS
-noperspective centroid in vec2 affineCoords;
+noperspective TC_QUAL in vec2 affineCoords;
 #else
 noperspective in vec2 affineCoords;
 #endif
-centroid in vec2 texCoords;
+TC_QUAL in vec2 texCoords;
 in vec3 worldPos;
 #else
-centroid in vec2 texCoords;
+TC_QUAL in vec2 texCoords;
 #endif
+in vec2 dTexCoords;
 in vec4 tint;
 in float vertexDist;
 
@@ -41,11 +43,9 @@ void main() {
 
     vec4 blockColour;
     #if ANISO_LEVEL == 0
-        // no anisotropic filtering, use regular texture lookup
-        blockColour = texture(blockTexture, finalCoords);
+        blockColour = textureGrad(blockTexture, finalCoords, dFdx(dTexCoords), dFdy(dTexCoords));
     #else
-        // use anisotropic filtering
-        blockColour = textureAF(blockTexture, finalCoords);
+        blockColour = textureAF(blockTexture, finalCoords, dFdx(dTexCoords), dFdy(dTexCoords));
     #endif
     float ratio = calculateFogFactor(vertexDist);
     

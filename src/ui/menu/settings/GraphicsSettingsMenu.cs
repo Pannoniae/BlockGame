@@ -41,16 +41,14 @@ public class GraphicsSettingsMenu : Menu {
 
         var anisotropy = new ToggleButton(this, "anisotropy", false,
             settings.anisotropy switch {
-                0 => 0, 1 => 1, 2 => 2, 4 => 3, 8 => 4, 16 => 5, 32 => 6, 64 => 7, 128 => 8, _ => 3
+                0 => 0, 2 => 1, 4 => 2, 8 => 3, 16 => 4, 32 => 5, _ => 3
             },
-            "Anisotropic Filtering: OFF", "Anisotropic Filtering: 1x", "Anisotropic Filtering: 2x",
-            "Anisotropic Filtering: 4x",
-            "Anisotropic Filtering: 8x", "Anisotropic Filtering: 16x", "Anisotropic Filtering: 32x",
-            "Anisotropic Filtering: 64x");
+            "Anisotropic Filtering: OFF", "Anisotropic Filtering: 2x", "Anisotropic Filtering: 4x",
+            "Anisotropic Filtering: 8x", "Anisotropic Filtering: 16x", "Anisotropic Filtering: 32x");
         anisotropy.centreContents();
         anisotropy.clicked += _ => {
             settings.anisotropy = anisotropy.getIndex() switch {
-                0 => 0, 1 => 1, 2 => 2, 3 => 4, 4 => 8, 5 => 16, 6 => 32, 7 => 64, 8 => 128, _ => 8
+                0 => 0, 1 => 2, 2 => 4, 3 => 8, 4 => 16, 5 => 32, _ => 8
             };
             Game.textures.reloadAtlases();
             Game.renderer?.updateAF();
@@ -127,49 +125,36 @@ public class GraphicsSettingsMenu : Menu {
             settings.msaaSamples = index < msaaSampleValues.Count ? msaaSampleValues[index] : 1;
             Game.instance.updateFramebuffers();
         };
-        msaa.tooltip = "Multi-Sample Anti-Aliasing uses hardware multisampling to reduce aliasing and jaggies.\nThe options shown are hardware-validated for your GPU.";
+        msaa.tooltip = "Multi-Sample Anti-Aliasing smooths the edges of geometry.\nDoes nothing for textures or foliage.\nThe options shown are hardware-validated for your GPU.";
         settingElements.Add(msaa);
         addElement(msaa);
 
-        var ssaa = new ToggleButton(this, "ssaa", false,
-            settings.ssaaScale switch { 1 => 0, 2 => 1, 4 => 2, 8 => 3, _ => 0 },
-            "SSAA: OFF", "SSAA: 2x", "SSAA: 4x", "SSAA: 8x");
+        var ssaaOptions = new List<string> { "SSAA: OFF" };
+        var ssaaSampleValues = new List<int> { 1 };
+
+        foreach (var sample in Game.supportedMSAASamples) {
+            if (sample > 8) {
+                break;
+            }
+            ssaaOptions.Add($"SSAA: {sample}x");
+            ssaaSampleValues.Add((int)sample);
+        }
+
+        var currentSsaaIndex = ssaaSampleValues.IndexOf(settings.ssaaSamples);
+        if (currentSsaaIndex == -1) {
+            currentSsaaIndex = 0;
+        }
+
+        var ssaa = new ToggleButton(this, "ssaa", false, currentSsaaIndex, ssaaOptions.ToArray());
         ssaa.centreContents();
         ssaa.clicked += _ => {
-            settings.ssaaScale = ssaa.getIndex() switch {
-                0 => 1, 1 => 2, 2 => 4, 3 => 8, _ => 1
-            };
+            var index = ssaa.getIndex();
+            settings.ssaaSamples = index < ssaaSampleValues.Count ? ssaaSampleValues[index] : 1;
             Game.instance.updateFramebuffers();
         };
-        ssaa.tooltip = "Super-Sample Anti-Aliasing renders the game at a higher resolution then downscales.\nProvides excellent quality but severely impacts performance.\nThis option stacked with MSAA is deadly.";
+        ssaa.tooltip = "Super-Sample Anti-Aliasing renders the game at a higher resolution then downscales.\nProvides excellent quality but severely impacts performance.";
         settingElements.Add(ssaa);
         addElement(ssaa);
-
-        var ssaaModeOptions = new List<string> { "SSAA Mode: Normal", "SSAA Mode: Weighted" };
-        var ssaaModeTooltip =
-            "SSAA sampling mode.\nNormal: uniform sampling\nWeighted: center-biased sampling for less blur";
-
-        // add per-sample option if supported
-        if (Game.sampleShadingSupported) {
-            ssaaModeOptions.Add("SSAA Mode: Per-Sample");
-            ssaaModeTooltip += "\nPer-Sample: hardware-accelerated per-sample shading";
-        }
-        else {
-            // clamp setting if per-sample was selected but not supported
-            if (settings.ssaaMode >= 2) {
-                settings.ssaaMode = 0;
-            }
-        }
-
-        var ssaaMode = new ToggleButton(this, "ssaaMode", false, settings.ssaaMode, ssaaModeOptions.ToArray());
-        ssaaMode.centreContents();
-        ssaaMode.clicked += _ => {
-            settings.ssaaMode = ssaaMode.getIndex();
-            Game.instance.updateFramebuffers();
-        };
-        ssaaMode.tooltip = ssaaModeTooltip;
-        settingElements.Add(ssaaMode);
-        addElement(ssaaMode);
 
 
 

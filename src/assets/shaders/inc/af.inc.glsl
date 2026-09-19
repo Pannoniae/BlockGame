@@ -1,9 +1,5 @@
-﻿uniform ivec2 texSize;
+uniform ivec2 texSize;
 uniform ivec2 atlasSize;
-
-float det(mat2 matrix) {
-    return matrix[0].x * matrix[1].y - matrix[0].y * matrix[1].x;
-}
 
 vec2 mirror(vec2 uv, vec2 minBounds, vec2 maxBounds) {
     vec2 range = maxBounds - minBounds;
@@ -30,64 +26,58 @@ vec4 mapAniso(float h, float maxrange) {
     }
 }
 
-vec4 textureAF(sampler2D texSampler, vec2 uv) {
-    const vec2 ri = vec2(1. / atlasSize);
-    const vec2 i = vec2(texSize * (ri));
-    // calculate subtexture boundaries for mirroring
-    // atlas is 256x256 with 16x16 textures (16 textures per row/column)
-    const vec2 subtexSize = vec2(1.0) * i; // each subtexture is 1/16 of atlas
-    const vec2 texelSize = vec2(1.0) * ri; // size of one texel in normalized coords
-    const vec2 margin = texelSize * 0.5; // half-texel margin to prevent bleeding
-    
-    vec2 subtexIndex = floor(uv / subtexSize);
-    vec2 subtexMin = subtexIndex * subtexSize;
-    vec2 subtexMax = (subtexIndex + 1.0) * subtexSize;
-    vec2 subtexMinClamped = subtexMin + margin;
-    vec2 subtexMaxClamped = subtexMax - margin;
-    
-    mat2 J = inverse(mat2(dFdx(uv), dFdy(uv)));
+
+vec4 textureAF(sampler2D texSampler, vec2 uv, vec2 ddx, vec2 ddy) {
+    vec2 ri = 1.0 / vec2(atlasSize); // one texel in uv
+    vec2 subtexSize = vec2(texSize) * ri;
+    vec2 subtexMin = floor(uv / subtexSize) * subtexSize;
+    vec2 subtexMax = subtexMin + subtexSize;
+
+    // pixel footprint ellipse in texels
+    // J = (M M^T)^-1 w/ M = [ddx | ddy]; eigenvalues are 1/axis^2
+    mat2 J = inverse(mat2(ddx * vec2(atlasSize), ddy * vec2(atlasSize)));
     J = transpose(J) * J;
-    float d = det(J);
+    float d = determinant(J);
     float t = J[0][0] + J[1][1];
     float D = sqrt(abs(t * t - 4.001 * d));
-    // major
+    // smaller  = major axis, larger = minor
     float V = (t - D) / 2.0;
-    // minor
     float v = (t + D) / 2.0;
-    // magnify along major axis
-    float M = 1.0 / sqrt(V);
-    // magnify along minor axis
-    float m = 1. / sqrt(v);
-    // major axis dv
-    vec2 A = M * normalize(vec2(-J[0][1], J[0][0] - V));
+    float M = inversesqrt(V); // major
+    float m = inversesqrt(v); // minor
     
-    // calculate anisotropy ratio and adapt sample count
+    vec2 e0 = vec2(-J[0][1], J[0][0] - V);
+    vec2 e1 = vec2(J[1][1] - V, -J[0][1]);
+    vec2 A = M * normalize(dot(e0, e0) > dot(e1, e1) ? e0 : e1);
+
     float anisotropy = max(M / m, 1.0);
-    float sampleCount = min(ANISO_LEVEL, ceil(anisotropy));
+    float sampleCount = min(float(ANISO_LEVEL), ceil(anisotropy));
+
+#if DEBUG_ANISO != 0
+    vec4 baseColor = texture(texSampler, clamp(mirror(uv, subtexMin, subtexMax), subtexMin + ri * 0.5, subtexMax - ri * 0.5));
+    return mix(mapAniso(anisotropy, 256.0), baseColor, 0.4);
+#endif
     
-    // debug mode: return anisotropy visualization
-    if (DEBUG_ANISO != 0) {
-        vec4 baseColor = texture(texSampler, clamp(mirror(uv, subtexMin, subtexMax), subtexMinClamped, subtexMaxClamped));
-        vec4 anisoColor = mapAniso(anisotropy, 256.0);
-        return mix(anisoColor, baseColor, 0.4);
-    }
-    
-    float lod = 0.0;
-    
-    float samplesHalf = sampleCount / 2.0;
-    vec2 ADivSamples = A / sampleCount;
-    
+    float lod = min(log2(max(max(m, M / float(ANISO_LEVEL)), 1.0)), log2(float(texSize.x)));
+
+    // neighbour bleed fix
+    vec2 margin = ri * (0.5 * exp2(ceil(lod)));
+    vec2 lo = subtexMin + margin;
+    vec2 hi = subtexMax - margin;
+
+    vec2 step = (A * ri) / sampleCount;
+    vec2 start = uv - step * (sampleCount - 1.0) * 0.5;
+
+    // transparent texels are black in the atlas so we must not darken the result
     vec4 c = vec4(0.0);
-    for (float i = -samplesHalf + 0.5; i < samplesHalf; i++) {
-        vec2 sampleUV = uv + ADivSamples * i;
-        sampleUV = clamp(mirror(sampleUV, subtexMin, subtexMax), subtexMinClamped, subtexMaxClamped);
-        vec4 colorSample = textureLod(texSampler, sampleUV, lod);
-        
-        c.rgb += colorSample.rgb * colorSample.a;
-        c.a += colorSample.a;
+    for (float i = 0.0; i < sampleCount; i++) {
+        vec2 sampleUV = clamp(mirror(start + step * i, subtexMin, subtexMax), lo, hi);
+        vec4 s = textureLod(texSampler, sampleUV, lod);
+        c.rgb += s.rgb * s.a;
+        c.a += s.a;
     }
-    c.rgb /= c.a;
+    // nan fix
+    c.rgb /= max(c.a, 1e-4);
     c.a /= sampleCount;
-    
     return c;
 }

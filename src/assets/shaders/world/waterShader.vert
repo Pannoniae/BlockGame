@@ -37,17 +37,20 @@ uniform vec3 uChunkPos;
     #endif
 #endif
 
+#include "/shaders/inc/tc.inc.glsl"
+
 #if AFFINE_MAPPING == 1
 #ifdef NV_EXTENSIONS
-noperspective centroid out vec2 affineCoords;
+noperspective TC_QUAL out vec2 affineCoords;
 #else
 noperspective out vec2 affineCoords;
 #endif
-centroid out vec2 texCoords; // perspective-correct
+TC_QUAL out vec2 texCoords; // perspective-correct
 out vec3 worldPos;
 #else
-centroid out vec2 texCoords;
+TC_QUAL out vec2 texCoords;
 #endif
+out vec2 dTexCoords;
 out vec4 tint;
 out float vertexDist;
 
@@ -81,6 +84,7 @@ void main() {
 #endif
 
     texCoords = texCoord * n;
+    dTexCoords = texCoords;
 #if AFFINE_MAPPING == 1
     affineCoords = texCoords;
     worldPos = pos;
