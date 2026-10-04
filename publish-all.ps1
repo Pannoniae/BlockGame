@@ -35,13 +35,24 @@ function Build-Platform {
     Copy-Item -Force .\publishs\server.pdb .\publish\
     Copy-Item -Force .\publishs\server.runtimeconfig.json .\publish\
 
-    # publish tools (they go to publish/ root via NetBeauty config)
-    dotnet publish SNBT2NBT/SNBT2NBT.csproj -r $runtime -c Release --no-restore
-    dotnet publish NBT2SNBT/NBT2SNBT.csproj -r $runtime -c Release --no-restore
-    dotnet publish win10fix/win10fix.csproj -r $runtime -c Release --no-restore
+    # publish tools to publisht/, NetBeauty refuses to beautify several SCD apps into the same dir
+    Remove-Item -Recurse -Force .\publisht\ -ErrorAction SilentlyContinue
+    dotnet publish SNBT2NBT/SNBT2NBT.csproj -r $runtime -c Release $scFlag --no-restore
+    dotnet publish NBT2SNBT/NBT2SNBT.csproj -r $runtime -c Release $scFlag --no-restore
+    dotnet publish win10fix/win10fix.csproj -r $runtime -c Release $scFlag --no-restore
+
+    # tools are self-contained too, but their runtime files are identical to the client's in libs/, so only copy the tools' own files
+    foreach ($t in "snbt2nbt", "nbt2snbt", "win10fix") {
+        Copy-Item -Force ".\publisht\$t\$t$exe" .\publish\
+        Copy-Item -Force ".\publisht\$t\libs\$t.dll", ".\publisht\$t\libs\$t.pdb", ".\publisht\$t\libs\$t.deps.json", ".\publisht\$t\libs\$t.runtimeconfig.json" .\publish\libs\
+    }
+    # the tools' app dir is libs/, so their (NetBeauty-patched) host has to live there too
+    $hostLibs = if ($runtime -like "win-*") { "hostfxr.dll", "hostpolicy.dll" } else { "libhostfxr.so", "libhostpolicy.so" }
+    foreach ($h in $hostLibs) { Copy-Item -Force ".\publisht\snbt2nbt\libs\$h" .\publish\libs\ }
 
     # cleanup
     Remove-Item -Recurse -Force .\publishs\
+    Remove-Item -Recurse -Force .\publisht\
 
     # rename publish to final output dir
     Rename-Item .\publish\ $outputDir
@@ -70,7 +81,7 @@ if ($versionLine -and $versionLine.Matches.Groups[1].Success) {
 }
 
 # Build both platforms
-Build-Platform -runtime "win-x64" -outputDir "BlockGame-win-$version" -selfContained $false
+Build-Platform -runtime "win-x64" -outputDir "BlockGame-win-$version" -selfContained $true
 Build-Platform -runtime "linux-x64" -outputDir "BlockGame-linux-$version" -selfContained $true
 
 $endTime = Get-Date

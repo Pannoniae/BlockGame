@@ -1,18 +1,23 @@
 <Project>
   <PropertyGroup>
-    <SatoriVersion Condition="'$(SatoriVersion)' == ''">20260903.1</SatoriVersion>
+    <SatoriVersion Condition="'$(SatoriVersion)' == ''">20261004.1-net11.0</SatoriVersion>
     <SatoriBaseUrl>https://github.com/hez2010/Satori/releases/download/$(SatoriVersion)</SatoriBaseUrl>
 
     <!-- map RID to archive name: win-x64 → windows_x64, linux-musl-x64 → linux_musl_x64, etc. -->
     <_SatoriRid>$(RuntimeIdentifier.Replace('win-', 'windows-').Replace('-', '_'))</_SatoriRid>
     <SatoriArchiveName>$(_SatoriRid).zip</SatoriArchiveName>
 
-    <SatoriCacheDir>$(IntermediateOutputPath)Satori\$(SatoriVersion)\</SatoriCacheDir>
+    <SatoriCacheDir>$(MSBuildThisFileDirectory)obj\Satori\$(SatoriVersion)\</SatoriCacheDir>
     <SatoriArchivePath>$(SatoriCacheDir)$(SatoriArchiveName)</SatoriArchivePath>
-    <SatoriExtractDir>$(SatoriCacheDir)extracted\</SatoriExtractDir>
+    <!-- per-RID!-->
+    <SatoriExtractDir>$(SatoriCacheDir)$(_SatoriRid)\</SatoriExtractDir>
   </PropertyGroup>
 
-  <Target Name="FetchSatori" AfterTargets="ResolveRuntimePackAssets" Condition="'$(RuntimeIdentifier)' != ''">
+  <Target Name="WarnSatoriFdd" BeforeTargets="Publish" Condition="'$(RuntimeIdentifier)' != '' And '$(SelfContained)' != 'true'">
+    <Warning Text="Satori: $(MSBuildProjectName) is published framework-dependent ($(RuntimeIdentifier)), it will run on the STOCK GC. Publish with --sc." />
+  </Target>
+
+  <Target Name="FetchSatori" AfterTargets="ResolveRuntimePackAssets" Condition="'$(RuntimeIdentifier)' != '' And '$(SelfContained)' == 'true'">
     <DownloadFile
         SourceUrl="$(SatoriBaseUrl)/$(SatoriArchiveName)"
         DestinationFolder="$(SatoriCacheDir)"
@@ -20,7 +25,7 @@
         Condition="!Exists('$(SatoriArchivePath)')" />
   </Target>
 
-  <Target Name="ExtractSatori" AfterTargets="FetchSatori" DependsOnTargets="FetchSatori" Condition="'$(RuntimeIdentifier)' != ''">
+  <Target Name="ExtractSatori" AfterTargets="FetchSatori" DependsOnTargets="FetchSatori" Condition="'$(RuntimeIdentifier)' != '' And '$(SelfContained)' == 'true'">
     <Unzip
         SourceFiles="$(SatoriArchivePath)"
         DestinationFolder="$(SatoriExtractDir)"
@@ -28,7 +33,7 @@
         Condition="!Exists('$(SatoriExtractDir)coreclr.dll') And !Exists('$(SatoriExtractDir)libcoreclr.so')" />
   </Target>
 
-  <Target Name="ReplaceSatoriAssets" AfterTargets="ExtractSatori" DependsOnTargets="ExtractSatori" Condition="'$(RuntimeIdentifier)' != ''">
+  <Target Name="ReplaceSatoriAssets" AfterTargets="ExtractSatori" DependsOnTargets="ExtractSatori" Condition="'$(RuntimeIdentifier)' != '' And '$(SelfContained)' == 'true'">
     <ItemGroup>
       <!-- remove stock runtime DLLs -->
       <RuntimePackAsset Remove="@(RuntimePackAsset)"
@@ -54,6 +59,14 @@
         <NuGetPackageId>SatoriGC</NuGetPackageId>
         <NuGetPackageVersion>0.0.0-satori</NuGetPackageVersion>
       </RuntimePackAsset>
+
+      <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)"
+                               Condition="'%(ReferenceCopyLocalPaths.NuGetPackageId)' != 'SatoriGC'
+                                     And ('%(ReferenceCopyLocalPaths.Filename)' == 'coreclr'
+                                       Or '%(ReferenceCopyLocalPaths.Filename)' == 'libcoreclr'
+                                       Or '%(ReferenceCopyLocalPaths.Filename)' == 'clrjit'
+                                       Or '%(ReferenceCopyLocalPaths.Filename)' == 'libclrjit'
+                                       Or '%(ReferenceCopyLocalPaths.Filename)' == 'System.Private.CoreLib')" />
     </ItemGroup>
   </Target>
 </Project>

@@ -1482,6 +1482,7 @@ public partial class Game {
                 GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
                 GL.BlitFramebuffer(0, 0, fbWidth, fbHeight, 0, 0, width, height,
                     ClearBufferMask.ColorBufferBit, Settings.instance.resolutionScaleLinear ? BlitFramebufferFilter.Linear : BlitFramebufferFilter.Nearest);
+                GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
                 goto esc;
             }
 

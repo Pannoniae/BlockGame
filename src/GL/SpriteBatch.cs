@@ -630,7 +630,7 @@ public sealed class SpriteBatch : IDisposable {
 
                 unsafe {
                     GL.DrawElements(PrimitiveType.Triangles, batchCount * 6,
-                        DrawElementsType.UnsignedInt, (void*)((batchStart - countWhiteItemsBefore(batchStart)) * 6 * sizeof(ushort)));
+                        DrawElementsType.UnsignedInt, (void*)((batchStart - countWhiteItemsBefore(batchStart)) * 6 * sizeof(uint)));
                 }
             }
         }
@@ -720,7 +720,7 @@ public sealed class SpriteBatch : IDisposable {
                     tex.bind();
                     unsafe {
                         GL.DrawElements(PrimitiveType.Triangles, (texBatchEnd - texBatchStart) * 6,
-                            DrawElementsType.UnsignedInt, (void*)(vertOffset * sizeof(ushort)));
+                            DrawElementsType.UnsignedInt, (void*)(vertOffset * sizeof(uint)));
                     }
 
                     vertOffset += (texBatchEnd - texBatchStart) * 6;
