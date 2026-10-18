@@ -89,6 +89,7 @@ public partial class Block {
     public static Block MAHOGANY_SLAB;
     public static Block MAHOGANY_LEAVES;
     public static Block MAHOGANY_SAPLING;
+    public static Block CLIMBABLE_LIANA;
     public static Block LIANA;
 
     public static Block PINE_LOG;
@@ -780,22 +781,21 @@ public partial class Block {
         MAHOGANY_SAPLING.material(Material.ORGANIC);
         MAHOGANY_SAPLING.setFlammable(60);
 
-        LIANA = register("liana", new MeshBlock("Liana"));
-        LIANA.setTex(uv("blocks.png", 30, 2));
-        LIANA.transparency();
-        LIANA.partialBlock();
-        LIANA.itemLike();
-        LIANA.material(Material.ORGANIC);
-        LIANA.setHardness(0.1);
+        CLIMBABLE_LIANA = register("climbable liana", new MeshBlock("Climbable Liana"));
+        CLIMBABLE_LIANA.setTex(uv("blocks.png", 30, 2));
+        CLIMBABLE_LIANA.transparency();
+        CLIMBABLE_LIANA.partialBlock();
+        CLIMBABLE_LIANA.itemLike();
+        CLIMBABLE_LIANA.material(Material.ORGANIC);
+        CLIMBABLE_LIANA.setHardness(0.1);
 
-
-        /*LIANA = register("liana", new Block("Liana"));
-        LIANA.setTex(crossUVs(30, 2));
+        LIANA = register("liana", new Block("Liana"));
+        LIANA.setTex(crossUVs(31, 2));
         LIANA.setModel(BlockModel.makeGrass(LIANA));
         LIANA.transparency();
         LIANA.partialBlock();
         LIANA.noCollision();
-        LIANA.itemLike();*/
+        LIANA.itemLike();
 
         CACTUS = register("cactus", new Cactus("Cactus"));
         CACTUS.setTex(grassUVs(1, 3, 0, 3, 1, 3));
