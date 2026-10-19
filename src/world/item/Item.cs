@@ -113,7 +113,7 @@ public class Item {
     public static Item GREEN_TEA_LEAVES;
     public static Item BLACK_TEA;
     public static Item GREEN_TEA;
-    //public static Item CHERRY;
+    public static Item CHERRY;
     public static Item PINEAPPLE;
     public static Item BANANA;
     public static Item STRAWBERRY_SEEDS;
@@ -446,6 +446,10 @@ public class Item {
         APPLE = register("apple", new Food("Apple", 5));
         APPLE.tex = uv("items.png", 0, 10);
         material[APPLE.id] = true;
+
+        CHERRY = register("cherry", new Food("Cherry", 5));
+        CHERRY.tex = uv("items.png", 14, 10);
+        material[CHERRY.id] = true;
 
         MAPLE_SYRUP = register("mapleSyrup", new Food("Maple Syrup", 10));
         MAPLE_SYRUP.tex = uv("items.png", 1, 10);

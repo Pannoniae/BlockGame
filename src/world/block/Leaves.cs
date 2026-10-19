@@ -33,9 +33,9 @@ public class Leaves : Block {
     }
 
     public override void getDrop(List<ItemStack> drops, World world, int x, int y, int z, byte metadata, bool canBreak) {
-        // oak: 1 in 10 chance to drop apple
+        // oak: 1 in 10 chance to drop fruit
         if (id == LEAVES.id && Game.random.Next(10) == 0) {
-            drops.Add(new ItemStack(Item.APPLE, 1, 0));
+            drops.Add(new ItemStack(Game.random.Next(2) == 0 ? Item.APPLE : Item.CHERRY, 1, 0));
         }
         // oak: 1 in 15 chance to drop sapling
         if (id == LEAVES.id && Game.random.Next(15) == 0) {
@@ -55,14 +55,9 @@ public class Leaves : Block {
         if (id == MAHOGANY_LEAVES.id && Game.random.Next(15) == 0) {
             drops.Add(new ItemStack(MAHOGANY_SAPLING.item, 1, 0));
         }
-        // mahogany: 1 in 10 chance to drop pineapple
+        // mahogany: 1 in 10 chance to drop either pineapple or tea seeds
         if (id == MAHOGANY_LEAVES.id && Game.random.Next(10) == 0) {
-            drops.Add(new ItemStack(Item.PINEAPPLE, 1, 0));
-        }
-
-        // mahogany: 1 in 10 chance to drop tea seeds
-        if (id == MAHOGANY_LEAVES.id && Game.random.Next(10) == 0) {
-            drops.Add(new ItemStack(Item.TEA_SEEDS, 1, 0));
+            drops.Add(new ItemStack(Game.random.Next(2) == 0 ? Item.PINEAPPLE : Item.TEA_SEEDS, 1, 0));
         }
 
         // PINE: 1 in 15 chance to drop sapling

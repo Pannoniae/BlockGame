@@ -132,6 +132,7 @@ public partial class Block {
     public static Door PINE_DOOR;
     public static Door GLASS_DOOR;
 
+
     public static Block CANDY;
     public static Block CANDY_SLAB;
     public static Block CANDY_STAIRS;
