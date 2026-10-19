@@ -320,7 +320,7 @@ public class PlayerHandRenderer {
         mat.translate(sinSwingSqrt * -0.1f, ((float)-getLower(interp) + circleishThing) * 0.2f, sinSwing * 0.05f);
 
         //mat.translate(0f, -0.2f, 0);
-        mat.rotate(15, 0, 1, 0);
+        mat.rotate(17.5f, 0, 1, 0);
         // we cheat a bit, we need to change the base
         mat.rotate(sinSwingSqrt * 50, 0, 0, 1);
         mat.rotate(-15, 0, 1, 0);
@@ -335,11 +335,11 @@ public class PlayerHandRenderer {
 
         // we rotate the item "into place"
         mat.rotate(-45 - 5, 1, 0, 0);
-        mat.rotate(60 + 15 - 90, 0, 0, 1);
+        mat.rotate(60 + 15, 0, 0, 1);
 
         mat.rotate(-90 + 10, 1, 0, 0);
 
-        mat.translate(0.4f, 0, 0);
+        //mat.translate(0.4f, 0, 0);
 
         // apply head pitch!!
         //mat.rotate(-headRotX, 1, 0, 0);

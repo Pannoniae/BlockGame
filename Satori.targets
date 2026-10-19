@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <SatoriVersion Condition="'$(SatoriVersion)' == ''">20261004.1-net11.0</SatoriVersion>
+    <SatoriVersion Condition="'$(SatoriVersion)' == ''">20261010.2-net11.0</SatoriVersion>
     <SatoriBaseUrl>https://github.com/hez2010/Satori/releases/download/$(SatoriVersion)</SatoriBaseUrl>
 
     <!-- map RID to archive name: win-x64 → windows_x64, linux-musl-x64 → linux_musl_x64, etc. -->
