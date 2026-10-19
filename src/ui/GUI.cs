@@ -992,12 +992,11 @@ public class GUI {
         var scale = float.Min(sx, sy); // use smaller scale to fit
         mat.scale(scale, -scale, scale); // negative Y to fix the flip..
 
-        //mat.translate(0, 24, 0);
+        // tilt around the body centre
+        mat.translate(0, 14, 0);
         mat.rotate(rotationX, 1, 0, 0); // tilt
         mat.rotate(180 + rotationY, 0, 1, 0); // face south (towards screen)
-
-        // rotate around the head!
-        //mat.translate(0, -24, 0); // move origin to feet
+        mat.translate(0, -14, 0);
 
         var ide = EntityRenderers.ide;
 

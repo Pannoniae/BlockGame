@@ -27,14 +27,24 @@ public class SurvivalInventoryMenu : InventoryMenu {
 
     // player model rotation state
     public float proty = 5f;
-    public float protx = -20f;
+    public float protx = PITCH_REST;
     private bool draggingPlayer = false;
     private Vector2 lastDragPos;
 
-    // inertia
+    // deg per GUI pixel, todo add this to the prefs, like mouse accel * constant?
+    private static readonly Vector2 SENS = new(1.6f, 0.6f);
+
+    // inertia, X = yaw, Y = pitch
     private Vector2 rotVel = Vector2.Zero;
-    private const float ROT_DAMPING = 0.95f;
-    private const float ROT_EPSILON = 0.1f;
+    private Vector2 frameRot = Vector2.Zero;
+    private const float VEL_TAU = 0.15f;
+    // coast friction
+    private const float ROT_FRICTION = 3.5f;
+    private const float ROT_EPSILON = 2f;
+    private const float PITCH_MAX = 80f;
+    private const float PITCH_REST = -20f;
+    // spring stiffness, rad/s. ~0.5s to settle
+    private const float PITCH_OMEGA = 10f;
 
     public SurvivalInventoryMenu(Vector2I guiPos) {
         this.guiPos = guiPos;
@@ -57,24 +67,55 @@ public class SurvivalInventoryMenu : InventoryMenu {
     protected override int getTextOffsetX() => textOffsetX;
     protected override int getTextOffsetY() => textOffsetY;
 
-    public override void update(double dt) {
-        base.update(dt);
+    public override void render(double dt, double interp) {
+        base.render(dt, interp);
 
-        // apply inertia when not dragging
-        if (!draggingPlayer) {
-            protx += rotVel.Y * (float)dt;
-            proty += rotVel.X * (float)dt;
+        var fdt = (float)dt;
+        if (fdt <= 0f) {
+            return;
+        }
 
-            protx = float.Clamp(protx, -80f, 80f);
+        if (draggingPlayer) {
+            var a = 1f - float.Exp(-fdt / VEL_TAU);
+            rotVel = Vector2.Lerp(rotVel, frameRot / fdt, a);
+            frameRot = Vector2.Zero;
+            return;
+        }
 
-            // decay velocity
-            rotVel *= ROT_DAMPING;
-
-            // stop if too small
-            if (rotVel.LengthSquared() < ROT_EPSILON * ROT_EPSILON) {
-                rotVel = Vector2.Zero;
+        // yaw coasting
+        if (rotVel.X != 0f) {
+            proty += rotVel.X * fdt;
+            rotVel.X *= float.Exp(-ROT_FRICTION * fdt);
+            if (float.Abs(rotVel.X) < ROT_EPSILON) {
+                rotVel.X = 0f;
             }
         }
+
+        var x = protx - PITCH_REST;
+        if (x != 0f || rotVel.Y != 0f) {
+            var e = float.Exp(-PITCH_OMEGA * fdt);
+            var tmp = (rotVel.Y + PITCH_OMEGA * x) * fdt;
+            x = (x + tmp) * e;
+            rotVel.Y = (rotVel.Y - PITCH_OMEGA * tmp) * e;
+
+            if (float.Abs(x) < 0.01f && float.Abs(rotVel.Y) < ROT_EPSILON) {
+                x = 0f;
+                rotVel.Y = 0f;
+            }
+
+            protx = PITCH_REST + x;
+        }
+
+        clampPitch();
+    }
+
+    private void clampPitch() {
+        if (protx is > PITCH_MAX or < -PITCH_MAX) {
+            protx = float.Clamp(protx, -PITCH_MAX, PITCH_MAX);
+            // kill the pitch speed
+            rotVel.Y = 0f;
+        }
+        proty %= 360f;
     }
 
     protected override void drawSlots(Vector2 guiBoundsPos) {
@@ -118,7 +159,9 @@ public class SurvivalInventoryMenu : InventoryMenu {
             guiPos.X >= areax && guiPos.X <= areax + playerModelW &&
             guiPos.Y >= areay && guiPos.Y <= areay + playerModelH) {
             draggingPlayer = true;
-            lastDragPos = Game.mousePos;
+            lastDragPos = mouse.Position;
+            rotVel = Vector2.Zero;
+            frameRot = Vector2.Zero;
             return;
         }
 
@@ -127,15 +170,14 @@ public class SurvivalInventoryMenu : InventoryMenu {
 
     public override void onMouseMove(IMouse mouse, Vector2 pos) {
         if (draggingPlayer) {
-            var delta = pos - lastDragPos;
-            var rotDelta = new Vector2(delta.X * 0.4f, delta.Y * 0.15f);
+            var rd = (pos - lastDragPos) / GUI.guiScale * SENS;
 
-            protx += rotDelta.Y;
-            proty += rotDelta.X;
-            protx = float.Clamp(protx, -80f, 80f);
-
-            // update velocity for inertia
-            rotVel = rotDelta * 60f;
+            // only count pitch that actually got applied, otherwise shoving it into the clamp increases it too...
+            var ox = protx;
+            proty += rd.X;
+            protx += rd.Y;
+            clampPitch();
+            frameRot += new Vector2(rd.X, protx - ox);
 
             lastDragPos = pos;
             return;
