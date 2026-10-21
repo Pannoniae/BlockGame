@@ -532,6 +532,11 @@ public class ClientPacketHandler : PacketHandler {
         var entity = Game.world.getEntity(p.entityID);
 
         if (entity != null) {
+            if (entity is Player pl) {
+                pl.skinTex?.Dispose();
+                pl.skinTex = null;
+            }
+
             Game.world.removeEntity(entity);
             Log.info($"Despawned entity id={p.entityID}");
         }
@@ -565,6 +570,10 @@ public class ClientPacketHandler : PacketHandler {
 
         player.resetSnapshots(p.position, p.rotation);
         Game.world.addEntity(player);
+
+        if (ClientConnection.instance?.playerList.GetValueOrDefault(p.entityID)?.skin is { } skin) {
+            applySkin(player, skin);
+        }
         Log.info($"[Client] Spawned player '{p.username}' (entityID={p.entityID})");
     }
 
@@ -743,7 +752,10 @@ public class ClientPacketHandler : PacketHandler {
         }
 
         // add or update player in list
-        ClientConnection.instance.playerList[p.entityID] = new PlayerListEntry(p.entityID, p.username, p.ping);
+        var list = ClientConnection.instance.playerList;
+        list[p.entityID] = new PlayerListEntry(p.entityID, p.username, p.ping) {
+            skin = list.GetValueOrDefault(p.entityID)?.skin
+        };
         Log.info($"Player list: added {p.username} (ping={p.ping}ms)");
     }
 
@@ -770,46 +782,68 @@ public class ClientPacketHandler : PacketHandler {
     }
 
     public void handlePlayerSkin(PlayerSkinPacket p) {
-        if (Game.world == null) {
-            return;
-        }
-
-        var entity = Game.world.getEntity(p.entityID);
-        if (entity is not Player player) {
+        var conn = ClientConnection.instance;
+        if (conn == null) {
             return;
         }
 
         // empty skin data = use default
-        if (p.skinData.Length == 0) {
-            player.skinTex?.Dispose();
-            player.skinTex = null;
-            return;
+        byte[]? skin = null;
+        if (p.skinData.Length > 0) {
+            if (!validSkin(p)) {
+                return;
+            }
+
+            skin = p.skinData;
         }
 
-        // validate size (max 64KB)
+        if (conn.playerList.TryGetValue(p.entityID, out var entry)) {
+            entry.skin = skin;
+        }
+
+        if (Game.world?.getEntity(p.entityID) is Player player) {
+            applySkin(player, skin);
+        }
+    }
+
+    private static bool validSkin(PlayerSkinPacket p) {
         if (p.skinData.Length > 65536) {
             Log.warn($"Rejected oversized skin for player {p.entityID}: {p.skinData.Length} bytes");
-            return;
+            return false;
         }
 
         try {
-            // load and validate skin
             using var ms = new MemoryStream(p.skinData);
             var img = Image.Load<Rgba32>(ms);
 
             if (!GL.BTexture2D.validateTransparency(img)) {
                 Log.warn($"Rejected transparent skin for player {p.entityID}");
-                return;
+                return false;
             }
 
-            // create texture and load from bytes
-            player.skinTex?.Dispose();
-            player.skinTex = new GL.BTexture2D("");
-            player.skinTex.loadFromBytes(p.skinData);
-
-            Log.info($"Loaded skin for player {p.entityID} ({p.skinData.Length} bytes, {img.Width}x{img.Height})");
+            Log.info($"Got skin for player {p.entityID} ({p.skinData.Length} bytes, {img.Width}x{img.Height})");
+            return true;
         } catch (Exception e) {
             Log.warn($"Failed to load skin for player {p.entityID}: {e.Message}");
+            return false;
+        }
+    }
+
+    private static void applySkin(Player player, byte[]? skin) {
+        player.skinTex?.Dispose();
+        player.skinTex = null;
+
+        if (skin == null) {
+            return;
+        }
+
+        try {
+            player.skinTex = new GL.BTexture2D("");
+            player.skinTex.loadFromBytes(skin);
+        } catch (Exception e) {
+            player.skinTex?.Dispose();
+            player.skinTex = null;
+            Log.warn($"Failed to upload skin for player {player.id}: {e.Message}");
         }
     }
 

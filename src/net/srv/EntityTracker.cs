@@ -244,45 +244,18 @@ public class EntityTracker {
             }
 
             if (t.entity is Player sp) {
-
-                // DON'T SEND SPAWNS, we send them in finishLogin!
-                continue;
-
-                Log.info($"[EntityTracker] Sending spawn for player {sp.name} (ID={t.entity.id}) to viewer {viewer.username}");
-                /*viewer.send(new SpawnPlayerPacket {
-                    entityID = t.entity.id,
+                viewer.send(new SpawnPlayerPacket {
+                    entityID = sp.id,
                     username = sp.name,
-                    position = t.entity.position,
-                    rotation = t.entity.rotation
-                }, DeliveryMethod.ReliableOrdered);*/
+                    position = sp.position,
+                    rotation = sp.rotation,
+                    sneaking = sp.sneaking,
+                    flying = sp.flyMode
+                }, DeliveryMethod.ReliableOrdered);
 
-                GameServer.instance.send(
-                    new SpawnPlayerPacket {
-                        entityID = sp.id,
-                        username = sp.name,
-                        position = sp.position,
-                        rotation = sp.rotation,
-                        sneaking = sp.sneaking,
-                        flying = sp.flyMode
-                    },
-                    DeliveryMethod.ReliableOrdered,
-                    exclude: viewer
-                );
 
-                // broadcast initial entity state to all existing clients
-                sp.state.markAllDirty();
-                GameServer.instance.send(
-                    new EntityStatePacket {
-                        entityID = sp.id,
-                        data = sp.state.serializeAll()
-                    },
-                    DeliveryMethod.ReliableOrdered,
-                    exclude: viewer
-                );
-
-                // send their held item
                 viewer.send(new HeldItemChangePacket {
-                    entityID = t.entity.id,
+                    entityID = sp.id,
                     slotIndex = (byte)sp.inventory.selected,
                     heldItem = sp.inventory.getSelected()
                 }, DeliveryMethod.ReliableOrdered);
@@ -311,11 +284,6 @@ public class EntityTracker {
         // send despawn to old viewers no longer in range (in viewers but not in tempViewers)
         foreach (var viewer in t.viewers) {
             if (t.tempViewers.Contains(viewer)) {
-                continue;
-            }
-
-            // DON'T SEND DESPAWNS for players either (todo players never despawn until disconnect, this needs to be improved later)
-            if (t.entity is Player) {
                 continue;
             }
 

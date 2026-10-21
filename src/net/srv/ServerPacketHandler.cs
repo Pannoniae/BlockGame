@@ -292,7 +292,8 @@ public class ServerPacketHandler : PacketHandler {
 
         Log.info($"Player '{conn.username}' logged in (entityID={conn.entityID})");
 
-        // send all existing players to the new client (both player list and spawn packets)
+        // existing players go into the new client's player list
+        // the entities themselves come from the EntityTracker, in range only
         foreach (var existingConn in GameServer.instance.connections.Values) {
             if (existingConn.entityID == conn.entityID) {
                 continue; // skip self
@@ -307,30 +308,6 @@ public class ServerPacketHandler : PacketHandler {
                 entityID = existingConn.entityID,
                 username = existingConn.username,
                 ping = existingConn.metrics.ping
-            }, DeliveryMethod.ReliableOrdered);
-
-            conn.send(new SpawnPlayerPacket {
-                entityID = existingConn.entityID,
-                username = existingConn.username,
-                position = existingConn.player.position,
-                rotation = existingConn.player.rotation,
-                sneaking = existingConn.player.sneaking,
-                flying = existingConn.player.flyMode
-            }, DeliveryMethod.ReliableOrdered);
-
-            // send initial entity state
-            existingConn.player.syncState();
-            existingConn.player.state.markAllDirty();
-            conn.send(new EntityStatePacket {
-                entityID = existingConn.entityID,
-                data = existingConn.player.state.serializeAll()
-            }, DeliveryMethod.ReliableOrdered);
-
-            // send their held item
-            conn.send(new HeldItemChangePacket {
-                entityID = existingConn.entityID,
-                slotIndex = (byte)existingConn.player.inventory.selected,
-                heldItem = existingConn.player.inventory.getSelected()
             }, DeliveryMethod.ReliableOrdered);
 
             // send their skin
@@ -349,39 +326,6 @@ public class ServerPacketHandler : PacketHandler {
                 ping = conn.metrics.ping
             },
             DeliveryMethod.ReliableOrdered,
-            exclude: conn
-        );
-
-        GameServer.instance.send(
-            new SpawnPlayerPacket {
-                entityID = conn.entityID,
-                username = conn.username,
-                position = player.position,
-                rotation = player.rotation,
-                sneaking = player.sneaking,
-                flying = player.flyMode
-            },
-            DeliveryMethod.ReliableOrdered,
-            exclude: conn
-        );
-
-        // broadcast initial entity state to all existing clients
-        player.state.markAllDirty();
-        GameServer.instance.send(
-            new EntityStatePacket {
-                entityID = conn.entityID,
-                data = player.state.serializeAll()
-            },
-            DeliveryMethod.ReliableOrdered,
-            exclude: conn
-        );
-
-        // send their held item
-        GameServer.instance.send(new HeldItemChangePacket {
-            entityID = conn.entityID,
-            slotIndex = (byte)player.inventory.selected,
-            heldItem = player.inventory.getSelected()
-        }, DeliveryMethod.ReliableOrdered,
             exclude: conn
         );
 

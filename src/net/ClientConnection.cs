@@ -390,6 +390,8 @@ public class PlayerListEntry {
     public string username;
     public int ping;
 
+    public byte[]? skin;
+
     public PlayerListEntry(int entityID, string username, int ping) {
         this.entityID = entityID;
         this.username = username;
