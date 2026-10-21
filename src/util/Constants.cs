@@ -47,7 +47,7 @@ public static class Constants {
     public const double flyModeDelay = 0.4;
 
     // Networking
-    public const int netVersion = 8;
+    public const int netVersion = 9;
     public const string connectionKey = "BlockGame";
 
     /**

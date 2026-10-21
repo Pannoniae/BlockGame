@@ -1,4 +1,4 @@
-﻿using BlockGame.main;
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world.item;
 using Molten.DoublePrecision;
@@ -9,11 +9,11 @@ public class Boa : Hostile {
     protected override float attackDamage => 4.0f;
     protected override int attackCooldown => 40;
     protected override bool usePathfinding => true;
-    protected override bool needsFallDamage => false;
     public override double speedMul => 0.1;
     public override bool burnInSunlight => false;
 
     public Boa(World world) : base(world, "boa") {
+        flags &= ~EFlag.FALL_DAMAGE;
         tex = "textures/entity/boa.png";
         hp = 50;
     }
@@ -44,7 +44,7 @@ public class Boa : Hostile {
     }
 
     public override void getDrop(List<ItemStack> drops) {
-        //if (id == Boa.id && Game.random.Next(20) == 0) {
+        //if (id == Boa.id && world.random.Next(20) == 0) {
         //    drops.Add(new ItemStack(.item, 1, 0));
         //}
     }

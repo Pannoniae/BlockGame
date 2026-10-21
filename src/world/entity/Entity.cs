@@ -17,6 +17,28 @@ using Molten.DoublePrecision;
 
 namespace BlockGame.world.entity;
 
+// this is better than the prev virtuals but the entitys are still kinda slopcoded. anyone knows how to fix?
+[Flags]
+public enum EFlag : ushort {
+    PREV_VARS = 1 << 0,
+    PHYSICS = 1 << 1,
+    GRAVITY = 1 << 2,
+    COLLISION = 1 << 3,
+    FRICTION = 1 << 4,
+    BLOCK_INTERACTION = 1 << 5,
+    ENTITY_COLLISION = 1 << 6,
+    BODY_ROTATION = 1 << 7,
+    FOOTSTEPS = 1 << 8,
+    FALL_DAMAGE = 1 << 9,
+    ANIMATION = 1 << 10,
+    DAMAGE_NUMBERS = 1 << 11,
+
+    DEFAULT = PREV_VARS | PHYSICS | GRAVITY | COLLISION | FRICTION | BLOCK_INTERACTION,
+
+    /** deadass walks around, gets hurt, falls over, RIP */
+    MOB = DEFAULT | ENTITY_COLLISION | BODY_ROTATION | FOOTSTEPS | FALL_DAMAGE | ANIMATION | DAMAGE_NUMBERS
+}
+
 public partial class Entity(World world, string type) : Persistent {
     public const int MAX_SWING_TICKS = 20;
     public const int AIR_HIT_CD = 20;
@@ -64,15 +86,7 @@ public partial class Entity(World world, string type) : Persistent {
 
     public bool sneaking;
 
-    /**
-     * Does this side own the entity's physics? For yourself / players the answer is the client,
-     * for everything else the server owns it for now.
-     */
-    public virtual bool simulated => world.isServer || this is ClientPlayer;
-
-    public Vector3D targetPos;
-    public Vector3 targetRot;
-    public int interpolationTicks;
+    public bool hasmovement = world.isServer;
 
     /** entity positions are at feet */
     public Vector3D prevPosition;
@@ -184,19 +198,25 @@ public partial class Entity(World world, string type) : Persistent {
     // network state sync
     public readonly EntityState state = new();
 
-    // capability flags - override in subclasses
-    protected virtual bool needsPrevVars => true;
-    protected virtual bool needsPhysics => true;
-    protected virtual bool needsGravity => true;
-    protected virtual bool needsCollision => true;
-    protected virtual bool needsFriction => true;
-    protected virtual bool needsBlockInteraction => true;
-    protected virtual bool needsEntityCollision => false;
-    protected virtual bool needsBodyRotation => false;
-    protected virtual bool needsFootsteps => false;
-    protected virtual bool needsFallDamage => false;
-    protected virtual bool needsAnimation => false;
-    protected virtual bool needsDamageNumbers => false;
+    protected EFlag flags = EFlag.DEFAULT;
+
+    protected bool needsPrevVars => (flags & EFlag.PREV_VARS) != 0;
+    protected bool needsPhysics => (flags & EFlag.PHYSICS) != 0;
+    protected bool needsGravity => (flags & EFlag.GRAVITY) != 0;
+    protected bool needsCollision => (flags & EFlag.COLLISION) != 0;
+    protected bool needsFriction => (flags & EFlag.FRICTION) != 0;
+    protected bool needsBlockInteraction => (flags & EFlag.BLOCK_INTERACTION) != 0;
+    protected bool needsEntityCollision => (flags & EFlag.ENTITY_COLLISION) != 0;
+    protected bool needsBodyRotation => (flags & EFlag.BODY_ROTATION) != 0;
+    protected bool needsFootsteps => (flags & EFlag.FOOTSTEPS) != 0;
+    protected bool needsFallDamage => (flags & EFlag.FALL_DAMAGE) != 0;
+    protected bool needsAnimation => (flags & EFlag.ANIMATION) != 0;
+    protected bool needsDamageNumbers => (flags & EFlag.DAMAGE_NUMBERS) != 0;
+
+    [ThreadStatic] private static List<Entity>? _nearby;
+
+    /** per-tick box queries. don't nest: whatever queries inside a loop over this clobbers it */
+    protected static List<Entity> nearby => _nearby ??= [];
 
     public bool isRiding() => mount != null;
     public bool hasRider() => rider != null;
@@ -228,47 +248,40 @@ public partial class Entity(World world, string type) : Persistent {
 
     // ============ LIFECYCLE:tm: ============
 
-    /**
-     * Main update loop - orchestrates all entity behaviour.
-     * Subclasses should override the hook methods, not this!!!
-     */
-    public virtual void update(double dt) {
-        if (!simulated) {
-            if (needsPrevVars) {
-                savePrevVars();
-            }
-
-            interpolate(dt);
-            updateVisualTimers(dt);
-            postPhysics(dt);
-            return;
-        }
-
-        // 1. early exit checks (death animation, despawn, etc)
-        if (!shouldContinueUpdate(dt)) {
-            return;
-        }
-
-        // 2. store prev state for interpolation
+    public void update(double dt) {
         if (needsPrevVars) {
             savePrevVars();
         }
 
-        // 3. decrement cooldowns and timers
-        updateTimers(dt);
+        if (world.isServer) {
+            // despawn/ death timers, false = removed or dead, nothing else to do
+            if (!shouldContinueUpdate(dt)) {
+                return;
+            }
 
-        // 4. AI/input sets velocities/forces
-        prePhysics(dt);
-
-        // 5. physics pipeline (unless riding)
-        if (needsPhysics && !isRiding()) {
-            updatePhysics(dt);
-        }
-        else if (isRiding()) {
-            syncToMount();
+            updateTimers(dt);
         }
 
-        // 6. post-physics updates (body rotation, animation, etc)
+        if (hasmovement) {
+            if (!dead) {
+                prePhysics(dt);
+
+                if (isRiding()) {
+                    syncToMount();
+                }
+                else if (needsPhysics) {
+                    updatePhysics(dt);
+                }
+            }
+        }
+        else if (world.isClient) {
+            interpolate(dt);
+        }
+
+        if (world.isClient) {
+            updateVisual(dt);
+        }
+
         postPhysics(dt);
 
         if (Game.devMode) {
@@ -282,25 +295,6 @@ public partial class Entity(World world, string type) : Persistent {
             return;
         }
         Log.error($"Entity {id} ({type}) is NaN: pos={position} vel={velocity} accel={accel}");
-    }
-
-    protected virtual void interpolate(double dt) {
-        if (interpolationTicks > 0) {
-            var t = 1.0 / interpolationTicks;
-            position = Vector3D.Lerp(position, targetPos, t);
-            rotation = Meth.lerpAngle(rotation, targetRot, (float)t);
-            interpolationTicks--;
-        }
-
-        if (dt > 0) {
-            velocity = (position - prevPosition) / dt;
-        }
-    }
-
-    public virtual void mpInterpolate(Vector3D pos, Vector3 rot) {
-        targetPos = pos;
-        targetRot = rot;
-        interpolationTicks = 4;
     }
 
     /**
@@ -379,6 +373,18 @@ public partial class Entity(World world, string type) : Persistent {
         paspeed = aspeed;
     }
 
+    /** client only */
+    protected virtual void updateVisual(double dt) {
+        updateVisualTimers(dt);
+
+        if (iframes > 0) {
+            iframes--;
+        }
+
+        // countdowns for the UI
+        updateEffects();
+    }
+
     protected virtual void updateVisualTimers(double dt) {
         updateSwing();
 
@@ -392,12 +398,7 @@ public partial class Entity(World world, string type) : Persistent {
         }
     }
 
-    /**
-     * Decrement cooldowns and timers.
-     * Override to add more timers (iframes, dmgTime, etc).
-     *
-     * Reminder: NEVER run sim code (damage, drops, etc.) on non-simulated entities because it will lead to ghost entities and desync
-     */
+    /** server only / gameplay logic */
     protected virtual void updateTimers(double dt) {
         updateVisualTimers(dt);
 
@@ -427,9 +428,6 @@ public partial class Entity(World world, string type) : Persistent {
             // apply fire damage once per second (60 ticks)
             if (fireTicks % 60 == 0) {
                 dmg(1);
-                if (hp <= 0) {
-                    die();
-                }
             }
         }
     }
@@ -633,129 +631,93 @@ public partial class Entity(World world, string type) : Persistent {
 
     /** damage without knockback (fall damage, fire, etc) */
     public virtual void dmg(float damage) {
-        double actualDmg;
-
-        if (iframes > 0) {
-            // if new damage is greater, apply difference & reset iframes
-            if (damage > lastDmg) {
-                actualDmg = damage - lastDmg;
-                hp -= actualDmg;
-                lastDmg = damage;
-                iframes = invulnerability;
-                dmgTime = 30;
-            }
-            else {
-                // ignore weaker hits during iframes
-                return;
-            }
-        }
-        else {
-            // no iframes, apply full dmg
-            actualDmg = damage;
-            hp -= damage;
-            lastDmg = damage;
-            iframes = invulnerability;
-            dmgTime = 30;
-
-            if (this is Player && world.isClient) {
-                Game.camera.applyImpact(damage * 4);
-            }
-        }
-
-        // spawn damage number at top of entity with random offset
-        if (needsDamageNumbers && world.isClient) {
-            var rng = Game.clientRandom;
-
-            // random pos, above the entity
-            var h = aabb.y1 - position.Y;
-            var a = new Vector3D(rng.NextSingle() * 0.14f,
-                h + rng.NextSingle() * 0.17f,
-                rng.NextSingle() * 0.14f);
-
-            var np = position + a;
-            world.particles.add(new DamageNumber(world, np, actualDmg));
-        }
-
-        // check if dead
-        if (hp <= 0) {
-            die();
-        }
+        applyDmg(damage, null);
     }
 
     /** damage with knockback from src */
     public virtual void dmg(double damage, Entity source) {
-        double actualDmg;
-        bool kb = false;
+        applyDmg(damage, source);
+    }
 
+    /**
+     * server only
+     */
+    private void applyDmg(double damage, Entity? source) {
+        if (dead || !world.isServer) {
+            return;
+        }
+
+        double actual;
         if (iframes > 0) {
-            if (damage > lastDmg) {
-                actualDmg = damage - lastDmg;
-                hp -= actualDmg;
-                lastDmg = damage;
-                iframes = invulnerability;
-                kb = true;
-                dmgTime = 30;
-            }
-            else {
+            // a bigger hit during iframes lands the difference. and knocks you around again, because that's funny
+            if (damage <= lastDmg) {
                 return;
             }
+
+            actual = damage - lastDmg;
         }
         else {
-            actualDmg = damage;
-            hp -= damage;
-            lastDmg = damage;
-            iframes = invulnerability;
-            kb = true;
-            dmgTime = 30;
-
-            if (this is Player && world.isClient) {
-                Game.camera.applyImpact((float)damage * 4);
-            }
+            actual = damage;
         }
 
-        // apply knockback
-        if (kb) {
-            // horizontal only for kb
-            var dir = (position - source.position).withoutY();
-            var len = dir.Length();
-            dir = len > Constants.epsilon ? dir / len : new Vector3D(0, 0, 1);
+        hp -= actual;
+        lastDmg = damage;
+        iframes = invulnerability;
+        dmgTime = 30;
 
-            var kbStrength = 14 + double.Sqrt(damage * 2);
+        pendingHurt += actual;
 
-            const double up = 9;
-            const double maxUp = 6;
-            var upImpulse = double.Min(up, maxUp - velocity.Y);
-
-            knockback(new Vector3D(dir.X * kbStrength, upImpulse, dir.Z * kbStrength));
+        if (source != null || pendingHurt == actual) {
+            pendingHurtSrc = source?.id ?? -1;
         }
 
-        // spawn damage number
-        if (needsDamageNumbers && world.isClient) {
-            var rng = Game.clientRandom;
-
-            // random pos, above the entity
-            var h = aabb.y1 - position.Y;
-            var a = new Vector3D(rng.NextSingle() * 0.14f,
-                h + rng.NextSingle() * 0.17f,
-                rng.NextSingle() * 0.14f);
-            var np = position + a;
-            world.particles.add(new DamageNumber(world, np, actualDmg));
+        if (source != null) {
+            knockback(knockbackFrom(source, damage));
         }
 
-        // check if dead
         if (hp <= 0) {
             die();
         }
     }
 
-    /** heal entity */
+    public const double KB_BASE = 14;
+    public const double KB_UP = 9;
+    public const double KB_UP_MAX = 6;
+
+    /** 0 = full knockback, 1 = immovable */
+    public double kbResist;
+
+    protected virtual Vector3D knockbackFrom(Entity src, double damage) {
+        var dir = src is ProjectileEntity or SnowballEntity ? src.velocity.withoutY() : (position - src.position).withoutY();
+        var len = dir.Length();
+
+        // standing inside each other?
+        dir = len > Constants.epsilon ? dir / len : src.hfacing;
+
+        var k = 1 - kbResist;
+        var h = (KB_BASE + double.Sqrt(damage * 2)) * k;
+        return new Vector3D(dir.X * h, KB_UP * k, dir.Z * h);
+    }
+
+    public static void applyImpulse(ref Vector3D vel, Vector3D impulse) {
+        vel.X += impulse.X;
+        vel.Z += impulse.Z;
+        vel.Y = double.Min(vel.Y + impulse.Y, double.Max(vel.Y, KB_UP_MAX));
+    }
+
+    /** heal entity. server only */
     public virtual void heal(double amount) {
+        if (!world.isServer) {
+            return;
+        }
+
         hp += amount;
         if (hp > 100) {
             hp = 100;
         }
     }
 
+    /* server only i think? */
     public virtual void sethp(double amount) {
         hp = amount;
         if (hp > 100) {
@@ -763,9 +725,16 @@ public partial class Entity(World world, string type) : Persistent {
         }
     }
 
-    public virtual void die() {
+    public void die() {
+        if (dead) {
+            return;
+        }
+
         dead = true;
-        // don't set active = false here - let death animation finish in Mob.shouldContinueUpdate()
+        onDeath();
+    }
+
+    protected virtual void onDeath() {
     }
 
     public virtual void onChunkChanged() {
@@ -886,7 +855,7 @@ public partial class Entity(World world, string type) : Persistent {
             aabb.x1 + 0.2, aabb.y1 + 0.1, aabb.z1 + 0.2
         );
 
-        List<Entity> nearby = [];
+        var nearby = Entity.nearby;
         world.getEntitiesInBox(nearby, expandedAABB);
 
         foreach (var other in nearby) {
@@ -917,8 +886,8 @@ public partial class Entity(World world, string type) : Persistent {
 
             // avoid divide by zero if entities at exact same pos
             if (dist < 0.01) {
-                dx = (Game.clientRandom.NextSingle() - 0.5) * 0.1;
-                dz = (Game.clientRandom.NextSingle() - 0.5) * 0.1;
+                dx = (world.random.NextSingle() - 0.5) * 0.1;
+                dz = (world.random.NextSingle() - 0.5) * 0.1;
                 dist = double.Sqrt(dx * dx + dz * dz);
             }
 
@@ -990,11 +959,30 @@ public partial class Entity(World world, string type) : Persistent {
     protected virtual void updateFootsteps(double dt) {
     }
 
-    /**
-     * Apply knockback to the entity
-     */
-    public virtual void knockback(Vector3D force) {
-        velocity += force;
+    public void knockback(Vector3D force) {
+        if (hasmovement) {
+            applyImpulse(ref velocity, force);
+        }
+        else {
+            pendingImpulse += force;
+            hasImpulse = true;
+        }
+    }
+
+    // ============ EVENTS ============
+    /** damage landed this tick (summed) and who did the last of it, -1 = environment */
+    public double pendingHurt;
+    public int pendingHurtSrc = -1;
+
+    /** knockback for a client-moved entity*/
+    public Vector3D pendingImpulse;
+    public bool hasImpulse;
+
+    public void clearEvents() {
+        pendingHurt = 0;
+        pendingHurtSrc = -1;
+        pendingImpulse = Vector3D.Zero;
+        hasImpulse = false;
     }
 
     // ============ STATE SYNC ============
@@ -1004,6 +992,7 @@ public partial class Entity(World world, string type) : Persistent {
         state.setBool(EntityState.ON_FIRE, fireTicks > 0);
         state.setBool(EntityState.SNEAKING, sneaking);
         state.setInt(EntityState.RIDING, mount?.id ?? -1);
+        state.setBool(EntityState.DEAD, dead);
     }
 
     /** apply state buffer to entity fields (client-side, after receiving) */
@@ -1011,12 +1000,14 @@ public partial class Entity(World world, string type) : Persistent {
         sneaking = state.getBool(EntityState.SNEAKING);
         fireTicks = state.getBool(EntityState.ON_FIRE) ? 300 : 0;
 
+        dead = state.getBool(EntityState.DEAD);
+
         // riding sync
         int mountID = state.getInt(EntityState.RIDING, -1);
         if (mountID >= 0) {
             // todo mount handling later
             // find mount entity and set entity.mount
-            var mount = world.entities.FirstOrDefault(e => e.id == mountID);
+            var mount = world.getEntity(mountID);
             if (mount != null) {
                 this.mount = mount;
                 mount.rider = this;

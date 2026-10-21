@@ -65,6 +65,10 @@ public class Furnace : EntityBlock {
 
     public override void onBreak(World world, int x, int y, int z, byte metadata) {
         var be = world.getBlockEntity(x, y, z) as FurnaceBlockEntity;
+        if (be != null && world.isServer) {
+            GameServer.instance.closeViewers(be);
+        }
+
         be?.dropContents(world, x, y, z);
 
         base.onBreak(world, x, y, z, metadata);
@@ -80,43 +84,17 @@ public class Furnace : EntityBlock {
             return true;
         }
 
-        // server-side: open inventory via helper
-        if (!world.isClient) {
-            var ctx = new FurnaceMenuContext(player.inventory, be);
-            return GameServer.openInventory(
-                (ServerPlayer)player,
-                ctx,
-                invType: 2, // furnace
-                title: "Furnace",
-                position: new Vector3I(x, y, z),
-                slots: be.slots,
-                additionalPackets: conn => {
-                    // send furnace state (smelting progress, fuel)
-                    conn.send(new FurnaceSyncPacket {
-                        position = new Vector3I(x, y, z),
-                        smeltProgress = be.smeltProgress,
-                        smeltTime = be.smeltTime,
-                        fuelRemaining = be.fuelRemaining,
-                        fuelMax = be.fuelMax,
-                        lit = be.isLit()
-                    }, DeliveryMethod.ReliableOrdered);
-                }
-            );
-        }
-        else {
-            var ctx = new FurnaceMenuContext(player.inventory, be);
-            player.currentCtx = ctx;
-
-            Screen.GAME_SCREEN.switchToMenu(new FurnaceMenu(new Vector2I(0, 32), ctx));
-            ((FurnaceMenu)Screen.GAME_SCREEN.currentMenu!).setup();
-
-            world.inMenu = true;
-            Game.instance.unlockMouse();
-
-            return true;
-        }
-
-        return false;
+        var ctx = new FurnaceMenuContext(player.inventory, be);
+        return GameServer.openInventory(
+            (ServerPlayer)player,
+            ctx,
+            invType: 2, // furnace
+            title: "Furnace",
+            position: new Vector3I(x, y, z),
+            slots: be.slots,
+            // smelting progress + fuel
+            additionalPackets: conn => ctx.sync(conn, be)
+        );
     }
 
     public override BlockEntity get() {

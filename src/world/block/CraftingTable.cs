@@ -18,32 +18,14 @@ public class CraftingTable : Block {
             return true; // return true to prevent block placement
         }
 
-        // server-side: open crafting table inventory
-        if (!world.isClient) {
-            var ctx = new CraftingTableContext(player);
-            var craftingGrid = ctx.getCraftingGrid();
-
-            return GameServer.openInventory(
-                (ServerPlayer)player,
-                ctx,
-                invType: 1, // crafting table
-                title: "Crafting",
-                position: new Vector3I(x, y, z),
-                slots: craftingGrid.grid // 3x3 crafting grid (starts empty)
-            );
-        }
-        else {
-            // singleplayer - open directly
-            var ctx = new CraftingTableContext(player);
-            player.currentCtx = ctx;
-
-            Screen.GAME_SCREEN.switchToMenu(new CraftingTableMenu(new Vector2I(0, 32), ctx));
-            ((CraftingTableMenu)Screen.GAME_SCREEN.currentMenu!).setup();
-
-            world.inMenu = true;
-            Game.instance.unlockMouse();
-
-            return true;
-        }
+        var ctx = new CraftingTableContext(player);
+        return GameServer.openInventory(
+            (ServerPlayer)player,
+            ctx,
+            invType: 1, // crafting table
+            title: "Crafting",
+            position: new Vector3I(x, y, z),
+            slots: ctx.getCraftingGrid().grid // 3x3 crafting grid (starts empty)
+        );
     }
 }

@@ -195,9 +195,8 @@ public class SurvivalInventoryMenu : InventoryMenu {
         base.onMouseUp(pos, button);
     }
 
-    protected override void handleSlotClick(ItemSlot slot, MouseButton button) {
-        var clickType = button == MouseButton.Left ? ClickType.LEFT : ClickType.RIGHT;
-        survivalCtx.handleSlotClick(slot, clickType);
+    protected override void handleSlotClick(ItemSlot slot, ClickType click) {
+        survivalCtx.handleSlotClick(slot, click);
     }
 
     public override void deactivate() {

@@ -298,7 +298,7 @@ public ref struct PacketBuffer {
 
 
     public void writeItemStack(ItemStack? stack) {
-        if (stack == null || stack == ItemStack.EMPTY) {
+        if (stack == null || stack.id == 0 || stack.quantity <= 0) {
             writeInt(-1);
             return;
         }
@@ -315,7 +315,7 @@ public ref struct PacketBuffer {
 
         int meta = readInt();
         int qty = readInt();
-        return new ItemStack(id, qty, meta);
+        return id == 0 || qty <= 0 ? ItemStack.EMPTY : new ItemStack(id, qty, meta);
     }
 
 

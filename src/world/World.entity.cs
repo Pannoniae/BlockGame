@@ -1,4 +1,5 @@
-﻿using BlockGame.main;
+using BlockGame.main;
+using BlockGame.net;
 using BlockGame.net.srv;
 using BlockGame.render;
 using BlockGame.util;
@@ -62,7 +63,7 @@ public partial class World {
 
         // if player add to the players list
         if (entity is Player p) {
-            // only set world.player for local player (ClientPlayer), not remote players (Humanoid)
+            // only set world.player for local player (ClientPlayer), not remote players
             if (p is ClientPlayer) {
                 player = p;
             }
@@ -143,12 +144,11 @@ public partial class World {
         itemEntity.position = new Vector3D(x + 0.5, y + 0.5, z + 0.5);
 
         // randomise pos
-        itemEntity.position.X += (Game.clientRandom.NextSingle() - 0.5) * 0.25;
-        itemEntity.position.Z += (Game.clientRandom.NextSingle() - 0.5) * 0.25;
-        itemEntity.position.Y += Game.clientRandom.NextSingle() * 0.15;
+        itemEntity.position.X += (random.NextSingle() - 0.5) * 0.25;
+        itemEntity.position.Z += (random.NextSingle() - 0.5) * 0.25;
+        itemEntity.position.Y += random.NextSingle() * 0.15;
 
         // add some random velocity
-        var random = Game.clientRandom;
         itemEntity.velocity = new Vector3D(
             (random.NextSingle() - 0.5) * 0.3,
             random.NextSingle() * 0.3 + 0.1,
@@ -225,6 +225,9 @@ public partial class World {
     }
 
     public void updateEntities(double dt) {
+        if (isClient) {
+            NetClock.tick();
+        }
 
         //Console.Out.WriteLine(entities.Count);
 

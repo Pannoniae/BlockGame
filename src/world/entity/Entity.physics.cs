@@ -295,8 +295,7 @@ public partial class Entity {
             accel.Y = MAX_ACCEL * Math.Sign(accel.Y);
         }
 
-        // ladder friction and climbing (only when pressed against wall)
-        // we do this *before* doing the whole movement stuff so it actually updates velocity properly
+        // ladder friction and climbing (only when pressed against wall).
         if (onLadder && (collx || collz)) {
             velocity.X *= LIQUID_FRICTION;
             velocity.Z *= LIQUID_FRICTION;

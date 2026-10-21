@@ -15,87 +15,88 @@ public class PacketRegistry {
      */
     static PacketRegistry() {
         // connection & auth (0x00-0x0F)
-        register(0x00, typeof(HugPacket));
-        register(0x01, typeof(LoginSuccessPacket));
-        register(0x02, typeof(LoginFailedPacket));
-        register(0x03, typeof(DisconnectPacket));
-        register(0x04, typeof(RespawnPacket));
-        register(0x05, typeof(GamemodePacket));
-        register(0x06, typeof(PlayerListAddPacket));
-        register(0x07, typeof(PlayerListRemovePacket));
-        register(0x08, typeof(PlayerListUpdatePingPacket));
-        register(0x09, typeof(PlayerSkinPacket));
+        register<HugPacket>(0x00);
+        register<LoginSuccessPacket>(0x01);
+        register<LoginFailedPacket>(0x02);
+        register<DisconnectPacket>(0x03);
+        register<RespawnPacket>(0x04);
+        register<GamemodePacket>(0x05);
+        register<PlayerListAddPacket>(0x06);
+        register<PlayerListRemovePacket>(0x07);
+        register<PlayerListUpdatePingPacket>(0x08);
+        register<PlayerSkinPacket>(0x09);
 
 
-        register(0x0A, typeof(AuthRequiredPacket));
-        register(0x0B, typeof(AuthPacket));
+        register<AuthRequiredPacket>(0x0A);
+        register<AuthPacket>(0x0B);
 
         // world state (0x10-0x1F)
-        register(0x10, typeof(ChunkDataPacket));
-        register(0x11, typeof(UnloadChunkPacket));
-        register(0x12, typeof(BlockChangePacket));
-        register(0x13, typeof(MultiBlockChangePacket));
-        register(0x14, typeof(LightUpdatePacket));
-        register(0x15, typeof(TimeUpdatePacket));
+        register<ChunkDataPacket>(0x10);
+        register<UnloadChunkPacket>(0x11);
+        register<BlockChangePacket>(0x12);
+        register<MultiBlockChangePacket>(0x13);
+        register<LightUpdatePacket>(0x14);
+        register<TimeUpdatePacket>(0x15);
 
         // entity sync (0x20-0x2F)
-        register(0x20, typeof(SpawnEntityPacket));
-        register(0x21, typeof(SpawnPlayerPacket));
-        register(0x22, typeof(DespawnEntityPacket));
-        register(0x23, typeof(EntityPositionPacket));
-        register(0x24, typeof(EntityVelocityPacket));
-        register(0x25, typeof(EntityRotationPacket));
-        register(0x26, typeof(EntityPositionRotationPacket));
-        register(0x27, typeof(EntityStatePacket));
-        register(0x28, typeof(PlayerHealthPacket));
-        register(0x29, typeof(EntityActionPacket));
-        register(0x2A, typeof(TeleportPacket));
-        register(0x2C, typeof(AddEffectPacket));
-        register(0x2D, typeof(RemoveEffectPacket));
+        register<SpawnEntityPacket>(0x20);
+        register<SpawnPlayerPacket>(0x21);
+        register<DespawnEntityPacket>(0x22);
+        register<EntityImpulsePacket>(0x24);
+        register<EntityPositionRotationPacket>(0x26);
+        register<EntityStatePacket>(0x27);
+        register<PlayerHealthPacket>(0x28);
+        register<EntityActionPacket>(0x29);
+        register<TeleportPacket>(0x2A);
+        register<AddEffectPacket>(0x2C);
+        register<RemoveEffectPacket>(0x2D);
 
         // player actions (0x30-0x3F)
-        register(0x30, typeof(PlayerPositionPacket));
-        register(0x31, typeof(PlayerRotationPacket));
-        register(0x32, typeof(PlayerPositionRotationPacket));
-        register(0x33, typeof(RespawnRequestPacket));
-        register(0x34, typeof(StartBlockBreakPacket));
-        register(0x35, typeof(CancelBlockBreakPacket));
-        register(0x36, typeof(FinishBlockBreakPacket));
-        register(0x37, typeof(BlockBreakProgressPacket));
-        register(0x38, typeof(PlaceBlockPacket));
-        register(0x39, typeof(DropItemPacket));
-        register(0x3A, typeof(AttackEntityPacket));
-        register(0x3B, typeof(EntityDamagePacket));
-        register(0x3C, typeof(UseItemPacket));
-        register(0x3D, typeof(UpdateBlockBreakProgressPacket));
-        register(0x3E, typeof(PlayerVelocityPacket));
+        register<PlayerPositionRotationPacket>(0x32);
+        register<RespawnRequestPacket>(0x33);
+        register<StartBlockBreakPacket>(0x34);
+        register<CancelBlockBreakPacket>(0x35);
+        register<FinishBlockBreakPacket>(0x36);
+        register<BlockBreakProgressPacket>(0x37);
+        register<PlaceBlockPacket>(0x38);
+        register<DropItemPacket>(0x39);
+        register<AttackEntityPacket>(0x3A);
+        register<EntityDamagePacket>(0x3B);
+        register<UseItemPacket>(0x3C);
+        register<UpdateBlockBreakProgressPacket>(0x3D);
+        register<InteractEntityPacket>(0x3F);
 
         // inventory (0x40-0x4F)
-        register(0x40, typeof(SetSlotPacket));
-        register(0x41, typeof(InventorySyncPacket));
-        register(0x42, typeof(InventorySlotClickPacket));
-        register(0x43, typeof(InventoryAckPacket));
-        register(0x44, typeof(InventoryOpenPacket));
-        register(0x45, typeof(InventoryClosePacket));
-        register(0x46, typeof(HeldItemChangePacket));
-        register(0x47, typeof(FurnaceSyncPacket));
-        register(0x48, typeof(PlayerHeldItemChangePacket));
-        register(0x49, typeof(InventoryResyncTermPacket));
-        register(0x4A, typeof(InventoryResyncAckPacket));
+        register<SetSlotPacket>(0x40);
+        register<InventorySyncPacket>(0x41);
+        register<InventorySlotClickPacket>(0x42);
+        register<InventoryAckPacket>(0x43);
+        register<InventoryOpenPacket>(0x44);
+        register<InventoryClosePacket>(0x45);
+        register<HeldItemChangePacket>(0x46);
+        register<FurnaceSyncPacket>(0x47);
+        register<PlayerHeldItemChangePacket>(0x48);
+        register<InventoryResyncTermPacket>(0x49);
+        register<InventoryResyncAckPacket>(0x4A);
 
         // block entities (0x50-0x5F)
-        register(0x50, typeof(UpdateBlockEntityPacket));
-        register(0x51, typeof(BlockEntityDataPacket));
+        register<UpdateBlockEntityPacket>(0x50);
+        register<BlockEntityDataPacket>(0x51);
 
         // chat & commands (0x70-0x7F)
-        register(0x70, typeof(ChatMessagePacket));
-        register(0x71, typeof(CommandPacket));
-        register(0x72, typeof(RenderDistancePacket));
-        register(0x73, typeof(ServerStatsPacket));
+        register<ChatMessagePacket>(0x70);
+        register<CommandPacket>(0x71);
+        register<RenderDistancePacket>(0x72);
+        register<ServerStatsPacket>(0x73);
     }
 
 
-    public static void register(int id, Type type) {
+    private delegate Packet Reader(PacketBuffer buf);
+
+    private static readonly Reader?[] readers = new Reader?[256];
+
+    public static void register<T>(int id) where T : Packet, new() {
+        var type = typeof(T);
         if (map.containsKey(id)) {
             InputException.throwNew($"Packet ID '{id}' is already registered to '{map[id].Name}'!");
         }
@@ -104,6 +105,12 @@ public class PacketRegistry {
         }
 
         map[id] = type;
+
+        readers[id] = static buf => {
+            var p = new T();
+            p.read(buf);
+            return p;
+        };
     }
 
     public static Type getType(int id) {
@@ -113,9 +120,7 @@ public class PacketRegistry {
     public static Packet decode(ReadOnlySpan<byte> frame, out Type type) {
         var id = BinaryPrimitives.ReadInt32LittleEndian(frame);
         type = getType(id);
-        var packet = (Packet)Activator.CreateInstance(type)!;
-        packet.read(new PacketBuffer(frame[4..]));
-        return packet;
+        return readers[id]!(new PacketBuffer(frame[4..]));
     }
 
     public static int getID(Type type) {

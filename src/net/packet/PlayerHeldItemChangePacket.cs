@@ -1,7 +1,7 @@
 ﻿namespace BlockGame.net.packet;
 
 /** C→S: 0x48 - client changes held item slot */
-public class PlayerHeldItemChangePacket : Packet {
+public struct PlayerHeldItemChangePacket : Packet {
     public byte slot;
 
     public byte channel => 0;

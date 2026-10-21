@@ -50,7 +50,7 @@ public class Raycast {
             if (type is RaycastType.ALL or RaycastType.ENTITIES) {
                 world.getEntitiesInBox(l, new AABB(currentPos - new Vector3D(0.3, 0.3, 0.3), currentPos + new Vector3D(0.3, 0.3, 0.3)));
                 foreach (var entity in l) {
-                    if (entity == player) {
+                    if (entity == player || entity.dead) {
                         continue;
                     }
 

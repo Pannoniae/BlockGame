@@ -49,10 +49,9 @@ public class ArrowEntity : ProjectileEntity {
     }
 
     protected override void spawnTrailParticles() {
-        // spawn particles every 2 ticks after initial grace period
-        if (world.isClient && age % 2 == 0 && age > 8) {
-            var particle = new ArrowParticle(world, position);
-            world.particles.add(particle);
+        // every 2 ticks after the grace period, and only in flight - a stuck arrow doesn't smoke
+        if (age % 2 == 0 && age > 8 && velocity.LengthSquared() > 1) {
+            world.particles.add(new ArrowParticle(world, position));
         }
     }
 
@@ -61,9 +60,10 @@ public class ArrowEntity : ProjectileEntity {
         dieTimer = 60;
     }
 
+    /** gone on hit. "sticking" meant hanging in mid-air where the mob was before the knockback sent it flying */
     protected override void onEntityHit(Entity entity) {
         entity.dmg(damage, this);
-        dieTimer = 60; // stick after hitting entity
+        active = false;
     }
 
     protected override void updateRotation() {

@@ -25,23 +25,23 @@ public class Cow : Mob {
     }
 
     public override bool interact(Player player, ItemStack stack) {
-        // milk cow with bottle
-        if (stack.id == Item.BOTTLE.id) {
-            // check if enough time has passed since last milking (1 full day)
-            if (world.worldTick - lastMilked < World.TICKS_PER_DAY) {
-                return false; // cow already milked today
-            }
+        if (stack.id != Item.BOTTLE.id) {
+            return false;
+        }
 
-            // remove 1 bottle from held stack
-            player.inventory.removeStack(player.inventory.selected, 1);
-            // add 1 milk to inventory
-            player.inventory.addItem(new ItemStack(Item.BOTTLE_MILK, 1, 0));
-
-            // update last milked time
-            lastMilked = world.worldTick;
+        if (!world.isServer) {
             return true;
         }
-        return false;
+
+        // once per day
+        if (world.worldTick - lastMilked < World.TICKS_PER_DAY) {
+            return false;
+        }
+
+        player.inventory.removeStack(player.inventory.selected, 1);
+        player.pickup(new ItemStack(Item.BOTTLE_MILK, 1, 0));
+        lastMilked = world.worldTick;
+        return true;
     }
 
     protected override void readx(NBTCompound data) {

@@ -74,7 +74,7 @@ public class SurvivalInventoryContext : InventoryContext {
 
         // Armour slots (3 slots)
         for (int i = 0; i < 3; i++) {
-            slots.Add(new ArmourSlot(playerInv, PlayerInventory.ARMOUR,
+            slots.Add(new ArmourSlot(playerInv, PlayerInventory.ARMOUR + i,
                 armourX,
                 armourY + i * (ItemSlot.SLOTSIZE + armourGap)));
         }
@@ -91,5 +91,13 @@ public class SurvivalInventoryContext : InventoryContext {
 
         // Crafting result slot
         slots.Add(new CraftingResultSlot(craftingGrid, -1, craftingResultX, craftingResultY));
+    }
+
+    protected override ItemStack getDestination(int from, ItemStack stack) {
+        if (from < PLAYER_END && (Item.armour[stack.id] || Item.accessory[stack.id])) {
+            return getDestination(stack, PLAYER_END, PLAYER_END + PlayerInventory.ACCESSORY_SIZE + PlayerInventory.ARMOUR_SIZE);
+        }
+
+        return base.getDestination(from, stack);
     }
 }

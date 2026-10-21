@@ -7,7 +7,7 @@
  * On the client we close the GUI, send the packet to the server, and set the player's currentCtx to their inventory.
  * Also don't let shit remain in the cursor.
  */
-public class InventoryClosePacket : Packet {
+public struct InventoryClosePacket : Packet {
     public int invID;
 
     public byte channel => 0;

@@ -1,7 +1,7 @@
 ﻿namespace BlockGame.net.packet;
 
 /** C→S: 0x33 - client requests respawn after death */
-public class RespawnRequestPacket : Packet {
+public struct RespawnRequestPacket : Packet {
 
     public byte channel => 0;
 

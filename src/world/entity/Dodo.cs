@@ -1,4 +1,4 @@
-﻿using BlockGame.main;
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.util.xNBT;
 using BlockGame.world.item;
@@ -37,9 +37,9 @@ public class Dodo : Mob {
             egg.stack = new ItemStack(Item.EGG, 1, 0);
             egg.position = new Vector3D(position.X, position.Y + 0.3, position.Z);
             egg.velocity = new Vector3D(
-                (Game.random.NextSingle() - 0.5) * 0.2,
+                (world.random.NextSingle() - 0.5) * 0.2,
                 0.15,
-                (Game.random.NextSingle() - 0.5) * 0.2
+                (world.random.NextSingle() - 0.5) * 0.2
             );
             world.addEntity(egg);
         }

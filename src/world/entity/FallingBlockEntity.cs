@@ -1,4 +1,4 @@
-﻿using BlockGame.main;
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.util.xNBT;
 using BlockGame.world.block;
@@ -11,18 +11,13 @@ public class FallingBlockEntity : Entity {
     const double size = 1 - EPSILON_GROUND_CHECK;
 
     public FallingBlockEntity(World world) : base(world, "fallingBlock") {
+        flags &= ~EFlag.BLOCK_INTERACTION;
     }
 
     public ushort blockID;
     public byte blockMeta;
     public int fallTime;
 
-    protected override bool needsGravity => true;
-    protected override bool needsBodyRotation => false;
-    protected override bool needsFootsteps => false;
-    protected override bool needsFallDamage => false;
-    protected override bool needsAnimation => false;
-    protected override bool needsBlockInteraction => false;
 
     public override bool blocksPlacement => false;
 

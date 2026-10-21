@@ -1,4 +1,4 @@
-﻿using BlockGame.main;
+using BlockGame.main;
 using BlockGame.ui.element;
 using BlockGame.world;
 using BlockGame.world.worldgen.generator;
@@ -107,7 +107,7 @@ public class CreateWorldMenu : Menu {
         int seed;
         if (string.IsNullOrEmpty(seedInput.getInput()) || !int.TryParse(seedInput.getInput(), out seed)) {
             // if seed is string, hash to int
-            seed = !string.IsNullOrEmpty(seedInput.getInput()) ? seedInput.getInput().GetHashCode() : Game.random.Next();
+            seed = !string.IsNullOrEmpty(seedInput.getInput()) ? seedInput.getInput().GetHashCode() : Game.clientRandom.Next();
         }
 
         // get generator name (strip "generator." prefix)

@@ -48,8 +48,10 @@ public class ItemStack : Persistent {
     }
 
     public ItemStack copy() {
-        var item = Item.get(id);
-        return new ItemStack(item!, quantity, metadata);
+        if (id == 0 || quantity <= 0) {
+            return EMPTY;
+        }
+        return new ItemStack(id, quantity, metadata);
     }
 
     public Item getItem() {

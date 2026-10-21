@@ -133,7 +133,7 @@ public partial class Game {
     public int fps;
     public double ft;
 
-    public static XRandom random = new XRandom();
+    /** client thread ONLY, for example for particles, sounds or camera. sim uses world.random */
     public static XRandom clientRandom = new XRandom();
 
     public static Stopwatch stopwatch = new();

@@ -1,4 +1,4 @@
-﻿using BlockGame.main;
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world.item;
 
@@ -100,7 +100,7 @@ public class Crop : Block {
         // if fully grown, drop the product and seeds
         if (metadata >= stages - 1) {
             var seedCount = world.random.Next(1, 4);
-            var productCount = canBreak ? Game.random.Next(1, 2) : 1;
+            var productCount = canBreak ? world.random.Next(1, 2) : 1;
             drops.Add(new ItemStack(product, productCount, 0));
             drops.Add(new ItemStack(seedItem, seedCount, 0));
             return;

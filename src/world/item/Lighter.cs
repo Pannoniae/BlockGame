@@ -12,9 +12,7 @@ public class Lighter : Item {
         // try to place fire TODO actually implement the conditions properly
         if (true || world.getBlock(x, y, z) == Block.AIR.id && FireBlock.canSurvive(world, x, y, z)) {
             world.setBlock(x, y, z, Block.FIRE.id);
-            // decrease lighter durability
-            stack.damageItem(player, 1);
-            return stack; // lighter is not consumed
+            return stack.damageItem(player, 1);
         }
 
         return null;

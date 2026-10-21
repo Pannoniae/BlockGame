@@ -87,6 +87,7 @@ public class ClientConnection : INetEventListener {
 
     public void connect(string address, int port, string username) {
         this.username = username;
+        NetClock.reset();
         Log.info($"Connecting to {address}:{port} as {username}...");
         netManager.Connect(address, port, Constants.connectionKey);
     }
@@ -223,6 +224,7 @@ public class ClientConnection : INetEventListener {
 
     public void connectMem(MemPipe pipe, string username) {
         this.username = username;
+        NetClock.reset();
         mem = pipe;
         connected = true;
         Log.info("Connected to the integrated server");

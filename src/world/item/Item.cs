@@ -752,9 +752,7 @@ public class Tool : Item {
             var bid = world.getBlock(x, y, z);
             if (bid == Block.DIRT.id || bid == Block.GRASS.id || bid == Block.SNOW_GRASS.id) {
                 world.setBlock(x, y, z, Block.FARMLAND.id);
-                // damage hoe
-                stack.damageItem(player, 1);
-                return stack;
+                return stack.damageItem(player, 1);
             }
         }
         // scythe right clicking: harvest banana fruit
@@ -789,9 +787,9 @@ public class Tool : Item {
                     return stack;
                 }
 
-                // harvest: give bananas, mark as harvested, schedule regrowth
-                int bananaCount = Game.random.Next(1, 3);
-                player.inventory.addItem(new ItemStack(Item.BANANA, bananaCount, 0));
+                if (world.isServer) {
+                    player.pickup(new ItemStack(Item.BANANA, world.random.Next(1, 3), 0));
+                }
 
                 // set metadata bit to mark as harvested
                 world.setMetadata(x, y, z, (byte)(metadata | 1));
@@ -799,9 +797,7 @@ public class Tool : Item {
                 // schedule regrowth after full day-night cycle
                 world.scheduleBlockUpdate(new Molten.Vector3I(x, y, z), World.TICKS_PER_DAY);
 
-                // damage scythe
-                stack.damageItem(player, 1);
-                return stack;
+                return stack.damageItem(player, 1);
             }
 
         }

@@ -9,7 +9,11 @@ using Path = BlockGame.util.path.Path;
 
 namespace BlockGame.world.entity;
 
-public class Mob(World world, string type) : Entity(world, type) {
+public class Mob : Entity {
+    public Mob(World world, string type) : base(world, type) {
+        flags = EFlag.MOB;
+    }
+
     private const double DESPAWN_DISTANCE = 128.0;
     private const double LOOK_AT_PLAYER_DISTANCE = 12.0;
     private const double TARGET_REACHED_DISTANCE = 1.5;
@@ -52,14 +56,6 @@ public class Mob(World world, string type) : Entity(world, type) {
     public virtual bool canSpawn => true;
     public virtual bool canDespawn => true;
 
-    // enable mob-specific systems
-    protected override bool needsEntityCollision => true;
-
-    protected override bool needsBodyRotation => true;
-    protected override bool needsFootsteps => true;
-    protected override bool needsFallDamage => true;
-    protected override bool needsAnimation => true;
-    protected override bool needsDamageNumbers => true;
 
     public virtual bool hostile => false;
     public virtual bool burnInSunlight => false;
@@ -173,7 +169,7 @@ public class Mob(World world, string type) : Entity(world, type) {
         }
 
         // randomly jump on ground, continuously jump in water to stay afloat
-        if (onGround && Game.random.NextSingle() < JUMP_CHANCE) {
+        if (onGround && world.random.NextSingle() < JUMP_CHANCE) {
             jumping = true;
         }
 
@@ -193,7 +189,7 @@ public class Mob(World world, string type) : Entity(world, type) {
         }
 
         // random small chance: change target anyway
-        if (Game.random.NextDouble() < 0.04 / Game.tps) {
+        if (world.random.NextDouble() < 0.04 / Game.tps) {
             if (path != null) {
                 Pathfinding.ret(path);
             }
@@ -224,7 +220,7 @@ public class Mob(World world, string type) : Entity(world, type) {
             if (path == null) {
                 path = Pathfinding.find(this, target);
             }
-            else if (path.isFinished() && Game.random.NextDouble() < 1.0 / Game.tps) {
+            else if (path.isFinished() && world.random.NextDouble() < 1.0 / Game.tps) {
                 Pathfinding.ret(path);
                 path = Pathfinding.find(this, target);
             }
@@ -235,13 +231,13 @@ public class Mob(World world, string type) : Entity(world, type) {
         // random wandering
         else {
             // random chance to decide to wander
-            if (!wantsToWander && Game.random.NextSingle() < CHANCE_START_WANDERING) {
+            if (!wantsToWander && world.random.NextSingle() < CHANCE_START_WANDERING) {
                 wantsToWander = true;
                 wanderTarget = null;
             }
 
             // random chance to stop wandering
-            if (wantsToWander && Game.random.NextSingle() < CHANCE_STOP_WANDERING) {
+            if (wantsToWander && world.random.NextSingle() < CHANCE_STOP_WANDERING) {
                 if (path != null) {
                     Pathfinding.ret(path);
                 }
@@ -265,8 +261,8 @@ public class Mob(World world, string type) : Entity(world, type) {
                     return;
                 }
 
-                var angle = Game.random.NextSingle(0, MathF.PI * 2);
-                var dist = Game.random.NextSingle((float)WANDER_MIN_DISTANCE, (float)WANDER_MAX_DISTANCE);
+                var angle = world.random.NextSingle(0, MathF.PI * 2);
+                var dist = world.random.NextSingle((float)WANDER_MIN_DISTANCE, (float)WANDER_MAX_DISTANCE);
                 var tx = (int)(position.X + MathF.Cos(angle) * dist);
                 var tz = (int)(position.Z + MathF.Sin(angle) * dist);
                 var ty = (int)position.Y;
@@ -364,23 +360,12 @@ public class Mob(World world, string type) : Entity(world, type) {
         }
 
         if (dead) {
-            prevBodyRotation = bodyRotation;
-
             dieTime++;
-
-            // animate death fall (fall to side over a sec)
-            const int deathAnimDuration = 60;
-            float t = Math.Min(dieTime / (float)deathAnimDuration, 1f);
-            // ease out for smoother animation
-            t = 1f - (1f - t) * (1f - t);
-            bodyRotation.Z = -90f * t;
-
-            // after 100 ticks of death, despawn
             if (dieTime > 100) {
                 active = false;
             }
 
-            return false; // don't update anything else when dead
+            return false;
         }
 
         // despawn check
@@ -399,7 +384,7 @@ public class Mob(World world, string type) : Entity(world, type) {
             // random despawn between 32-128 blocks (prevents never despawning at low render dist lol)
             const double RANDOM_DESPAWN_MIN = 32.0 * 32.0;
             if (distSq > RANDOM_DESPAWN_MIN) {
-                if (Game.random.Next(8000) == 0) {
+                if (world.random.Next(8000) == 0) {
                     active = false;
                     return false;
                 }
@@ -444,7 +429,38 @@ public class Mob(World world, string type) : Entity(world, type) {
         }
     }
 
+    public override void syncState() {
+        base.syncState();
+        state.setBool(EntityState.ON_GROUND, onGround);
+    }
+
+    public override void applyState() {
+        base.applyState();
+        onGround = state.getBool(EntityState.ON_GROUND);
+    }
+
+    /** death fall-over */
+    protected override void updateVisual(double dt) {
+        base.updateVisual(dt);
+
+        if (!dead) {
+            dieTime = 0;
+            return;
+        }
+
+        dieTime++;
+
+        const int deathAnimDuration = 60;
+        float t = Math.Min(dieTime / (float)deathAnimDuration, 1f);
+        t = 1f - (1f - t) * (1f - t);
+        bodyRotation.Z = -90f * t;
+    }
+
     protected override void updateBodyRotation(double dt) {
+        if (dead) {
+            return;
+        }
+
         // use velocity as movement input (mobs don't have strafeVector :()
         var vel = velocity.withoutY();
         var velLength = vel.Length();
@@ -509,9 +525,6 @@ public class Mob(World world, string type) : Entity(world, type) {
             if (fireDamageTicks >= 60) {
                 dmg(4);
                 fireDamageTicks = 0;
-                if (hp <= 0) {
-                    die();
-                }
             }
         }
         else {
@@ -519,9 +532,7 @@ public class Mob(World world, string type) : Entity(world, type) {
         }
     }
 
-    public override void die() {
-        base.die();
-
+    protected override void onDeath() {
         // spawn drops
         dropList.Clear();
         getDrop(dropList);
@@ -536,14 +547,14 @@ public class Mob(World world, string type) : Entity(world, type) {
             itemEntity.position = new Vector3D(position.X, position.Y + 0.5, position.Z);
 
             // randomise pos
-            itemEntity.position.X += (Game.random.NextSingle() - 0.5) * 0.5;
-            itemEntity.position.Z += (Game.random.NextSingle() - 0.5) * 0.5;
+            itemEntity.position.X += (world.random.NextSingle() - 0.5) * 0.5;
+            itemEntity.position.Z += (world.random.NextSingle() - 0.5) * 0.5;
 
             // add some random velocity
             itemEntity.velocity = new Vector3D(
-                (Game.random.NextSingle() - 0.5) * 0.5,
-                Game.random.NextSingle() * 0.3 + 0.2,
-                (Game.random.NextSingle() - 0.5) * 0.5
+                (world.random.NextSingle() - 0.5) * 0.5,
+                world.random.NextSingle() * 0.3 + 0.2,
+                (world.random.NextSingle() - 0.5) * 0.5
             );
 
             world.addEntity(itemEntity);

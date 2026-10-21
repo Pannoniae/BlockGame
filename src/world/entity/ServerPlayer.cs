@@ -1,7 +1,10 @@
-﻿using BlockGame.net.packet;
+﻿using System.Numerics;
+using BlockGame.main;
+using BlockGame.net.packet;
 using BlockGame.net.srv;
 using BlockGame.util;
 using BlockGame.world.item;
+using BlockGame.world.item.inventory;
 using Molten.DoublePrecision;
 
 namespace BlockGame.world.entity;
@@ -15,84 +18,46 @@ public class ServerPlayer : Player {
     public ServerConnection conn;
 
     public ServerPlayer(World world, int x, int y, int z) : base(world, x, y, z) {
+        hasmovement = false;
     }
 
-    public override void update(double dt) {
-        // only update essential systems
-        savePrevVars();
-        updateTimers(dt);
+    private double fallSpeed;
 
-        // derive velocity from position change for body rotation
-        // (position is set by packets, not physics)
-        //velocity = (position - prevPosition) / dt;
+    public void resetFall() => fallSpeed = 0;
 
-        updateBodyRotation(dt);  // needed for broadcasting correct bodyRotation
-        updateAnimation(dt);      // needed for animation state
+    public void applyMove(Vector3D pos, Vector3 rot, bool ground) {
+        velocity = (pos - position) * Game.tps;
+        position = pos;
+        rotation = rot;
         aabb = calcAABB(position);
 
-        // item pickup
-        if (!dead) {
-            pickup();
+        // dead clients don't run physics
+        if (dead || flyMode || inLiquid || onLadder || !gameMode.gameplay) {
+            fallSpeed = 0;
+            return;
         }
+
+        if (!ground) {
+            fallSpeed = double.Max(fallSpeed, -velocity.Y);
+            return;
+        }
+
+        if (fallSpeed > SAFE_FALL_SPEED) {
+            dmg((float)((fallSpeed - SAFE_FALL_SPEED) * FALL_DAMAGE_MULTIPLIER));
+        }
+
+        fallSpeed = 0;
     }
 
-    protected override void updateBodyRotation(double dt) {
-        // use velocity for body rotation (like Mob does), not strafeVector
-        var vel = velocity.withoutY();
-        var velLength = vel.Length();
+    public override void teleport(Vector3D pos) {
+        base.teleport(pos);
+        fallSpeed = 0;
 
-        const double IDLE_VELOCITY_THRESHOLD = 0.05;
-        const float BODY_ROTATION_SNAP = 45f;
-        const float ROTATION_SPEED = 1.8f;
-
-        bool moving = velLength > IDLE_VELOCITY_THRESHOLD;
-
-        float targetYaw;
-        float rotSpeed;
-
-        if (moving) {
-            targetYaw = rotation.Y;
-            rotSpeed = ROTATION_SPEED * 2;
-        }
-        else {
-            targetYaw = bodyRotation.Y;
-            rotSpeed = ROTATION_SPEED * 2;
-        }
-
-        bodyRotation.Y = Meth.lerpAngle(bodyRotation.Y, targetYaw, rotSpeed * (float)dt);
-
-        float angleDiff = Meth.angleDiff(bodyRotation.Y, rotation.Y);
-
-        if (angleDiff is > 70 or < -70) {
-            bodyRotation.Y = rotation.Y - float.CopySign(70, angleDiff);
-            angleDiff = float.CopySign(70, angleDiff);
-        }
-
-        var a = Math.Abs(angleDiff);
-        if (a > BODY_ROTATION_SNAP) {
-            bodyRotation.Y = Meth.lerpAngle(bodyRotation.Y, rotation.Y, rotSpeed * 0.6f * (float)dt * (a / BODY_ROTATION_SNAP));
-        }
-
-        bodyRotation.X = 0;
-        bodyRotation.Z = 0;
-
-        bodyRotation = Meth.clampAngle(bodyRotation);
-        rotation = Meth.clampAngle(rotation);
-    }
-
-    public override void knockback(Vector3D force) {
-        base.knockback(force);
-
-        conn?.send(new EntityVelocityPacket {
-            entityID = id,
-            velocity = force
+        // send teleport packet to client
+        conn?.send(new TeleportPacket {
+            position = pos,
+            rotation = rotation
         }, LiteNetLib.DeliveryMethod.ReliableOrdered);
-    }
-
-    // sync HP to client on damage
-    public override void dmg(float damage) {
-        base.dmg(damage);
-        syncHealth();
     }
 
     public override void dmg(double damage, Entity source) {
@@ -109,16 +74,6 @@ public class ServerPlayer : Player {
         }
 
         base.dmg(damage, source);
-        syncHealth();
-    }
-
-    private void syncHealth() {
-        if (conn != null && !dead) {
-            conn.send(new PlayerHealthPacket {
-                health = hp,
-                damageTime = dmgTime
-            }, LiteNetLib.DeliveryMethod.ReliableOrdered);
-        }
     }
 
     // sync effects to client
@@ -155,118 +110,119 @@ public class ServerPlayer : Player {
         }
     }
 
-    public override void teleport(Vector3D pos) {
-        base.teleport(pos);
+    protected override void onDeath() {
+        if (currentInventoryID != Constants.INV_ID_PLAYER) {
+            var id = currentInventoryID;
+            closeInventory();
+            conn?.send(new InventoryClosePacket { invID = id }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+        }
 
-        // send teleport packet to client
-        if (conn != null) {
-            conn.send(new TeleportPacket {
-                position = pos,
-                rotation = rotation
-            }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+        base.onDeath();
+
+        dropDeathItems();
+        syncInventory();
+
+        // also see EntityTracker for hp/death flag
+    }
+
+    protected override void updateTimers(double dt) {
+        base.updateTimers(dt);
+        interactBlock(dt);
+    }
+
+    [ThreadStatic] private static List<Entity>? _nearby;
+
+    protected override void pickup() {
+        var nearby = _nearby ??= [];
+        var min = position.toBlockPos() - new Molten.Vector3I(2, 2, 2);
+        var max = position.toBlockPos() + new Molten.Vector3I(2, 2, 2);
+        world.getEntitiesInBox(nearby, min, max);
+
+        bool changed = false;
+        foreach (var entity in nearby) {
+            if (entity is ItemEntity item && item.active && item.pickup(this)) {
+                changed = true;
+            }
+        }
+
+        // the despawn goes out through the tracker when the item is removed
+        if (changed) {
+            syncInventory();
         }
     }
 
-    public override void die() {
-        base.die();
+    private int windowCtr;
 
-        // close any open inv
-        if (currentInventoryID != -1) {
-            closeInventory();
-        }
+    public int nextWindowID() {
+        windowCtr = windowCtr == int.MaxValue ? 1 : windowCtr + 1;
+        return windowCtr;
+    }
 
-        // notify client of death and broadcast to nearby players
-        var server = GameServer.instance;
-        if (conn != null) {
-            // send respawn packet to client (triggers death screen)
-            conn.send(new PlayerHealthPacket {
-                health = 0,
-                damageTime = dmgTime
-            }, LiteNetLib.DeliveryMethod.ReliableOrdered);
-        }
+    // ============ INVENTORY SYNC ============
 
-        // broadcast death action to nearby players
-        server.send(
+    public void syncSlot(int invIdx) {
+        conn?.send(new SetSlotPacket {
+            invID = Constants.INV_ID_PLAYER,
+            slotIndex = (ushort)invIdx,
+            stack = inventory.getStack(invIdx)
+        }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+    }
+
+    public void syncSelected() {
+        syncSlot(inventory.selected);
+        broadcastHeld();
+    }
+
+    public void broadcastHeld() {
+        GameServer.instance.send(
             position,
             128.0,
-            new EntityActionPacket {
+            new HeldItemChangePacket {
                 entityID = id,
-                action = EntityActionPacket.Action.DEATH
+                slotIndex = (byte)inventory.selected,
+                heldItem = inventory.getSelected()
             },
-            LiteNetLib.DeliveryMethod.ReliableOrdered
+            LiteNetLib.DeliveryMethod.ReliableOrdered,
+            exclude: conn
         );
     }
 
-    private void dropInventoryOnDeath() {
-        // drop all materials (blocks used for building, not tools)
-        for (int i = 0; i < inventory.slots.Length; i++) {
-            var stack = inventory.slots[i];
-            if (stack != ItemStack.EMPTY && stack.quantity > 0) {
-                var item = stack.getItem();
-                // only drop materials (blocks), not tools
-                if (item.isBlock() && Item.material[item.id]) {
-                    dropItemStack(stack, false);
-                    inventory.slots[i] = ItemStack.EMPTY;
-                }
-            }
-        }
-
-        // sync inventory clear to client
-        var server = GameServer.instance;
-        if (conn != null) {
-            var inventorySlots = new List<ItemStack>();
-            inventorySlots.AddRange(inventory.slots);
-            inventorySlots.AddRange(inventory.armour);
-            inventorySlots.AddRange(inventory.accessories);
-
-            conn.send(new InventorySyncPacket {
-                invID = Constants.INV_ID_PLAYER,
-                items = inventorySlots.ToArray()
-            }, LiteNetLib.DeliveryMethod.ReliableOrdered);
-        }
+    public void syncCursor() {
+        conn?.send(new SetSlotPacket {
+            invID = Constants.INV_ID_CURSOR,
+            slotIndex = 0,
+            stack = inventory.cursor
+        }, LiteNetLib.DeliveryMethod.ReliableOrdered);
     }
 
-    private void pickup() {
-        // get nearby entities
-        var entities = new List<Entity>();
-        var min = position.toBlockPos() - new Molten.Vector3I(2, 2, 2);
-        var max = position.toBlockPos() + new Molten.Vector3I(2, 2, 2);
-        world.getEntitiesInBox(entities, min, max);
+    private ItemStack[] syncBuf = [];
 
-        // try to pickup any ItemEntities
-        foreach (var entity in entities) {
-            if (entity is ItemEntity itemEntity) {
-                if (itemEntity.pickup(this)) {
-                    // successfully picked up - notify client and broadcast
-                    var server = GameServer.instance;
-
-                    if (conn != null) {
-                        // find which slot was updated and send SetSlotPacket
-                        // (inventory.addItem already modified the inventory)
-                        // for now, just sync the entire inventory - optimise later..
-                        var inventorySlots = new List<ItemStack>();
-                        inventorySlots.AddRange(inventory.slots);
-                        inventorySlots.AddRange(inventory.armour);
-                        inventorySlots.AddRange(inventory.accessories);
-
-                        conn.send(new InventorySyncPacket {
-                            invID = Constants.INV_ID_PLAYER,
-                            items = inventorySlots.ToArray()
-                        }, LiteNetLib.DeliveryMethod.ReliableOrdered);
-                    }
-
-                    // broadcast entity despawn to all nearby players
-                    server.send(
-                        position,
-                        128.0,
-                        new DespawnEntityPacket {
-                            entityID = itemEntity.id
-                        },
-                        LiteNetLib.DeliveryMethod.ReliableOrdered
-                    );
-                }
-            }
+    /** full player inventory + 2x2 grid + cursor */
+    public void syncInventory() {
+        if (conn == null) {
+            return;
         }
+
+        var grid = (inventoryCtx as SurvivalInventoryContext)?.getCraftingGrid().grid;
+        var n = PlayerInventory.TOTAL_SIZE + (grid?.Length ?? 0);
+        if (syncBuf.Length != n) {
+            syncBuf = new ItemStack[n];
+        }
+
+        var items = syncBuf;
+        for (int i = 0; i < PlayerInventory.TOTAL_SIZE; i++) {
+            items[i] = inventory.getStack(i);
+        }
+
+        grid?.CopyTo(items, PlayerInventory.TOTAL_SIZE);
+
+        conn.send(new InventorySyncPacket {
+            invID = Constants.INV_ID_PLAYER,
+            items = items
+        }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+
+        syncCursor();
+        broadcastHeld();
     }
 
     // override sendMessage to send ChatMessagePacket back to client

@@ -1,3 +1,4 @@
+using BlockGame.util.stuff;
 using BlockGame.world.item;
 using BlockGame.world.item.inventory;
 using Molten;
@@ -180,6 +181,25 @@ public class AccessorySlot : ItemSlot {
     }
 }
 
+/** slot which can only be taken from */
+public class OutputSlot : ItemSlot {
+    public OutputSlot(Inventory? inventory, int index, int x, int y) : base(inventory, index, x, y) {
+    }
+
+    public override bool canPlace() => false;
+
+    public override bool accept(ItemStack stack) => stack == ItemStack.EMPTY;
+
+    public override ItemStack place(ItemStack stack) => stack;
+}
+
+public class FuelSlot : ItemSlot {
+    public FuelSlot(Inventory? inventory, int index, int x, int y) : base(inventory, index, x, y) {
+    }
+
+    public override bool accept(ItemStack stack) => stack == ItemStack.EMPTY || Registry.ITEMS.fuelValue[stack.id] > 0;
+}
+
 public class CraftingResultSlot : ItemSlot {
     private readonly CraftingGridInventory craftingGrid;
 
@@ -201,21 +221,16 @@ public class CraftingResultSlot : ItemSlot {
             return ItemStack.EMPTY;
         }
 
-        var takeAmount = Math.Min(count, result.quantity);
-        var taken = new ItemStack(result.getItem(), takeAmount, result.metadata);
+        var taken = new ItemStack(result.getItem(), result.quantity, result.metadata);
 
         // use cached recipe from updateResult() to prevent double lookup
         var recipe = craftingGrid.lastMatchedRecipe;
-        Console.WriteLine($"[CraftingResultSlot.take] recipe={recipe?.GetType().Name}, result={result.getItem().name}");
         if (recipe != null && recipe.matches(craftingGrid)) {
-            Console.WriteLine($"[CraftingResultSlot.take] Recipe matches, calling consumeIngredients");
-            // recipe still valid - consume ingredients
             recipe.consumeIngredients(craftingGrid);
             craftingGrid.updateResult(); // recalculate to see if we can craft again
             craftingGrid.notifyChanged();
         }
         else {
-            Console.WriteLine($"[CraftingResultSlot.take] Recipe NULL or doesn't match, clearing grid");
             // recipe no longer matches (grid changed or desync) - clear grid and don't give items
             craftingGrid.clearAll();
             craftingGrid.notifyChanged();

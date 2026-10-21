@@ -3,7 +3,7 @@
 namespace BlockGame.net.packet;
 
 /** C→S: 0x05 - client changes gamemode */
-public class GamemodePacket : Packet {
+public struct GamemodePacket : Packet {
     public GameModeID gamemode;
 
     public byte channel => 0;

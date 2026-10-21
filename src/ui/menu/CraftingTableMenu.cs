@@ -61,9 +61,8 @@ public class CraftingTableMenu : InventoryMenu {
         }
     }
 
-    protected override void handleSlotClick(ItemSlot slot, MouseButton button) {
-        var clickType = button == MouseButton.Left ? ClickType.LEFT : ClickType.RIGHT;
-        craftingCtx.handleSlotClick(slot, clickType);
+    protected override void handleSlotClick(ItemSlot slot, ClickType click) {
+        craftingCtx.handleSlotClick(slot, click);
     }
 
     public override void deactivate() {

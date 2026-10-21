@@ -4,7 +4,7 @@ using Molten.DoublePrecision;
 namespace BlockGame.net.packet;
 
 /** S→C: 0x04 - respawn player */
-public class RespawnPacket : Packet {
+public struct RespawnPacket : Packet {
     public Vector3D spawnPosition;
     public Vector3 rotation;
 

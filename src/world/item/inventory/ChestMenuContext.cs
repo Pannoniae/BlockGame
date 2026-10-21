@@ -51,4 +51,8 @@ public class ChestMenuContext : InventoryContext {
             }
         }
     }
+
+    protected override ItemStack getDestination(int from, ItemStack stack) {
+        return from < PLAYER_END ? getDestination(stack, PLAYER_END, slots.Count) : base.getDestination(from, stack);
+    }
 }

@@ -38,9 +38,8 @@ public class ChestMenu : InventoryMenu {
     protected override int getTextOffsetX() => textOffsetX;
     protected override int getTextOffsetY() => textOffsetY;
 
-    protected override void handleSlotClick(ItemSlot slot, MouseButton button) {
-        var clickType = button == MouseButton.Left ? ClickType.LEFT : ClickType.RIGHT;
-        chestCtx.handleSlotClick(slot, clickType);
+    protected override void handleSlotClick(ItemSlot slot, ClickType click) {
+        chestCtx.handleSlotClick(slot, click);
     }
 
     public override void deactivate() {

@@ -77,9 +77,10 @@ public class Bush : Block {
             return true;
         }
 
-        // harvest: give fruit, mark as harvested, schedule regrowth
-        int fruitCount = Game.random.Next(1, 3);
-        player.inventory.addItem(new ItemStack(fruit, fruitCount, 0));
+        // server only
+        if (world.isServer) {
+            player.pickup(new ItemStack(fruit, world.random.Next(1, 3), 0));
+        }
 
         // set metadata bit to mark as harvested
         world.setMetadata(x, y, z, (byte)(metadata | 1));
@@ -87,9 +88,7 @@ public class Bush : Block {
         // schedule regrowth after full day-night cycle
         world.scheduleBlockUpdate(new Molten.Vector3I(x, y, z), World.TICKS_PER_DAY);
 
-        // damage scythe
-        held.damageItem(player, 1);
-        player.inventory.setStack(player.inventory.selected, held);
+        player.inventory.setStack(player.inventory.selected, held.damageItem(player, 1));
 
         return true;
     }

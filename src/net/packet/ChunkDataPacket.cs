@@ -5,7 +5,7 @@ using K4os.Compression.LZ4;
 namespace BlockGame.net.packet;
 
 /** S→C: 0x10 - sends chunk data */
-public class ChunkDataPacket : Packet {
+public struct ChunkDataPacket : Packet {
     // maybe we should stop slopcoding constants in and centralise them
     // BUT NOT TODAY
     public const int LIGHT_PLANE_BYTES = Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE / 2;

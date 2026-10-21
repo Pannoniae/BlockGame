@@ -82,17 +82,11 @@ public class ClientPacketHandler : PacketHandler {
             case SpawnPlayerPacket p:
                 handleSpawnPlayer(p);
                 break;
-            case EntityPositionPacket p:
-                handleEntityPosition(p);
-                break;
-            case EntityRotationPacket p:
-                handleEntityRotation(p);
-                break;
             case EntityPositionRotationPacket p:
                 handleEntityPositionRotation(p);
                 break;
-            case EntityVelocityPacket p:
-                handleEntityVelocity(p);
+            case EntityImpulsePacket p:
+                handleEntityImpulse(p);
                 break;
             case ServerStatsPacket p:
                 handleServerStats(p);
@@ -520,12 +514,7 @@ public class ClientPacketHandler : PacketHandler {
         entity.position = p.position;
         entity.rotation = p.rotation;
         entity.velocity = p.velocity;
-
-        // set the interpolation target. Because delta packets *also* apply to these they must start in sync
-        // with the server's lastSentPos or we're already fucked from the start (might be a cause of the entity jitter?)
-        entity.targetPos = p.position;
-        entity.targetRot = p.rotation;
-        entity.interpolationTicks = 0;
+        entity.resetSnapshots(p.position, p.rotation);
 
         // deserialize entity-specific data
         EntityTracker.deserializeExtraData(entity, p.extraData);
@@ -565,42 +554,18 @@ public class ClientPacketHandler : PacketHandler {
             return;
         }
 
-        // spawn other player entity
-        var player = new Humanoid(Game.world, (int)p.position.X, (int)p.position.Y, (int)p.position.Z) {
+        // a remote player is just a Player that doesn't move itself
+        var player = new Player(Game.world, (int)p.position.X, (int)p.position.Y, (int)p.position.Z) {
             id = p.entityID,
             name = p.username,
-            position = p.position,
-            rotation = p.rotation,
             sneaking = p.sneaking,
             flyMode = p.flying,
             gameMode = GameMode.creative // TODO assume creative for now...
         };
 
+        player.resetSnapshots(p.position, p.rotation);
         Game.world.addEntity(player);
         Log.info($"[Client] Spawned player '{p.username}' (entityID={p.entityID})");
-    }
-
-    public void handleEntityPosition(EntityPositionPacket p) {
-        if (Game.world == null) {
-            return;
-        }
-
-        var entity = Game.world.getEntity(p.entityID);
-        if (entity != null) {
-            // keep the current target rotation, only the position moved
-            entity.mpInterpolate(p.position, entity.targetRot);
-        }
-    }
-
-    public void handleEntityRotation(EntityRotationPacket p) {
-        if (Game.world == null) {
-            return;
-        }
-
-        var entity = Game.world.getEntity(p.entityID);
-        if (entity != null) {
-            entity.mpInterpolate(entity.targetPos, p.rotation);
-        }
     }
 
     public void handleEntityPositionRotation(EntityPositionRotationPacket p) {
@@ -608,7 +573,12 @@ public class ClientPacketHandler : PacketHandler {
             return;
         }
 
-        Game.world.getEntity(p.entityID)?.mpInterpolate(p.position, p.rotation);
+        NetClock.onRecv(p.tick);
+
+        var e = Game.world.getEntity(p.entityID);
+        if (e != null && !e.hasmovement) {
+            e.addSnapshot(p.tick, p.position, p.rotation);
+        }
     }
 
     public static ServerStatsPacket? serverStats;
@@ -643,12 +613,9 @@ public class ClientPacketHandler : PacketHandler {
         }
     }
 
-    public void handleEntityVelocity(EntityVelocityPacket p) {
-        if (Game.world == null) {
-            return;
-        }
-        if (Game.player != null && Game.world.getEntity(p.entityID) == Game.player) {
-            Game.player.velocity += p.velocity;
+    public void handleEntityImpulse(EntityImpulsePacket p) {
+        if (Game.player != null && p.entityID == Game.player.id) {
+            Entity.applyImpulse(ref Game.player.velocity, p.impulse);
         }
     }
 
@@ -679,19 +646,6 @@ public class ClientPacketHandler : PacketHandler {
                     }
 
                     break;
-                case EntityActionPacket.Action.TAKE_DAMAGE:
-                    // trigger damage flash/animation on entity
-                    entity.dmgTime = 30;
-                    break;
-                case EntityActionPacket.Action.DEATH:
-                    // mark entity as dead (starts death animation)
-                    if (!entity.dead) {
-                        entity.dead = true;
-                        if (entity is Mob mob) {
-                            mob.dieTime = 0;
-                        }
-                    }
-                    break;
                 // todo other actions (EAT, CRITICAL_HIT)
             }
         }
@@ -703,29 +657,26 @@ public class ClientPacketHandler : PacketHandler {
             return;
         }
 
-        // find damaged entity
-        Entity? entity = null;
-        foreach (Entity e in world.entities) {
-            if (e.id == p.entityID) {
-                entity = e;
-                break;
-            }
-        }
+        var entity = world.getEntity(p.entityID);
         if (entity == null) {
             return;
         }
 
-        entity.dmgTime = 30;
+        if (entity == Game.player) {
+            entity.dmgTime = 30;
 
-        var rng = Game.clientRandom;
-        var h = entity.aabb.y1 - entity.position.Y;
-        var a = new Vector3D(
-            rng.NextSingle() * 0.14f,
-            h + rng.NextSingle() * 0.17f,
-            rng.NextSingle() * 0.14f
-        );
-        var np = entity.position + a;
-        world.particles.add(new DamageNumber(world, np, p.damage));
+            if (p.attackerID != -1 || world.worldTick - Game.player.lastDMGTick > 20) {
+                Game.camera.applyImpact((float)p.damage * 4);
+            }
+
+            return;
+        }
+
+        if (p.attackerID == Game.player?.id && entity.consumePredictedHurt()) {
+            return;
+        }
+
+        entity.showHurt(p.damage);
     }
 
     public void handlePlayerHealth(PlayerHealthPacket p) {
@@ -747,7 +698,7 @@ public class ClientPacketHandler : PacketHandler {
             return;
         }
 
-        var entity = world.entities.FirstOrDefault(e => e.id == p.entityID);
+        var entity = world.getEntity(p.entityID);
         if (entity == null) {
             return;
         }
@@ -771,18 +722,7 @@ public class ClientPacketHandler : PacketHandler {
             return;
         }
 
-        Entity? entity = null;
-        foreach (Entity e in world.entities) {
-            if (e.id == p.entityID) {
-                entity = e;
-                break;
-            }
-        }
-        if (entity == null) {
-            return;
-        }
-
-        entity.removeEffect(p.effectID);
+        world.getEntity(p.entityID)?.removeEffect(p.effectID);
     }
 
     public void handleChatMessage(ChatMessagePacket p) {
@@ -930,17 +870,19 @@ public class ClientPacketHandler : PacketHandler {
             // cursor update
             Game.player.inventory.cursor = p.stack;
         } else if (p.invID == Constants.INV_ID_PLAYER) {
-            // player inventory
-            if (p.slotIndex < Game.player.inventory.size()) {
-                Game.player.inventory.setStack((int)p.slotIndex, p.stack);
+            if (p.slotIndex < PlayerInventory.TOTAL_SIZE) {
+                Game.player.inventory.setStack(p.slotIndex, p.stack);
+            }
+            else if (Game.player.inventoryCtx is SurvivalInventoryContext surv) {
+                surv.getCraftingGrid().setStack(p.slotIndex - PlayerInventory.TOTAL_SIZE, p.stack);
             }
         } else {
-            // other inventory (chest, furnace, etc)
-            if (Game.player.currentInventoryID == p.invID && Game.player.currentCtx != null) {
+            // window packets are in context order
+            if (Game.player.currentInventoryID == p.invID) {
                 var slots = Game.player.currentCtx.getSlots();
                 if (p.slotIndex < slots.Count) {
                     var slot = slots[p.slotIndex];
-                    if (slot.inventory != null) {
+                    if (slot.inventory != null && slot.index >= 0) {
                         slot.inventory.setStack(slot.index, p.stack);
 
                         // if furnace input slot changed, recalculate recipe
@@ -959,60 +901,30 @@ public class ClientPacketHandler : PacketHandler {
             return;
         }
 
-        // full inventory sync from server (on login or inventory opening)
         if (p.invID == Constants.INV_ID_PLAYER) {
-            // player inventory
-            // split array back into slots, armour, accessories, and crafting grid (if survival)
-            int idx = 0;
-            for (int i = 0; i < Game.player.inventory.slots.Length; i++) {
-                Game.player.inventory.slots[i] = idx < p.items.Length ? p.items[idx++] : ItemStack.EMPTY;
+            var inv = Game.player.inventory;
+            for (int i = 0; i < PlayerInventory.TOTAL_SIZE; i++) {
+                inv.setStack(i, i < p.items.Length ? p.items[i] : ItemStack.EMPTY);
             }
 
-            for (int i = 0; i < Game.player.inventory.armour.Length; i++) {
-                Game.player.inventory.armour[i] = idx < p.items.Length ? p.items[idx++] : ItemStack.EMPTY;
-            }
-
-            for (int i = 0; i < Game.player.inventory.accessories.Length; i++) {
-                Game.player.inventory.accessories[i] = idx < p.items.Length ? p.items[idx++] : ItemStack.EMPTY;
-            }
-
-            // if survival mode, also sync crafting grid (2x2 = 4 slots)
-            if (Game.player.inventoryCtx is SurvivalInventoryContext survCtx) {
-                var grid = survCtx.getCraftingGrid();
+            if (Game.player.inventoryCtx is SurvivalInventoryContext surv) {
+                var grid = surv.getCraftingGrid();
                 for (int i = 0; i < grid.grid.Length; i++) {
-                    grid.grid[i] = idx < p.items.Length ? p.items[idx++] : ItemStack.EMPTY;
+                    var idx = PlayerInventory.TOTAL_SIZE + i;
+                    grid.grid[i] = idx < p.items.Length ? p.items[idx] : ItemStack.EMPTY;
                 }
+
                 grid.updateResult();
             }
-
-            Log.info("Received full inventory sync from server");
         }
-        else {
-            // inventory - sync to currentCtx
-            if (Game.player.currentCtx != null && p.invID == Game.player.currentInventoryID) {
-                // currentCtx has references to the block entity's inventory
-                // the InventorySyncPacket contains just the inventory slots
-                // we need to update the underlying inventory that currentCtx points to
-
-                if (Game.player.currentCtx is ChestMenuContext chestCtx) {
-                    for (int i = 0; i < p.items.Length && i < (chestCtx.chestInv as ChestBlockEntity).slots.Length; i++) {
-                        (chestCtx.chestInv as ChestBlockEntity).slots[i] = p.items[i];
-                    }
+        else if (p.invID == Game.player.currentInventoryID) {
+            // window packets are in context order, and the client built the same context from the open packet
+            var slots = Game.player.currentCtx.getSlots();
+            for (int i = 0; i < p.items.Length && i < slots.Count; i++) {
+                var slot = slots[i];
+                if (slot.inventory != null && slot.index >= 0) {
+                    slot.inventory.setStack(slot.index, p.items[i]);
                 }
-                else if (Game.player.currentCtx is FurnaceMenuContext furnaceCtx) {
-                    for (int i = 0; i < p.items.Length && i < (furnaceCtx.getFurnaceInventory() as FurnaceBlockEntity).slots.Length; i++) {
-                        (furnaceCtx.getFurnaceInventory() as FurnaceBlockEntity).slots[i] = p.items[i];
-                    }
-                }
-                else if (Game.player.currentCtx is CraftingTableContext craftingCtx) {
-                    var grid = craftingCtx.getCraftingGrid();
-                    for (int i = 0; i < p.items.Length && i < grid.grid.Length; i++) {
-                        grid.grid[i] = p.items[i];
-                    }
-                    grid.updateResult();
-                }
-
-                Log.info($"Received invsync (invID={p.invID})");
             }
         }
     }
@@ -1047,10 +959,16 @@ public class ClientPacketHandler : PacketHandler {
 
         // close context - reset to player inventory
         Game.player.closeInventory();
+        Game.player.inventory.cursor = ItemStack.EMPTY;
 
         // update local player's game mode
         var id = p.gamemode;
         Game.player.gameMode = GameMode.fromID(id);
+
+        // survival means no flying...
+        if (Game.player.gameMode.gameplay) {
+            Game.player.flyMode = false;
+        }
 
         // update both inventoryCtx and currentCtx (SurvivalInventoryMenu reads from inventoryCtx!)
         if (Game.player.gameMode == GameMode.creative) {
@@ -1070,11 +988,10 @@ public class ClientPacketHandler : PacketHandler {
             return;
         }
 
-        var entity = Game.world.getEntity(p.entityID);
-        if (entity is Humanoid humanoid) {
-            humanoid.inventory.selected = p.slotIndex;
-            // set the held item in their inventory
-            humanoid.inventory.setStack(p.slotIndex, p.heldItem);
+        // remote players only - our own inventory is the server's business through the inventory packets
+        if (Game.world.getEntity(p.entityID) is Player { hasmovement: false } other) {
+            other.inventory.selected = p.slotIndex;
+            other.inventory.setStack(p.slotIndex, p.heldItem);
         }
     }
 
@@ -1152,14 +1069,11 @@ public class ClientPacketHandler : PacketHandler {
     }
 
     public void handleInventoryClose(InventoryClosePacket p) {
-        if (Game.player == null) {
+        if (Game.player == null || p.invID != Game.player.currentInventoryID) {
             return;
         }
 
-        // clear cursor
         Game.player.inventory.cursor = ItemStack.EMPTY;
-
-        // close current inventory
         Game.player.closeInventory();
 
         // close menu on main thread if it's open
@@ -1202,6 +1116,9 @@ public class ClientPacketHandler : PacketHandler {
         }
 
         Log.info($"Respawned at {p.spawnPosition}");
+
+        Game.player.closeInventory();
+        Game.player.inventory.cursor = ItemStack.EMPTY;
 
         // respawn the player locally
         Game.player.dead = false;

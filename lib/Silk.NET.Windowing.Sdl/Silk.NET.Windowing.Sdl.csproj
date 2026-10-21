@@ -14,7 +14,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="ppy.SDL3-CS" Version="2026.722.0" />
+      <PackageReference Include="coverlet.collector" Version="10.1.0">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+      <PackageReference Include="ppy.SDL3-CS" Version="2026.1002.1" />
       <ProjectReference Include="..\Silk.NET.Windowing.Common\Silk.NET.Windowing.Common.csproj" />
     </ItemGroup>
 

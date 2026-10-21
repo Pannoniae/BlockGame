@@ -5,10 +5,11 @@ using Molten.DoublePrecision;
 namespace BlockGame.net.packet;
 
 /**
- * S→C: 0x26 - combined entity position+rotation update
+ * S→C: 0x26 - combined entity position+rotation update.
  */
 public struct EntityPositionRotationPacket : Packet {
     public int entityID;
+    public int tick;
     public Vector3D position;
     public Vector3 rotation;
 
@@ -23,6 +24,7 @@ public struct EntityPositionRotationPacket : Packet {
         split(position.Z, out var cz, out var offZ);
 
         buf.writeInt(entityID);
+        buf.writeInt(tick);
         buf.writeInt(cx);
         buf.writeInt(cz);
         buf.writeUShort(offX);
@@ -35,6 +37,7 @@ public struct EntityPositionRotationPacket : Packet {
 
     public void read(PacketBuffer buf) {
         entityID = buf.readInt();
+        tick = buf.readInt();
 
         var cx = buf.readInt();
         var cz = buf.readInt();

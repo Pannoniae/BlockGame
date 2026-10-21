@@ -1,4 +1,4 @@
-﻿using BlockGame.main;
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world.item;
 using Molten;
@@ -34,39 +34,39 @@ public class Leaves : Block {
 
     public override void getDrop(List<ItemStack> drops, World world, int x, int y, int z, byte metadata, bool canBreak) {
         // oak: 1 in 10 chance to drop fruit
-        if (id == LEAVES.id && Game.random.Next(10) == 0) {
-            drops.Add(new ItemStack(Game.random.Next(2) == 0 ? Item.APPLE : Item.CHERRY, 1, 0));
+        if (id == LEAVES.id && world.random.Next(10) == 0) {
+            drops.Add(new ItemStack(world.random.Next(2) == 0 ? Item.APPLE : Item.CHERRY, 1, 0));
         }
         // oak: 1 in 15 chance to drop sapling
-        if (id == LEAVES.id && Game.random.Next(15) == 0) {
+        if (id == LEAVES.id && world.random.Next(15) == 0) {
             drops.Add(new ItemStack(OAK_SAPLING.item, 1, 0));
         }
 
         // maple leaves: 1 in 15 chance to drop sapling
-        if (id == MAPLE_LEAVES.id && Game.random.Next(15) == 0) {
+        if (id == MAPLE_LEAVES.id && world.random.Next(15) == 0) {
             drops.Add(new ItemStack(MAPLE_SAPLING.item, 1, 0));
         }
         // maple leaves: 1 in 20 chance to drop maple syrup
-        if (id == MAPLE_LEAVES.id && Game.random.Next(20) == 0) {
+        if (id == MAPLE_LEAVES.id && world.random.Next(20) == 0) {
             drops.Add(new ItemStack(Item.MAPLE_SYRUP, 1, 0));
         }
 
         // mahogany leaves: 1 in 15 chance to drop sapling
-        if (id == MAHOGANY_LEAVES.id && Game.random.Next(15) == 0) {
+        if (id == MAHOGANY_LEAVES.id && world.random.Next(15) == 0) {
             drops.Add(new ItemStack(MAHOGANY_SAPLING.item, 1, 0));
         }
         // mahogany: 1 in 10 chance to drop either pineapple or tea seeds
-        if (id == MAHOGANY_LEAVES.id && Game.random.Next(10) == 0) {
-            drops.Add(new ItemStack(Game.random.Next(2) == 0 ? Item.PINEAPPLE : Item.TEA_SEEDS, 1, 0));
+        if (id == MAHOGANY_LEAVES.id && world.random.Next(10) == 0) {
+            drops.Add(new ItemStack(world.random.Next(2) == 0 ? Item.PINEAPPLE : Item.TEA_SEEDS, 1, 0));
         }
 
         // PINE: 1 in 15 chance to drop sapling
-        if (id == PINE_LEAVES.id && Game.random.Next(15) == 0) {
+        if (id == PINE_LEAVES.id && world.random.Next(15) == 0) {
             drops.Add(new ItemStack(PINE_SAPLING.item, 1, 0));
         }
 
         // palm: 1 in 10 chance to drop sapling
-        if (id == PALM_LEAVES.id && Game.random.Next(15) == 0) {
+        if (id == PALM_LEAVES.id && world.random.Next(15) == 0) {
             drops.Add(new ItemStack(PALM_SAPLING.item, 1, 0));
         }
 

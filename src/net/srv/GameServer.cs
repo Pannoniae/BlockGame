@@ -95,6 +95,12 @@ public class GameServer : INetEventListener {
     public World world;
     public long lastProgress;
     public int tickCtr = 0;
+
+    /**
+     * Simulated ticks since start - the stamp on entity snapshots. NOT world.worldTick: that's time of day,
+     * /time set moves it backwards and every client then drops every snapshot as stale.
+     */
+    public int simTick;
     private int pingUpdateCtr = 0;
     private int timeUpdateCtr = 0;
     private int chunkSyncCtr = 0;
@@ -243,24 +249,22 @@ public class GameServer : INetEventListener {
 
         // 60 TPS game loop
         sw.Restart();
-        double lastUpdate = sw.ElapsedMilliseconds;
+        using var timer = new TickTimer();
+        var next = sw.Elapsed.TotalMilliseconds;
 
         while (running) {
-            long now = sw.ElapsedMilliseconds;
-
-            // todo if took too long, warn
-            //  if *really* long, skip updates too
-
-            if (now - lastUpdate >= mspt) {
-                update();
-                lastUpdate += mspt;
+            var now = sw.Elapsed.TotalMilliseconds;
+            if (now < next) {
+                timer.sleepUntil(sw, next);
+                continue;
             }
-            else {
-                // sleep for remaining time to avoid busy-waiting
-                int sleepms = (int)(mspt - (now - lastUpdate));
-                if (sleepms > 0) {
-                    Thread.Sleep(sleepms);
-                }
+
+            update();
+            next += mspt;
+
+            // drop the backlog
+            if (now - next > mspt * 10) {
+                next = now;
             }
         }
 
@@ -427,13 +431,10 @@ public class GameServer : INetEventListener {
         // update world, entities, lighting, etc.
         if (!(paused && !isDedicated && connections.Count <= 1)) {
             world.update(mspt / 1000.0);
+            simTick++;
         }
 
-        // update entity tracker (position/state broadcasting)
         entityTracker.update();
-
-        // sync entity state changes to clients
-        syncEntityStates();
 
         // update chunk tracking for all connected players
         foreach (var conn in connections.Values) {
@@ -630,11 +631,12 @@ public class GameServer : INetEventListener {
             return false;
         }
 
-        // increment window ID
-        player.currentInventoryID++;
+        if (player.currentInventoryID != Constants.INV_ID_PLAYER) {
+            player.currentCtx.removeViewer(conn);
+            player.closeInventory();
+        }
 
-        // set server-side context for validation
-        player.currentCtx = ctx;
+        player.openInventory(player.nextWindowID(), ctx);
 
         // send open packet
         conn.send(new InventoryOpenPacket {
@@ -645,10 +647,9 @@ public class GameServer : INetEventListener {
             position = position
         }, DeliveryMethod.ReliableOrdered);
 
-        // send inventory sync
         conn.send(new InventorySyncPacket {
             invID = player.currentInventoryID,
-            items = slots
+            items = ctx.snapshot()
         }, DeliveryMethod.ReliableOrdered);
 
         // send cursor state (the client needs to know what's in cursor when switching inventories, desync alert!!)
@@ -667,6 +668,51 @@ public class GameServer : INetEventListener {
         ctx.addViewer(conn, player.currentInventoryID);
 
         return true;
+    }
+
+    /**
+     * Every viewer of a container has their own context over the same block entity, so a change made through one
+     * context has to be pushed to the others by hand. Without this, B never sees A's changes and B's next click NACKs.
+     */
+    public void notifyOtherViewers(ServerConnection except, Inventory inv, int index, ItemStack stack) {
+        if (inv is PlayerInventory) {
+            return;
+        }
+
+        foreach (var c in connections.Values) {
+            var p = c.player;
+            if (c == except || p == null || p.currentInventoryID == Constants.INV_ID_PLAYER) {
+                continue;
+            }
+
+            var i = p.currentCtx.find(inv, index);
+            if (i >= 0) {
+                c.send(new SetSlotPacket {
+                    invID = p.currentInventoryID,
+                    slotIndex = (ushort)i,
+                    stack = stack
+                }, DeliveryMethod.ReliableOrdered);
+            }
+        }
+    }
+
+    /** actually notify the players / whatevers close to it */
+    public void closeViewers(Inventory inv) {
+        foreach (var c in connections.Values) {
+            var p = c.player;
+            if (p == null || p.currentInventoryID == Constants.INV_ID_PLAYER || !p.currentCtx.uses(inv)) {
+                continue;
+            }
+
+            var id = p.currentInventoryID;
+            p.currentCtx.removeViewer(c);
+            p.closeInventory();
+            p.pickup(p.inventory.cursor);
+            p.inventory.cursor = ItemStack.EMPTY;
+
+            c.send(new InventoryClosePacket { invID = id }, DeliveryMethod.ReliableOrdered);
+            p.syncInventory();
+        }
     }
 
     // authentication
@@ -907,6 +953,7 @@ public class GameServer : INetEventListener {
             // remove from viewer list before context reset
             conn.player.currentCtx?.removeViewer(conn);
             conn.player.closeInventory();
+            conn.player.pickupLooseItems();
         }
 
         // save player data before removing
@@ -1159,35 +1206,6 @@ public class GameServer : INetEventListener {
     }
 
     /** sync entity state changes (sneaking, on fire, flying, etc.) */
-    private void syncEntityStates() {
-        foreach (var entity in world.entities) {
-            // skip removed entities (e.g. FallingBlockEntity that just landed and removed itself)
-            if (!entity.active) {
-                continue;
-            }
-
-            // sync state from entity properties to EntityState
-            entity.syncState();
-
-            // check if state changed (dirty)
-            if (entity.state.isDirty()) {
-                // serialize state
-                var data = entity.state.serialize();
-
-                // broadcast to all clients in range
-                send(
-                    entity.position,
-                    128.0,
-                    new EntityStatePacket {
-                        entityID = entity.id,
-                        data = data
-                    },
-                    DeliveryMethod.ReliableOrdered
-                );
-            }
-        }
-    }
-
     /** safety guard: verify loadedChunks matches reality:tm: */
     private void syncLoadedChunks() {
         foreach (var conn in connections.Values) {
@@ -1226,41 +1244,10 @@ public class GameServer : INetEventListener {
         return tracker;
     }
 
-    /** sync furnace state to all players viewing furnaces */
     private void syncOpenFurnaces() {
-        // for each connection viewing a furnace, send furnace sync
         foreach (var conn in connections.Values) {
-            if (conn.player?.currentCtx == null) {
-                continue;
-            }
-
-            // check if viewing a furnace
-            if (conn.player.currentInventoryID >= 0 && conn.player.currentCtx is FurnaceMenuContext furnaceCtx) {
-                if (furnaceCtx.getFurnaceInventory() is FurnaceBlockEntity furnace) {
-                    // sync slots FIRST (input/fuel/output) - these change during smelting but aren't auto-notified sadly
-                    // since furnace modifies its own slots during update(), not just through user interaction
-                    // IMPORTANT: send slots before progress so client has correct recipe info!
-                    var slots = furnaceCtx.getSlots();
-                    // furnace slots at the end. TODO have better slot handling this is fucked!!
-                    int furnaceSlotStart = slots.Count - 3;
-                    for (int i = 0; i < 3; i++) {
-                        int slotIdx = furnaceSlotStart + i;
-                        if (slotIdx < slots.Count) {
-                            var slot = slots[slotIdx];
-                            furnaceCtx.notifySlotChanged(slotIdx, slot.getStack());
-                        }
-                    }
-
-                    // sync progress bars
-                    conn.send(new FurnaceSyncPacket {
-                        position = furnace.pos,
-                        smeltProgress = furnace.smeltProgress,
-                        smeltTime = furnace.smeltTime,
-                        fuelRemaining = furnace.fuelRemaining,
-                        fuelMax = furnace.fuelMax,
-                        lit = furnace.isLit()
-                    }, DeliveryMethod.Unreliable); // unreliable is fine, sent every 2 ticks
-                }
+            if (conn.player?.currentCtx is FurnaceMenuContext ctx && ctx.getFurnaceInventory() is FurnaceBlockEntity furnace) {
+                ctx.sync(conn, furnace);
             }
         }
     }

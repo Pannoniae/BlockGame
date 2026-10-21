@@ -5,7 +5,7 @@ namespace BlockGame.net.packet;
 /**
  * S→C: 0x44 - open inventory window
  */
-public class InventoryOpenPacket : Packet {
+public struct InventoryOpenPacket : Packet {
     public int invID;
     public byte invType;  // inventory type ID
     public string title;

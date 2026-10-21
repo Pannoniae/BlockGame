@@ -3,7 +3,7 @@
 namespace BlockGame.net.packet;
 
 /** S→C: 0x51 - update block entity data */
-public class BlockEntityDataPacket : Packet {
+public struct BlockEntityDataPacket : Packet {
     public Vector3I position;
     public byte[] data;
 

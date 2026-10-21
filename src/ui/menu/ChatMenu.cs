@@ -51,23 +51,6 @@ public class ChatMenu : Menu {
         messages.PushFront(new ChatMessage(msg, tick));
     }
 
-    // parse coordinate with relative support (~, ~5, ~-3)
-    private static bool parseCoord(string arg, double playerPos, out int result) {
-        if (arg[0] == '~') {
-            if (arg.Length == 1) {
-                result = (int)playerPos;
-                return true;
-            }
-            if (int.TryParse(arg[1..], out int offset)) {
-                result = (int)playerPos + offset;
-                return true;
-            }
-            result = 0;
-            return false;
-        }
-        return int.TryParse(arg, out result);
-    }
-
     public override void onKeyChar(IKeyboard keyboard, char c) {
         if (!char.IsControl(c)) {
             
@@ -148,38 +131,27 @@ public class ChatMenu : Menu {
     }
 
     private void doChat(string msg) {
-        // if command, execute locally or send to server
+        if (string.IsNullOrWhiteSpace(msg)) {
+            return;
+        }
+
+        var conn = ClientConnection.instance;
+
         if (msg.StartsWith('/')) {
-            var args = msg[1..].Split(' ');
-            var cmdName = args[0];
-
-            // find command to check if it's client-only
-            var cmd = Command.find(cmdName);
-
-            // client-only commands execute locally
-            if (cmd != null && cmd.Value.side == NetMode.CL) {
-                Command.execute(Game.player, args);
+            var args = msg[1..].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (args.Length == 0) {
+                return;
             }
-            else if (!Game.world.isServer && ClientConnection.instance is { connected: true }) {
-                ClientConnection.instance.send(
-                    new CommandPacket { command = msg[1..] },
-                    LiteNetLib.DeliveryMethod.ReliableOrdered
-                );
+
+            if (Command.find(args[0]) is { side: not CmdSide.SERVER }) {
+                Command.execute(Game.player, args);
             }
             else {
-                // no server to ask
-                Command.execute(Game.player, args);
+                conn?.send(new CommandPacket { command = string.Join(' ', args) }, LiteNetLib.DeliveryMethod.ReliableOrdered);
             }
         }
-        // if not command, send to server or display locally
         else {
-            if (!Game.world.isServer && ClientConnection.instance is { connected: true }) {
-                ClientConnection.instance.send(new ChatMessagePacket { message = msg }, LiteNetLib.DeliveryMethod.ReliableOrdered);
-            }
-            // no server: just print with player name
-            else {
-                addMessage($"<{Game.player.name}> {msg}");
-            }
+            conn?.send(new ChatMessagePacket { message = msg }, LiteNetLib.DeliveryMethod.ReliableOrdered);
         }
     }
 

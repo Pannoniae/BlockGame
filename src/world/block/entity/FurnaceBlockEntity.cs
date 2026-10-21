@@ -29,6 +29,12 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
 
         bool wasLit = fuelRemaining > 0;
 
+        // the input can be gone mid-smelting...
+        if (currentRecipe != null && (slots[0] == ItemStack.EMPTY || slots[0].id != currentRecipe.getInput().id)) {
+            currentRecipe = null;
+            smeltProgress = 0;
+        }
+
         // try to start new recipe if idle
         if (currentRecipe == null && slots[0] != ItemStack.EMPTY) {
             currentRecipe = SmeltingRecipe.findRecipe(slots[0].getItem());

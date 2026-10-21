@@ -14,7 +14,9 @@ namespace BlockGame.world.item.inventory;
 public class CreativeInventoryContext : InventoryContext {
     private readonly PlayerInventory playerInv;
 
-    private readonly List<ItemStack> allItems;
+    private static List<ItemStack>? _catalog;
+    private static List<ItemStack> allItems => _catalog ??= collectAllItems();
+
     private int currentPage = 0;
     private readonly int itemsPerPage;
 
@@ -23,17 +25,14 @@ public class CreativeInventoryContext : InventoryContext {
     public CreativeInventoryContext(PlayerInventory playerInv, int itemsPerPage) {
         this.playerInv = playerInv;
         this.itemsPerPage = itemsPerPage;
-        this.allItems = [];
 
-        collectAllItems();
         calculatePages();
-
 
         setupSlots(CreativeInventoryMenu.rows, CreativeInventoryMenu.cols, CreativeInventoryMenu.invOffsetX, CreativeInventoryMenu.invOffsetY);
     }
 
-    private void collectAllItems() {
-        allItems.Clear();
+    private static List<ItemStack> collectAllItems() {
+        List<ItemStack> allItems = [];
 
         // add all blocks
         for (int i = 1; i < Block.currentID; i++) {
@@ -95,6 +94,8 @@ public class CreativeInventoryContext : InventoryContext {
                 allItems.Add(new ItemStack(item, 1));
             }
         }
+
+        return allItems;
     }
 
     private void calculatePages() {
@@ -169,6 +170,12 @@ public class CreativeInventoryContext : InventoryContext {
 
     public override void handleSlotClick(ItemSlot slot, ClickType click, Player player) {
         var cursor = player.inventory.cursor;
+
+        click = click switch {
+            ClickType.SHIFT_LEFT => ClickType.LEFT,
+            ClickType.SHIFT_RIGHT => ClickType.RIGHT,
+            _ => click
+        };
 
         // left-click merge-take: allow combining items from creative slots
         if (click == ClickType.LEFT && cursor != ItemStack.EMPTY && slot is CreativeSlot) {

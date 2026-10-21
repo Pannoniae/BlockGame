@@ -13,18 +13,11 @@ public class SnowballEntity : Entity {
     public int age;
     public const int MAX_AGE = 1200;
     public double damage = 1.5;
-    public double knockbackStrength = 5.0;
 
     public SnowballEntity(World world) : base(world, "snowball") {
+        flags &= ~(EFlag.FRICTION | EFlag.BLOCK_INTERACTION);
     }
 
-    protected override bool needsPrevVars => true;
-    protected override bool needsPhysics => true;
-    protected override bool needsGravity => true;
-    protected override bool needsCollision => true;
-    protected override bool needsFriction => false;
-    protected override bool needsBlockInteraction => false;
-    protected override bool needsEntityCollision => false;
 
     public override AABB calcAABB(Vector3D pos) {
         return AABB.fromSize(
@@ -49,77 +42,30 @@ public class SnowballEntity : Entity {
     }
 
     protected override void updatePhysics(double dt) {
-        // spawn particle trail
-        if (world.isClient && age % 3 == 0 && age > 5) {
-            // TODO: create SnowParticle? or this is fine?
-            // var particle = new SnowParticle(world, position);
-            // world.particles.add(particle);
-        }
-
-        // check entity collision before moving
-        checkEntityCollision();
-
-        // apply gravity
         updateGravity(dt);
 
-        // apply velocity
         velocity += accel * dt;
         clamp(dt);
 
-        // check block collision
-        var nextPos = position + velocity * dt;
-        if (checkBlockCollision(nextPos)) {
+        var from = position;
+        var to = position + velocity * dt;
+        var tBlock = ProjectileEntity.collide(world, from, to);
+
+        var hit = ProjectileEntity.collideEntities(this, owner, age, from, to, tBlock, out _);
+        if (hit != null) {
+            hit.dmg(damage, this);
             active = false;
             return;
         }
 
-        position = nextPos;
+        if (tBlock < 1) {
+            active = false;
+            return;
+        }
 
-        // air friction
+        position = to;
         velocity *= 0.98;
-
-        // update AABB
         aabb = calcAABB(position);
-    }
-
-    private bool checkBlockCollision(Vector3D pos) {
-        var blockPos = pos.toBlockPos();
-        if (!world.inWorld(blockPos.X, blockPos.Y, blockPos.Z)) {
-            return false;
-        }
-
-        var block = world.getBlock(blockPos);
-
-        // check if block is solid
-        if (Block.collision[block]) {
-            return true;
-        }
-
-        return false;
-    }
-
-    private void checkEntityCollision() {
-        var entities = new List<Entity>();
-        world.getEntitiesInBox(entities, aabb);
-
-        foreach (var entity in entities) {
-            // skip owner for first 8 ticks
-            if (entity == owner && age < 8) {
-                continue;
-            }
-
-            // skip self and other snowballs
-            if (entity == this || entity is SnowballEntity) {
-                continue;
-            }
-
-            // check collision
-            if (AABB.isCollision(aabb, entity.aabb)) {
-                entity.dmg(damage, this);
-                active = false; // despawn immediately on hit
-                return;
-            }
-        }
     }
 
     protected override void readx(NBTCompound data) {

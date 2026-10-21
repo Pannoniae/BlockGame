@@ -157,26 +157,26 @@ public class PlayerInventory : Inventory {
     }
 
     /**
-     * Try to add an ItemStack to the inventory. Returns true if successful, false if full.
+     * Try to add an ItemStack to the inventory. Returns true if all of it fit.
+     * If only some fit, <paramref name="stack"/>.quantity is reduced to what's left over and the caller keeps the remaining items
      */
     public bool addItem(ItemStack stack) {
         if (stack == ItemStack.EMPTY || stack.quantity <= 0) {
             return true;
         }
 
-        var remaining = stack.quantity;
         var maxStackSize = stack.getItem().getMaxStackSize();
 
         // first, try to add to existing stacks of the same item
         for (int i = 0; i < slots.Length; i++) {
             var slot = slots[i];
             if (slot != ItemStack.EMPTY && slot.same(stack)) {
-                var canAdd = Math.Min(remaining, maxStackSize - slot.quantity);
+                var canAdd = Math.Min(stack.quantity, maxStackSize - slot.quantity);
                 if (canAdd > 0) {
                     slot.quantity += canAdd;
                     shiny[i] = 1.0f; // trigger pop animation
-                    remaining -= canAdd;
-                    if (remaining <= 0) {
+                    stack.quantity -= canAdd;
+                    if (stack.quantity <= 0) {
                         return true;
                     }
                 }
@@ -186,17 +186,16 @@ public class PlayerInventory : Inventory {
         // if we still have items left, try to place in empty slots
         for (int i = 0; i < slots.Length; i++) {
             if (slots[i] == ItemStack.EMPTY) {
-                var canAdd = Math.Min(remaining, maxStackSize);
-                slots[i] = new ItemStack(stack.getItem(), canAdd, stack.metadata);
+                var canAdd = Math.Min(stack.quantity, maxStackSize);
+                slots[i] = new ItemStack(stack.id, canAdd, stack.metadata);
                 shiny[i] = 1.0f; // trigger pop animation
-                remaining -= canAdd;
-                if (remaining <= 0) {
+                stack.quantity -= canAdd;
+                if (stack.quantity <= 0) {
                     return true;
                 }
             }
         }
 
-        // if we get here, the inventory is full
         return false;
     }
 

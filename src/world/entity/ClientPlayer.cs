@@ -38,59 +38,59 @@ public class ClientPlayer : Player {
     public readonly XMap<Vector3I, BreakState> breakStates = [];
 
     public ClientPlayer(World world, int x, int y, int z) : base(world, x, y, z) {
+        hasmovement = true;
     }
 
-    public override void update(double dt) {
-        base.update(dt);
+    private bool lastSentGround;
+    private const int KEEPALIVE = 20;
 
-        // send position updates to server
-        if (ClientConnection.instance != null && ClientConnection.instance.connected) {
-            // send every tick... it was quite buggy otherwise
+    protected override void postPhysics(double dt) {
+        base.postPhysics(dt);
+        sendMovement();
+    }
+
+    private void sendMovement() {
+        if (ClientConnection.instance is not { connected: true }) {
+            return;
+        }
+
+        ticksSinceUpdate++;
+        if (position != lastSentPos || rotation != lastSentRot || onGround != lastSentGround || ticksSinceUpdate >= KEEPALIVE) {
             ClientConnection.instance.send(
                 new PlayerPositionRotationPacket {
                     position = position,
                     rotation = rotation,
+                    onGround = onGround
                 },
-                DeliveryMethod.Unreliable
+                DeliveryMethod.Sequenced
             );
 
-            // velocity is only needed for knockback/special effects, send less frequently
-            ticksSinceUpdate++;
-            ClientConnection.instance.send(
-                new PlayerVelocityPacket {
-                    velocity = velocity
-                },
-                DeliveryMethod.Unreliable
-            );
+            lastSentPos = position;
+            lastSentRot = rotation;
+            lastSentGround = onGround;
             ticksSinceUpdate = 0;
-
-            // send state changes (sneaking, flying)
-            // todo we need this for now because players don't use syncState yet. (we skip them in the EntityTracker....)
-            //  we should probably migrate to that system later.
-            if (sneaking != lastSentSneaking) {
-                state.setBool(EntityState.SNEAKING, sneaking);
-                ClientConnection.instance.send(
-                    new EntityStatePacket {
-                        entityID = id,
-                        data = state.serialize()
-                    },
-                    DeliveryMethod.ReliableOrdered
-                );
-                lastSentSneaking = sneaking;
-            }
-
-            if (flyMode != lastSentFlying) {
-                state.setBool(EntityState.FLYING, flyMode);
-                ClientConnection.instance.send(
-                    new EntityStatePacket {
-                        entityID = id,
-                        data = state.serialize()
-                    },
-                    DeliveryMethod.ReliableOrdered
-                );
-                lastSentFlying = flyMode;
-            }
         }
+
+        if (sneaking != lastSentSneaking || flyMode != lastSentFlying) {
+            upState.setBool(EntityState.SNEAKING, sneaking);
+            upState.setBool(EntityState.FLYING, flyMode);
+            ClientConnection.instance.send(
+                new EntityStatePacket {
+                    entityID = id,
+                    data = upState.serialize()
+                },
+                DeliveryMethod.ReliableOrdered
+            );
+            lastSentSneaking = sneaking;
+            lastSentFlying = flyMode;
+        }
+    }
+
+    private readonly EntityState upState = new();
+
+    public override void applyState() {
+        fireTicks = state.getBool(EntityState.ON_FIRE) ? 300 : 0;
+        noClip = state.getBool(EntityState.NOCLIP);
     }
 
     public void breakBlock() {
@@ -324,15 +324,18 @@ public class ClientPlayer : Player {
                 return;
             }
 
-            // send attack packet to server
+            var target = Game.raycast.entity;
             ClientConnection.instance.send(
                 new AttackEntityPacket {
-                    targetEntityID = Game.raycast.entity.id
+                    targetEntityID = target.id
                 },
                 DeliveryMethod.ReliableOrdered
             );
 
-            // play swing animation locally
+            // do it now so it's responsive, actual knockback is applied on the server
+            var held = inventory.getSelected();
+            target.predictHurt(held.getItem().getDamage(held));
+
             setSwinging(true);
             lastMouseAction = now;
         } else {
@@ -568,22 +571,15 @@ public class ClientPlayer : Player {
             return false;
         }
 
-        // try entity interaction
         if (!entity.interact(this, stack)) {
             return false;
         }
 
-        // entity handled it - swing animation
         setSwinging(true);
-
-        // send to server (reuse PlaceBlockPacket for now)
-        if (!world.isServer) {
-            var info = getPlacementInfo();
-            ClientConnection.instance.send(
-                new PlaceBlockPacket { position = new Vector3I(0, 0, 0), info = info },
-                DeliveryMethod.ReliableOrdered
-            );
-        }
+        ClientConnection.instance.send(
+            new InteractEntityPacket { entityID = entity.id },
+            DeliveryMethod.ReliableOrdered
+        );
 
         return true;
     }

@@ -3,7 +3,7 @@ using BlockGame.world.chunk;
 namespace BlockGame.net.packet;
 
 /** S→C: 0x11 - tells client to unload a chunk */
-public class UnloadChunkPacket : Packet {
+public struct UnloadChunkPacket : Packet {
     public ChunkCoord coord;
 
     public byte channel => 0;

@@ -22,16 +22,10 @@ public abstract class ProjectileEntity : Entity {
     protected abstract bool canCollideWithEntities { get; }
 
     protected ProjectileEntity(World world, string name) : base(world, name) {
+        flags &= ~(EFlag.FRICTION | EFlag.BLOCK_INTERACTION);
     }
 
     // common capability flags
-    protected override bool needsPrevVars => true;
-    protected override bool needsPhysics => true;
-    protected override bool needsGravity => true;
-    protected override bool needsCollision => true;
-    protected override bool needsFriction => false; // most projectiles don't use ground friction
-    protected override bool needsBlockInteraction => false; // custom block interaction
-    protected override bool needsEntityCollision => false; // custom entity collision
 
     protected override void updateGravity(double dt) {
         velocity.Y -= GRAVITY * gravityMultiplier * dt;
@@ -55,76 +49,113 @@ public abstract class ProjectileEntity : Entity {
     }
 
     protected override void updatePhysics(double dt) {
-        // optional particle spawning
-        spawnTrailParticles();
-
-        // check entity collision before moving
-        checkEntityCollision();
-
-        // apply gravity
         updateGravity(dt);
 
-        // apply velocity
         velocity += accel * dt;
         clamp(dt);
 
-        // check block collision
-        var nextPos = position + velocity * dt;
-        if (checkBlockCollision(nextPos)) {
+        var from = position;
+        var to = position + velocity * dt;
+        var tBlock = collide(world, from, to);
+
+        if (canCollideWithEntities) {
+            var hit = collideEntities(this, owner, age, from, to, tBlock, out var tHit);
+            if (hit != null) {
+                position = from + (to - from) * tHit;
+                aabb = calcAABB(position);
+                onEntityHit(hit);
+                return;
+            }
+        }
+
+        if (tBlock < 1) {
+            // stop at the face, not up to a step short of it
+            position = from + (to - from) * tBlock;
+            aabb = calcAABB(position);
             onBlockHit();
             return;
         }
 
-        // move to next position
-        position = nextPos;
-
-        // apply air friction
+        position = to;
         velocity *= airFriction;
-
-        // update AABB
         aabb = calcAABB(position);
-
-        // optional: update rotation based on velocity
         updateRotation();
     }
 
-    // unified block collision with bounds check
-    protected bool checkBlockCollision(Vector3D pos) {
-        var blockPos = pos.toBlockPos();
-        if (!world.inWorld(blockPos.X, blockPos.Y, blockPos.Z)) {
-            return false;
-        }
-
-        var block = world.getBlock(blockPos);
-        return Block.collision[block];
+    protected override void updateVisual(double dt) {
+        base.updateVisual(dt);
+        age++;
+        spawnTrailParticles();
     }
 
-    // unified entity collision with owner grace period
-    protected virtual void checkEntityCollision() {
-        if (!canCollideWithEntities) {
-            return;
+    // ============ SWEPT COLLISION (snowballs use it too) ============
+
+    private const double SWEEP_STEP = 0.25;
+
+    public static double collide(World world, Vector3D from, Vector3D to) {
+        var d = to - from;
+        var steps = int.Max(1, (int)double.Ceiling(d.Length() / SWEEP_STEP));
+
+        for (int i = 1; i <= steps; i++) {
+            var p = (from + d * ((double)i / steps)).toBlockPos();
+            if (world.inWorld(p.X, p.Y, p.Z) && Block.collision[world.getBlock(p)]) {
+                return (double)(i - 1) / steps;
+            }
         }
 
-        var entities = new List<Entity>();
-        world.getEntitiesInBox(entities, aabb);
+        return 1;
+    }
+    public static Entity? collideEntities(Entity self, Entity? owner, int age, Vector3D from, Vector3D to, double maxT, out double tHit) {
+        var r = (self.aabb.x1 - self.aabb.x0) * 0.5;
+        var lo = Vector3D.Min(from, to) - new Vector3D(r + 1);
+        var hi = Vector3D.Max(from, to) + new Vector3D(r + 1);
 
-        foreach (var entity in entities) {
-            // skip owner for first 8 ticks
-            if (entity == owner && age < 8) {
+        var list = nearby;
+        self.world.getEntitiesInBox(list, new AABB(lo, hi));
+
+        Entity? best = null;
+        tHit = maxT;
+        var d = to - from;
+
+        foreach (var e in list) {
+            // plot armour for the shooter
+            if (e == self || e.dead || e.GetType() == self.GetType() || (e == owner && age < 8)) {
                 continue;
             }
 
-            // skip self and other projectiles of same type
-            if (entity == this || entity.GetType() == GetType()) {
-                continue;
-            }
-
-            // check collision
-            if (AABB.isCollision(aabb, entity.aabb)) {
-                onEntityHit(entity);
-                return;
+            if (segment(e.aabb, from, d, r, out var t) && t <= tHit) {
+                tHit = t;
+                best = e;
             }
         }
+
+        return best;
+    }
+
+    private static bool segment(in AABB b, Vector3D from, Vector3D d, double r, out double t) {
+        double t0 = 0, t1 = 1;
+        var hit = slab(from.X, d.X, b.x0 - r, b.x1 + r, ref t0, ref t1) &&
+                  slab(from.Y, d.Y, b.y0 - r, b.y1 + r, ref t0, ref t1) &&
+                  slab(from.Z, d.Z, b.z0 - r, b.z1 + r, ref t0, ref t1);
+        t = t0;
+        return hit;
+    }
+
+    private static bool slab(double o, double v, double min, double max, ref double t0, ref double t1) {
+        if (double.Abs(v) < 1e-12) {
+            return o >= min && o <= max;
+        }
+
+        var inv = 1 / v;
+        var a = (min - o) * inv;
+        var b = (max - o) * inv;
+        if (a > b) {
+            (a, b) = (b, a);
+        }
+
+        t0 = double.Max(t0, a);
+        t1 = double.Min(t1, b);
+        return t0 <= t1;
     }
 
     // hooks for subclass behavior

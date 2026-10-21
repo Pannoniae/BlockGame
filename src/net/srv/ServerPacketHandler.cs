@@ -33,12 +33,6 @@ public class ServerPacketHandler : PacketHandler {
             case AuthPacket p:
                 handleAuth(p);
                 break;
-            case PlayerPositionPacket p:
-                handlePlayerPosition(p);
-                break;
-            case PlayerRotationPacket p:
-                handlePlayerRotation(p);
-                break;
             case PlayerPositionRotationPacket p:
                 handlePlayerPositionRotation(p);
                 break;
@@ -84,14 +78,11 @@ public class ServerPacketHandler : PacketHandler {
             case InventorySlotClickPacket p:
                 handleInventorySlotClick(p);
                 break;
-            case InventoryAckPacket p:
-                handleInventoryAck(p);
-                break;
             case InventoryResyncAckPacket p:
                 handleResyncAck(p);
                 break;
-            case HeldItemChangePacket p:
-                handleHeldItemChange(p);
+            case InteractEntityPacket p:
+                handleInteractEntity(p);
                 break;
             case PlayerHeldItemChangePacket p:
                 handlePlayerHeldItemChange(p);
@@ -107,9 +98,6 @@ public class ServerPacketHandler : PacketHandler {
                 break;
             case PlayerSkinPacket p:
                 handlePlayerSkin(p);
-                break;
-            case PlayerVelocityPacket p:
-                handlePlayerVelocity(p);
                 break;
             default:
                 Log.warn($"Unhandled packet type: {packet.GetType().Name}");
@@ -290,28 +278,9 @@ public class ServerPacketHandler : PacketHandler {
             initialHP = player.hp
         }, DeliveryMethod.ReliableOrdered);
 
-        // send initial inventory (invID=0 for player inventory)
-        var inventorySlots = new List<ItemStack>();
-        inventorySlots.AddRange(player.inventory.slots);
-        inventorySlots.AddRange(player.inventory.armour);
-        inventorySlots.AddRange(player.inventory.accessories);
-
-        // also sync crafting grid if in survival mode
-        if (player.inventoryCtx is SurvivalInventoryContext survCtx) {
-            inventorySlots.AddRange(survCtx.getCraftingGrid().grid);
-        }
-
-        conn.send(new InventorySyncPacket {
-            invID = Constants.INV_ID_PLAYER,
-            items = inventorySlots.ToArray()
-        }, DeliveryMethod.ReliableOrdered);
-
-        // send cursor
-        conn.send(new SetSlotPacket {
-            invID = Constants.INV_ID_CURSOR,
-            slotIndex = 0,
-            stack = player.inventory.cursor
-        }, DeliveryMethod.ReliableOrdered);
+        // hand back whatever the last save had on the cursor / in the 2x2 grid
+        player.pickupLooseItems();
+        player.syncInventory();
 
         // send initial health
         conn.send(new PlayerHealthPacket {
@@ -447,75 +416,13 @@ public class ServerPacketHandler : PacketHandler {
         GameServer.instance.discord?.updatePlayerCountStatus();
     }
 
-    private void handlePlayerPosition(PlayerPositionPacket p) {
-        if (!conn.authenticated || conn.player == null) {
-            return;
-        }
-
-        conn.player.position = p.position;
-
-        // broadcast to other players
-        GameServer.instance.send(
-            conn.player.position,
-            128.0,
-            new EntityPositionPacket {
-                entityID = conn.entityID,
-                position = p.position,
-            },
-            DeliveryMethod.Unreliable,
-            exclude: conn
-        );
-    }
-
-    private void handlePlayerRotation(PlayerRotationPacket p) {
-        if (!conn.authenticated || conn.player == null) {
-            return;
-        }
-
-        conn.player.rotation = normrot(p.rotation);
-
-        // broadcast to other players
-        GameServer.instance.send(
-            conn.player.position,
-            128.0,
-            new EntityRotationPacket {
-                entityID = conn.entityID,
-                rotation = conn.player.rotation,
-                bodyRotation = conn.player.bodyRotation
-            },
-            DeliveryMethod.Unreliable,
-            exclude: conn
-        );
-    }
-
+    /** the EntityTracker relays it to everyone else, like any other entity */
     private void handlePlayerPositionRotation(PlayerPositionRotationPacket p) {
         if (!conn.authenticated || conn.player == null) {
             return;
         }
 
-        conn.player.position = p.position;
-        conn.player.rotation = normrot(p.rotation);
-
-        // broadcast to other players (combined packet for efficiency)
-        GameServer.instance.send(
-            conn.player.position,
-            128.0,
-            new EntityPositionRotationPacket {
-                entityID = conn.entityID,
-                position = conn.player.position,
-                rotation = conn.player.rotation,
-            },
-            DeliveryMethod.Unreliable,
-            exclude: conn
-        );
-    }
-
-    private void handlePlayerVelocity(PlayerVelocityPacket p) {
-        if (!conn.authenticated || conn.player == null) {
-            return;
-        }
-
-        conn.player.velocity = p.velocity;
+        conn.player.applyMove(p.position, normrot(p.rotation), p.onGround);
     }
 
     private void handleStartBlockBreak(StartBlockBreakPacket p) {
@@ -647,9 +554,7 @@ public class ServerPacketHandler : PacketHandler {
             if (heldStack != ItemStack.EMPTY) {
                 var newStack = heldStack.damageItem(conn.player, 1);
                 conn.player.inventory.setStack(conn.player.inventory.selected, newStack);
-
-                // broadcast inventory change via context
-                conn.player.inventoryCtx.notifySlotChanged(conn.player.inventory.selected, newStack);
+                conn.player.syncSelected();
             }
         }
 
@@ -708,7 +613,12 @@ public class ServerPacketHandler : PacketHandler {
         }
 
         // execute onUse (opens inventory, etc)
-        return block.onUse(world, p.position.X, p.position.Y, p.position.Z, conn.player);
+        if (!block.onUse(world, p.position.X, p.position.Y, p.position.Z, conn.player)) {
+            return false;
+        }
+
+        conn.player.syncInventory();
+        return true;
     }
 
     /** item.useBlock() - doors, buckets, etc */
@@ -726,9 +636,9 @@ public class ServerPacketHandler : PacketHandler {
             return false;
         }
 
-        // item handled it - update inventory
+        // item handled it - update inventory. full sync for the same reason as onUse (harvesting adds items)
         conn.player.inventory.setStack(conn.player.inventory.selected, result);
-        conn.player.inventoryCtx.notifySlotChanged(conn.player.inventory.selected, result);
+        conn.player.syncInventory();
 
         return true;
     }
@@ -774,7 +684,7 @@ public class ServerPacketHandler : PacketHandler {
         // consume in survival
         if (conn.player.gameMode.gameplay) {
             conn.player.inventory.removeStack(conn.player.inventory.selected, 1);
-            conn.player.inventoryCtx.notifySlotChanged(conn.player.inventory.selected, conn.player.inventory.getSelected());
+            conn.player.syncSelected();
         }
 
         // broadcast to nearby clients
@@ -843,8 +753,7 @@ public class ServerPacketHandler : PacketHandler {
             metadata = raw.getMetadata()
         }, DeliveryMethod.ReliableOrdered);
 
-        // resync inventory
-        conn.player.inventoryCtx.notifyAllSlotsChanged();
+        conn.player.syncInventory();
     }
 
     private void handleUseItem(UseItemPacket p) {
@@ -864,10 +773,7 @@ public class ServerPacketHandler : PacketHandler {
         var result = stack.getItem().use(stack, GameServer.instance.world, conn.player);
         if (result != null!) {
             conn.player.inventory.setStack(conn.player.inventory.selected, result);
-
-
-            // broadcast inventory change via context
-            conn.player.inventoryCtx.notifySlotChanged(conn.player.inventory.selected, result);
+            conn.player.syncSelected();
         }
     }
 
@@ -947,18 +853,10 @@ public class ServerPacketHandler : PacketHandler {
             return;
         }
 
-        // apply state changes to player entity
-        conn.player.state.deserialize(p.data);
-        conn.player.applyState();
-
-        // broadcast to nearby players
-        GameServer.instance.send(
-            conn.player.position,
-            128.0,
-            p,
-            DeliveryMethod.ReliableOrdered,
-            exclude: conn
-        );
+        var s = new EntityState();
+        s.deserialize(p.data);
+        conn.player.sneaking = s.getBool(EntityState.SNEAKING, conn.player.sneaking);
+        conn.player.flyMode = s.getBool(EntityState.FLYING, conn.player.flyMode);
     }
 
     private void handleEntityAction(EntityActionPacket p) {
@@ -984,6 +882,22 @@ public class ServerPacketHandler : PacketHandler {
         );
     }
 
+    private void handleInteractEntity(InteractEntityPacket p) {
+        if (!conn.authenticated || conn.player == null) {
+            return;
+        }
+
+        var target = GameServer.instance.world.getEntity(p.entityID);
+        if (target == null || target.dead || Vector3D.Distance(conn.player.position, target.position) > 7.5) {
+            conn.player.syncInventory();
+            return;
+        }
+
+        target.interact(conn.player, conn.player.inventory.getSelected());
+
+        conn.player.syncInventory();
+    }
+
     private void handleAttackEntity(AttackEntityPacket p) {
         if (!conn.authenticated || conn.player == null) {
             return;
@@ -991,10 +905,9 @@ public class ServerPacketHandler : PacketHandler {
 
         var world = GameServer.instance.world;
 
-        // find target entity
-        var target = world.entities.FirstOrDefault(e => e.id == p.targetEntityID);
-        if (target == null) {
-            return; // entity doesn't exist
+        var target = world.getEntity(p.targetEntityID);
+        if (target == null || target.dead) {
+            return;
         }
 
         // validate reach distance (max 5 blocks)
@@ -1007,69 +920,13 @@ public class ServerPacketHandler : PacketHandler {
         var heldStack = conn.player.inventory.getSelected();
         var damage = heldStack.getItem().getDamage(heldStack);
 
-        // creative mode players cant be hit!
-        if (target is ServerPlayer tp && !tp.gameMode.gameplay) {
-            goto swing;
-        }
-
-        // pvp check
-        if (target is ServerPlayer && !GameServer.instance.pvp) {
-            goto swing;
-        }
-
-        // apply damage with knockback
-        var hpBefore = target.hp;
+        var before = target.pendingHurt;
         target.dmg(damage, conn.player);
-        var applied = hpBefore - target.hp;
 
-        // damage held item (if it has durability)
-        if (heldStack != ItemStack.EMPTY && Item.durability[heldStack.id] > 0) {
-            var newStack = heldStack.damageItem(conn.player, 1);
-            conn.player.inventory.setStack(conn.player.inventory.selected, newStack);
-
-            // broadcast inventory change via context
-            conn.player.inventoryCtx.notifySlotChanged(conn.player.inventory.selected, newStack);
+        if (target.pendingHurt > before && heldStack != ItemStack.EMPTY && Item.durability[heldStack.id] > 0) {
+            conn.player.inventory.setStack(conn.player.inventory.selected, heldStack.damageItem(conn.player, 1));
+            conn.player.syncSelected();
         }
-
-        // broadcast damage event to nearby players (for damage numbers and visual effects)
-        if (applied > 0) {
-            GameServer.instance.send(
-                target.position,
-                128.0,
-                new EntityDamagePacket {
-                    entityID = p.targetEntityID,
-                    attackerID = conn.player.id,
-                    damage = applied
-                },
-                DeliveryMethod.ReliableOrdered
-            );
-        }
-
-        // if target is a player, send health update
-        if (target is ServerPlayer targetPlayer) {
-            var targetConn = targetPlayer.conn;
-
-            if (targetConn != null) {
-                targetConn.send(new PlayerHealthPacket {
-                    health = targetPlayer.hp,
-                    damageTime = targetPlayer.dmgTime
-                }, DeliveryMethod.ReliableOrdered);
-            }
-        }
-
-        swing: ;
-
-        // broadcast attacker swing animation
-        GameServer.instance.send(
-            conn.player.position,
-            128.0,
-            new EntityActionPacket {
-                entityID = conn.entityID,
-                action = EntityActionPacket.Action.SWING
-            },
-            DeliveryMethod.ReliableOrdered,
-            exclude: conn
-        );
     }
 
     private void handleUpdateBlockEntity(UpdateBlockEntityPacket p) {
@@ -1120,110 +977,68 @@ public class ServerPacketHandler : PacketHandler {
             return;
         }
 
-        // validate window ID matches currently open window
-        if (p.invID != conn.player.currentInventoryID && p.invID != Constants.INV_ID_CURSOR) {
+        var player = conn.player;
 
-            conn.send(new InventoryAckPacket {
-                invID = p.invID,
-                actionID = p.actionID,
-                acc = false
-            }, DeliveryMethod.ReliableOrdered);
-            Log.warn($"Player '{conn.username}' sent invalid inventory ID {p.invID} (expected {conn.player.currentInventoryID})");
-
-            // resync entire inventory to fix desync
-            conn.player.currentCtx.notifyAllSlotsChanged();
-
-            return;
-        }
-
-        // get the context for this window
-        var ctx = conn.player.currentCtx;
-        if (ctx == null!) {
-            SkillIssueException.throwNew("No inventory context for player!");
-        }
-
-        // validate slot index
-        if (p.idx >= ctx.getSlots().Count) {
-            conn.send(new InventoryAckPacket {
-                invID = p.invID,
-                actionID = p.actionID,
-                acc = false
-            }, DeliveryMethod.ReliableOrdered);
-            Log.warn($"Player '{conn.username}' sent invalid slot index {p.idx} for inventory ID {p.invID} (type={ctx.GetType()})");
-
-            // resync entire inventory to fix desync
-            conn.player.currentCtx.notifyAllSlotsChanged();
-            return;
-        }
-
-        // save state before click for rollback
-        var slot = ctx.getSlots()[p.idx];
-        var slotBefore = slot.getStack().copy();
-        var cursorBefore = conn.player.inventory.cursor.copy();
-
-        // perform the click operation
-        var clickType = p.button == 0 ? ClickType.LEFT : ClickType.RIGHT;
-        ctx.handleSlotClick(slot, clickType, conn.player);
-
-        // broadcast slot change to all viewers
-        ctx.notifySlotChanged(p.idx, slot.getStack());
-
-        // validate result matches client's expectation
-        var slotAfter = slot.getStack();
-        if (!slotAfter.same(p.expectedSlot)) {
-            // desync detected - rollback and reject
-            if (slot.inventory != null) {
-                slot.inventory.setStack(slot.index, slotBefore);
+        // client thinks a window is open that the server already closed (death, block broken, gamemode...)
+        if (p.invID != player.currentInventoryID) {
+            Log.warn($"Player '{conn.username}' sent invalid inventory ID {p.invID} (expected {player.currentInventoryID})");
+            if (p.invID != Constants.INV_ID_PLAYER) {
+                conn.send(new InventoryClosePacket { invID = p.invID }, DeliveryMethod.ReliableOrdered);
             }
 
-            conn.player.inventory.cursor = cursorBefore;
-
-            // set out-of-sync flag to discard further clicks until resync completes
-            conn.outOfSync = true;
-
-            // send NACK
-            conn.send(new InventoryAckPacket {
-                invID = p.invID,
-                actionID = p.actionID,
-                acc = false
-            }, DeliveryMethod.ReliableOrdered);
-
-            Log.warn($"Inventory desync detected for player '{conn.username}' (invID={p.invID}, actionID={p.actionID}). Expected slot {p.idx} to be {p.expectedSlot}, but was {slotAfter}");
-
-            // send minimal resync (only affected slots, not entire inventory)
-            conn.send(new SetSlotPacket {
-                invID = p.invID,
-                slotIndex = p.idx,
-                stack = slotBefore
-            }, DeliveryMethod.ReliableOrdered);
-
-            conn.send(new SetSlotPacket {
-                invID = Constants.INV_ID_CURSOR,
-                slotIndex = 0,
-                stack = cursorBefore
-            }, DeliveryMethod.ReliableOrdered);
-
-            // signal end of resync
-            conn.send(new InventoryResyncTermPacket {
-                actionID = p.actionID
-            }, DeliveryMethod.ReliableOrdered);
-
+            rejectClick(p);
             return;
         }
 
-        // transaction successful - send ack
-        // note: slot changes are automatically broadcast via InventoryListener
+        var ctx = player.currentCtx;
+        if (p.idx >= ctx.getSlots().Count) {
+            Log.warn($"Player '{conn.username}' sent invalid slot index {p.idx} for inventory ID {p.invID} (type={ctx.GetType()})");
+            rejectClick(p);
+            return;
+        }
+
+        var slot = ctx.getSlots()[p.idx];
+        var left = p.button == 0;
+        var clickType = p.mode == 1 ? (left ? ClickType.SHIFT_LEFT : ClickType.SHIFT_RIGHT) : (left ? ClickType.LEFT : ClickType.RIGHT);
+        ctx.updatePrevItems();
+        ctx.handleSlotClick(slot, clickType, player);
+
+        // fuck it resync the whole thing
+        var after = slot.getStack();
+        if (!after.same(p.expectedSlot) || after.quantity != p.expectedSlot.quantity) {
+            Log.warn($"Inventory desync for player '{conn.username}' (invID={p.invID}, actionID={p.actionID}). Expected slot {p.idx} to be {p.expectedSlot}, but was {after}");
+            rejectClick(p);
+            return;
+        }
+
+        ctx.broadcastSlotUpdates(conn);
+
         conn.send(new InventoryAckPacket {
             invID = p.invID,
             actionID = p.actionID,
             acc = true
         }, DeliveryMethod.ReliableOrdered);
 
-        // sync cursor (not tracked by listener)
-        conn.send(new SetSlotPacket {
-            invID = Constants.INV_ID_CURSOR,
-            slotIndex = 0,
-            stack = conn.player.inventory.cursor
+        player.syncCursor();
+    }
+
+    private void rejectClick(InventorySlotClickPacket p) {
+        conn.outOfSync = true;
+
+        conn.send(new InventoryAckPacket {
+            invID = p.invID,
+            actionID = p.actionID,
+            acc = false
+        }, DeliveryMethod.ReliableOrdered);
+
+        var player = conn.player;
+        player.syncInventory();
+        if (player.currentCtx != player.inventoryCtx) {
+            player.currentCtx.notifyAllSlotsChanged();
+        }
+
+        conn.send(new InventoryResyncTermPacket {
+            actionID = p.actionID
         }, DeliveryMethod.ReliableOrdered);
     }
 
@@ -1235,28 +1050,16 @@ public class ServerPacketHandler : PacketHandler {
         // validate player is in creative mode (anti-cheat)
         if (conn.player.gameMode.gameplay) {
             Log.warn($"Player '{conn.username}' tried to use creative inventory while not in creative mode!");
-            conn.send(new InventoryAckPacket {
-                invID = p.invID,
-                actionID = p.actionID,
-                acc = false
-            }, DeliveryMethod.ReliableOrdered);
-
-            // resync player inventory and cursor to rollback client-side changes
-            syncPlayerInventory(conn.player);
+            rejectClick(p);
             return;
         }
 
         // creative inventory layout (from CreativeInventoryContext.setupSlots):
         // - slots 0-39: creative slots (infinite items, client-only)
         // - slots 40-49: player hotbar (actual inventory slots 0-9)
-
-        // if clicking hotbar slot (40-49), update actual player inventory
         if (p.idx >= 40 && p.idx < 50) {
-            var invSlot = p.idx - 40; // map to actual player inventory slot (0-9)
+            var invSlot = p.idx - 40;
             conn.player.inventory.setStack(invSlot, p.expectedSlot);
-
-            // broadcast inventory change via context
-            conn.player.inventoryCtx.notifySlotChanged(invSlot, p.expectedSlot);
         }
 
         // creative slots (0-39) are client-only, no server-side state
@@ -1271,10 +1074,6 @@ public class ServerPacketHandler : PacketHandler {
 
         // don't sync cursor - creative inventory is client-authoritative for cursor
         // (server doesn't perform click operations, so it doesn't know correct cursor state)
-    }
-
-    private void handleInventoryAck(InventoryAckPacket p) {
-        // todo not entirely sure what to do here? I ran out of ideas :D
     }
 
     private void handleResyncAck(InventoryResyncAckPacket p) {
@@ -1297,53 +1096,8 @@ public class ServerPacketHandler : PacketHandler {
             return; // invalid slot
         }
 
-        // update player's selected slot
-        Log.info($"Player '{conn.username}' selected slot {p.slot}");
         conn.player.inventory.selected = p.slot;
-
-        // broadcast to nearby players so they can see which item this player is holding
-        var heldItem = conn.player.inventory.getStack(p.slot);
-        GameServer.instance.send(
-            conn.player.position,
-            128.0,
-            new HeldItemChangePacket {
-                entityID = conn.entityID,
-                slotIndex = p.slot,
-                heldItem = heldItem
-            },
-            DeliveryMethod.ReliableOrdered,
-            exclude: conn
-        );
-    }
-
-    private void handleHeldItemChange(HeldItemChangePacket p) {
-        if (!conn.authenticated || conn.player == null) {
-            return;
-        }
-
-        // validate hotbar slot (0-9)
-        if (p.slotIndex > 9) {
-            Log.warn($"Player '{conn.username}' tried to select invalid slot {p.slotIndex}!");
-            return; // invalid slot
-        }
-
-        // update player's selected slot
-        Log.info($"Player '{conn.username}' selected slot {p.slotIndex}");
-        conn.player.inventory.selected = p.slotIndex;
-
-        // broadcast to nearby players so they can see which item this player is holding
-        var heldItem = conn.player.inventory.getStack(p.slotIndex);
-        GameServer.instance.send(
-            conn.player.position,
-            128.0,
-            new HeldItemChangePacket {
-                entityID = conn.entityID,
-                slotIndex = p.slotIndex,
-                heldItem = heldItem
-            },
-            DeliveryMethod.ReliableOrdered,
-            exclude: conn
-        );
+        conn.player.broadcastHeld();
     }
 
     private void handleInventoryClose(InventoryClosePacket p) {
@@ -1356,26 +1110,17 @@ public class ServerPacketHandler : PacketHandler {
             return; // no window open or wrong window
         }
 
-        // remove viewer from context
-        conn.player.currentCtx?.removeViewer(conn);
+        var player = conn.player;
 
-        // drop cursor items if any
-        if (conn.player.inventory.cursor != ItemStack.EMPTY) {
-            conn.player.dropItemStack(conn.player.inventory.cursor, withVelocity: true);
-            conn.player.inventory.cursor = ItemStack.EMPTY;
-
-            // sync cursor clear
-            conn.send(new SetSlotPacket {
-                invID = Constants.INV_ID_CURSOR,
-                slotIndex = 0,
-                stack = ItemStack.EMPTY
-            }, DeliveryMethod.ReliableOrdered);
+        if (player.currentCtx != player.inventoryCtx) {
+            player.currentCtx.removeViewer(conn);
         }
 
-        // close the window - reset to player inventory context
-        conn.player.closeInventory();
+        player.dropItemStack(player.inventory.cursor, withVelocity: true);
+        player.inventory.cursor = ItemStack.EMPTY;
 
-        Log.info($"Player '{conn.username}' closed inventory window {p.invID}");
+        player.closeInventory();
+        player.syncInventory();
     }
 
     private void handleDropItem(DropItemPacket p) {
@@ -1398,7 +1143,9 @@ public class ServerPacketHandler : PacketHandler {
         var stack = conn.player.inventory.getStack(p.slotIndex);
         if (stack == ItemStack.EMPTY || stack.quantity == 0) {
             Log.warn($"Player '{conn.username}' tried to drop item from empty slot {p.slotIndex}!");
-            return; // nothing in slot
+            // the client already removed it, naive thing
+            conn.player.syncSlot(p.slotIndex);
+            return;
         }
 
         // clamp quantity to what's available
@@ -1412,36 +1159,7 @@ public class ServerPacketHandler : PacketHandler {
 
         // spawn item entity in world with velocity (thrown)
         conn.player.dropItemStack(droppedStack, true);
-
-        // broadcast inventory change via context
-        var newStack = conn.player.inventory.getStack(p.slotIndex);
-        conn.player.inventoryCtx.notifySlotChanged(p.slotIndex, newStack);
-    }
-
-    /** sync player's full inventory + cursor */
-    private static void syncPlayerInventory(ServerPlayer player) {
-        var conn = player.conn;
-        if (conn == null) {
-            return;
-        }
-
-        // send full inventory
-        var inventorySlots = new List<ItemStack>();
-        inventorySlots.AddRange(player.inventory.slots);
-        inventorySlots.AddRange(player.inventory.armour);
-        inventorySlots.AddRange(player.inventory.accessories);
-
-        conn.send(new InventorySyncPacket {
-            invID = Constants.INV_ID_PLAYER,
-            items = inventorySlots.ToArray()
-        }, DeliveryMethod.ReliableOrdered);
-
-        // send cursor
-        conn.send(new SetSlotPacket {
-            invID = Constants.INV_ID_CURSOR,
-            slotIndex = 0,
-            stack = player.inventory.cursor
-        }, DeliveryMethod.ReliableOrdered);
+        conn.player.syncSlot(p.slotIndex);
     }
 
     private void handleRespawnRequest(RespawnRequestPacket p) {
@@ -1451,9 +1169,9 @@ public class ServerPacketHandler : PacketHandler {
 
         var player = conn.player;
 
-        // check if player is actually dead
         if (!player.dead) {
             Log.warn($"Player '{conn.username}' tried to respawn but is not dead!");
+            return;
         }
 
         // respawn the player
@@ -1473,6 +1191,8 @@ public class ServerPacketHandler : PacketHandler {
         player.velocity = Vector3D.Zero;
         player.prevVelocity = Vector3D.Zero;
 
+        player.resetFall();
+
         Log.info($"Player '{conn.username}' respawned at {spawnPos}");
 
         // send respawn packet to client (position + rotation)
@@ -1480,27 +1200,6 @@ public class ServerPacketHandler : PacketHandler {
             spawnPosition = spawnPos,
             rotation = player.rotation
         }, DeliveryMethod.ReliableOrdered);
-
-        // send health update
-        conn.send(new PlayerHealthPacket {
-            health = player.hp,
-            damageTime = 0
-        }, DeliveryMethod.ReliableOrdered);
-
-        // broadcast to other players that this player is alive again
-        // send position update
-        GameServer.instance.send(
-            player.position,
-            128.0,
-            new EntityPositionRotationPacket {
-                entityID = conn.entityID,
-                position = player.position,
-                rotation = player.rotation
-            },
-            DeliveryMethod.ReliableOrdered,
-            exclude: conn
-        );
- 
         // save player data immediately to prevent (potential...) data loss if server crashes
         GameServer.instance.savePlayerData(conn);
     }

@@ -24,6 +24,12 @@ public class EntityTracker {
         public Vector3 lastSentRot;
         public int ticksSinceUpdate;
 
+        /** players only */
+        public double lastSentHp = double.NaN;
+        public int hpTicks;
+
+        public bool wasMoving;
+
         /** so a permanently broken entity logs once, not sixty times a second */
         public bool warnedNaN;
 
@@ -62,6 +68,8 @@ public class EntityTracker {
             return; // not tracking
         }
 
+        flushEvents(t, owner(t.entity));
+
         // send despawn to all viewers
         var despawnPacket = new DespawnEntityPacket { entityID = entityID };
         foreach (var viewer in t.viewers) {
@@ -76,21 +84,25 @@ public class EntityTracker {
             updateEntity(t);
         }
 
-        // periodically refresh viewers (every 60 ticks = 1 second)
-        if (server.world.worldTick % 60 == 0) {
+        // every 1/3s. once a second
+        if (server.simTick % 20 == 0) {
             foreach (var t in tracked.Values) {
                 updateViewers(t);
             }
         }
     }
 
-    private void updateEntity(TrackedEntity t) {
-        var entity = t.entity;
+    private static ServerConnection? owner(Entity e) => (e as ServerPlayer)?.conn;
 
-        // if player, don't send shit, we already do
-        if (entity is Player) {
-            return;
-        }
+    private void updateEntity(TrackedEntity t) {
+        var o = owner(t.entity);
+        syncMovement(t);
+        syncState(t, o);
+        flushEvents(t, o);
+    }
+
+    private void syncMovement(TrackedEntity t) {
+        var entity = t.entity;
 
         // A NaN position encodes to something plausible-looking rather than failing, so every client
         // would snap the entity to wherever that lands and never correct it. Drop the update instead -
@@ -116,16 +128,28 @@ public class EntityTracker {
         bool moved = Vector3D.DistanceSquared(entity.position, t.lastSentPos) > MOVE_THRESHOLD_SQ;
         bool rotated = Vector3.DistanceSquared(entity.rotation, t.lastSentRot) > ROT_THRESHOLD_SQ;
 
-        if (!moved && !rotated && t.ticksSinceUpdate < KEEPALIVE) {
+        // came to rest under the threshold: send where it actually stopped, or the client coasts up to 1/16 past it
+        // and sits there until the keepalive. (server players always land here - packets beat savePrevVars)
+        bool settled = !moved && entity.position == entity.prevPosition && entity.position != t.lastSentPos;
+
+        // hard stop (wall, landing): the stop was sent as a normal move, so without this the client extrapolates
+        // a full tick past it and holds there until the keepalive. half a block into the wall for an arrow
+        bool stopped = !moved && t.wasMoving;
+
+        if (!moved && !rotated && !settled && !stopped && t.ticksSinceUpdate < KEEPALIVE) {
             return;
         }
 
+        t.wasMoving = moved || settled;
+
         var packet = new EntityPositionRotationPacket {
             entityID = entity.id,
+            tick = server.simTick,
             position = entity.position,
             rotation = entity.rotation,
         };
 
+        // unreliable is fine
         foreach (var viewer in t.viewers) {
             viewer.send(packet, DeliveryMethod.Unreliable);
         }
@@ -133,6 +157,62 @@ public class EntityTracker {
         t.lastSentPos = entity.position;
         t.lastSentRot = entity.rotation;
         t.ticksSinceUpdate = 0;
+    }
+
+    private static void syncState(TrackedEntity t, ServerConnection? o) {
+        var e = t.entity;
+        e.syncState();
+
+        if (e.state.isDirty()) {
+            var packet = new EntityStatePacket {
+                entityID = e.id,
+                data = e.state.serialize()
+            };
+
+            foreach (var viewer in t.viewers) {
+                viewer.send(packet, DeliveryMethod.ReliableOrdered);
+            }
+
+            o?.send(packet, DeliveryMethod.ReliableOrdered);
+        }
+
+        t.hpTicks++;
+        if (o != null && e.hp != t.lastSentHp && (e.hp < t.lastSentHp || t.hpTicks >= 10 || double.IsNaN(t.lastSentHp))) {
+            t.lastSentHp = e.hp;
+            t.hpTicks = 0;
+            o.send(new PlayerHealthPacket {
+                health = e.hp,
+                damageTime = e.dmgTime
+            }, DeliveryMethod.ReliableOrdered);
+        }
+    }
+
+    private static void flushEvents(TrackedEntity t, ServerConnection? o) {
+        var e = t.entity;
+
+        if (e.pendingHurt > 0) {
+            // every damage source, not just melee - arrows, fire, falls used to be invisible to clients
+            var packet = new EntityDamagePacket {
+                entityID = e.id,
+                attackerID = e.pendingHurtSrc,
+                damage = e.pendingHurt
+            };
+
+            foreach (var viewer in t.viewers) {
+                viewer.send(packet, DeliveryMethod.ReliableOrdered);
+            }
+
+            o?.send(packet, DeliveryMethod.ReliableOrdered);
+        }
+
+        if (e.hasImpulse) {
+            o?.send(new EntityImpulsePacket {
+                entityID = e.id,
+                impulse = e.pendingImpulse
+            }, DeliveryMethod.ReliableOrdered);
+        }
+
+        e.clearEvents();
     }
 
     /** recalculate which clients can see this entity (based on distance) */
@@ -296,8 +376,7 @@ public class EntityTracker {
             case ArrowEntity arrow:
                 var ownerID = buf.readInt();
                 if (ownerID >= 0) {
-                    // find owner entity in world
-                    arrow.owner = entity.world.entities.FirstOrDefault(e => e.id == ownerID);
+                    arrow.owner = entity.world.getEntity(ownerID);
                 }
                 break;
         }

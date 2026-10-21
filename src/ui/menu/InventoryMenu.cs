@@ -6,6 +6,7 @@ using BlockGame.net.packet;
 using BlockGame.ui.element;
 using BlockGame.ui.screen;
 using BlockGame.util;
+using BlockGame.world.item.inventory;
 using Molten;
 using Silk.NET.Input;
 
@@ -26,21 +27,6 @@ public abstract class InventoryMenu : Menu {
 
     public override bool isBlockingInput() {
         return true;
-    }
-
-    public override void deactivate() {
-        base.deactivate();
-
-        // drop cursor items when closing inventory to prevent voiding
-        // (only in singleplayer - server handles it in multiplayer)
-        // it's guarded in dropItemStack but BUG AVOIDANCE
-        var player = Game.world?.player;
-        if (player?.inventory?.cursor != null && player.inventory.cursor != ItemStack.EMPTY) {
-            if (Game.world.isServer) {
-                player.dropItemStack(player.inventory.cursor, withVelocity: true);
-                player.inventory.cursor = ItemStack.EMPTY;
-            }
-        }
     }
 
     protected abstract string getTitle();
@@ -150,17 +136,21 @@ public abstract class InventoryMenu : Menu {
             return;
         }
 
+        var left = button == MouseButton.Left;
+        var shift = Game.keyboard.IsKeyPressed(Key.ShiftLeft) || Game.keyboard.IsKeyPressed(Key.ShiftRight);
+        var click = shift ? (left ? ClickType.SHIFT_LEFT : ClickType.SHIFT_RIGHT) : (left ? ClickType.LEFT : ClickType.RIGHT);
+
         // do optimistic local update
-        handleSlotClick(slot, button);
+        handleSlotClick(slot, click);
 
         // send to server if multiplayer
         if (!Game.world.isServer) {
             ClientConnection.instance.send(new InventorySlotClickPacket {
                 invID = player.currentInventoryID,
                 idx = (ushort)slotIdx,
-                button = (byte)(button == MouseButton.Left ? 0 : 1),
+                button = (byte)(left ? 0 : 1),
                 actionID = ClientConnection.instance.nextActionID++,
-                mode = 0, // normal click
+                mode = (byte)(shift ? 1 : 0),
                 expectedSlot = slot.getStack()
             }, LiteNetLib.DeliveryMethod.ReliableOrdered);
         }
@@ -181,6 +171,10 @@ public abstract class InventoryMenu : Menu {
                 }, LiteNetLib.DeliveryMethod.ReliableOrdered);
             }
 
+            if (player.currentInventoryID == Constants.INV_ID_CREATIVE) {
+                player.inventory.cursor = ItemStack.EMPTY;
+            }
+
             // close context - reset to player inventory
             player.closeInventory();
 
@@ -193,7 +187,7 @@ public abstract class InventoryMenu : Menu {
         }
     }
 
-    protected abstract void handleSlotClick(ItemSlot slot, MouseButton button);
+    protected abstract void handleSlotClick(ItemSlot slot, ClickType click);
 
     public sealed override void resize(Vector2I newSize) {
         base.resize(newSize);

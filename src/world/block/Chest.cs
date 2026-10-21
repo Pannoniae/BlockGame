@@ -59,6 +59,11 @@ public class Chest : EntityBlock {
     public override void onBreak(World world, int x, int y, int z, byte metadata) {
         // drop contents
         var be = world.getBlockEntity(x, y, z) as ChestBlockEntity;
+        // todo move this to somewhere shared?
+        if (be != null && world.isServer) {
+            GameServer.instance.closeViewers(be);
+        }
+
         be?.dropContents(world, x, y, z);
 
         base.onBreak(world, x, y, z, metadata);
@@ -74,30 +79,15 @@ public class Chest : EntityBlock {
             return true; // return true to prevent block placement
         }
 
-        // server-side: open inventory via helper
-        if (!world.isClient) {
-            var ctx = new ChestMenuContext(player.inventory, be);
-            return GameServer.openInventory(
-                (ServerPlayer)player,
-                ctx,
-                invType: 0, // chest
-                title: "Chest",
-                position: new Vector3I(x, y, z),
-                slots: be.slots
-            );
-        }
-        else {
-            var ctx = new ChestMenuContext(player.inventory, be);
-            player.currentCtx = ctx;
-
-            Screen.GAME_SCREEN.switchToMenu(new ChestMenu(new Vector2I(0, 12), ctx));
-            ((ChestMenu)Screen.GAME_SCREEN.currentMenu!).setup();
-
-            world.inMenu = true;
-            Game.instance.unlockMouse();
-
-            return true;
-        }
+        var ctx = new ChestMenuContext(player.inventory, be);
+        return GameServer.openInventory(
+            (ServerPlayer)player,
+            ctx,
+            invType: 0, // chest
+            title: "Chest",
+            position: new Vector3I(x, y, z),
+            slots: be.slots
+        );
     }
 
     public override BlockEntity get() {

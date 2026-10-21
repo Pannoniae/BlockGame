@@ -14,6 +14,8 @@ public class ItemEntity : Entity {
     public const double size = 0.25;
 
     public ItemEntity(World world) : base(world, "item") {
+        // custom gravity in updatePhysics; block interaction stays on for liquids
+        flags &= ~EFlag.GRAVITY;
 
     }
 
@@ -30,19 +32,8 @@ public class ItemEntity : Entity {
     /** funny sine wave */
     public float hover;
     
-    protected override bool needsGravity => false; // custom gravity in updatePhysics
-    protected override bool needsBodyRotation => false;
-    protected override bool needsFootsteps => false;
-    protected override bool needsFallDamage => false;
-    protected override bool needsAnimation => false;
-    protected override bool needsBlockInteraction => true; // liquids!
 
     // ============ LIFECYCLE HOOKS ============
-
-    protected override void updateTimers(double dt) {
-        base.updateTimers(dt);
-        age++;
-    }
 
     protected override void updateVisualTimers(double dt) {
         base.updateVisualTimers(dt);
@@ -167,12 +158,15 @@ public class ItemEntity : Entity {
         return nearest;
     }
 
+    [ThreadStatic] private static List<Player>? _players;
+
     private Player? findNearestPlayer() {
         if (plotArmour > 0) {
             return null; // no attraction during grace period
         }
 
-        var entities = new List<Player>();
+        // every item, every tick
+        var entities = _players ??= [];
         var min = position.toBlockPos() - new Vector3I(2, 2, 2);
         var max = position.toBlockPos() + new Vector3I(2, 2, 2);
         world.getPlayersInBox(entities, min, max);
@@ -229,23 +223,19 @@ public class ItemEntity : Entity {
         );
     }
 
-    /** Try to be picked up by the given player. Returns true if successful. */
+    /** Try to be picked up by the given player. Returns true if the player's inventory changed (could be a partial pickup). */
     public bool pickup(Player player) {
-        if (plotArmour > 0) {
-            return false; // grace period to prevent immediate pickup
+        if (plotArmour > 0 || !canPickup(player)) {
+            return false;
         }
 
-        // check if player can pick up this item
-        if (canPickup(player)) {
-            // try to add to inventory
-            if (player.inventory.addItem(stack)) {
-                // successfully added to inventory, remove from world
-                remove();
-                return true;
-            }
+        var before = stack.quantity;
+        if (player.inventory.addItem(stack)) {
+            remove();
+            return true;
         }
 
-        return false;
+        return stack.quantity != before;
     }
 
     private bool canPickup(Player player) {
@@ -255,13 +245,26 @@ public class ItemEntity : Entity {
         return distance <= 0.8; // pickup radius
     }
 
+    public override void syncState() {
+        base.syncState();
+        state.setInt(EntityState.ITEM_QUANTITY, stack.quantity);
+    }
+
+    public override void applyState() {
+        base.applyState();
+        var qty = state.getInt(EntityState.ITEM_QUANTITY, stack.quantity);
+        if (qty > 0 && stack != ItemStack.EMPTY) {
+            stack.quantity = qty;
+        }
+    }
+
     public override void dmg(double damage, Entity source) {
         // items take knockback but no damage from attacks
         base.dmg(damage, source);
         hp = 100;
     }
 
-    public override void die() {
+    protected override void onDeath() {
         remove();
     }
 

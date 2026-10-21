@@ -179,11 +179,13 @@ public class Carpet : Block {
         var block = world.getBlockRaw(x, y, z);
         var metadata = block.getMetadata();
 
-        // drop the carpet as an item
-        var drops = new List<ItemStack>();
-        getDrop(drops, world, x, y, z, metadata, true);
-        foreach (var drop in drops) {
-            player.inventory.addItem(drop);
+        // into the inventory, or on the floor if full
+        if (world.isServer) {
+            var drops = new List<ItemStack>();
+            getDrop(drops, world, x, y, z, metadata, true);
+            foreach (var drop in drops) {
+                player.pickup(drop);
+            }
         }
 
         // remove the carpet

@@ -23,12 +23,12 @@ public class CreativeInventoryMenu : InventoryMenu {
     public const int PADDING = 2;
     public const int BUTTONPADDING = 5;
     public const int BUTTONW = 8;
-    public const int BUTTONH = 6;
+    public const int BUTTONH = 8;
 
     private readonly CreativeInventoryContext creativeCtx;
 
-    public Rectangle upArrow = new Rectangle(205, 0, BUTTONW, BUTTONH);
-    public Rectangle downArrow = new Rectangle(205, 6, BUTTONW, BUTTONH);
+    public Rectangle upArrow = new Rectangle(128, 80, BUTTONW, BUTTONH);
+    public Rectangle downArrow = new Rectangle(128, 88, BUTTONW, BUTTONH);
 
     public CreativeInventoryMenu(Vector2I guiPos) {
         this.guiPos = guiPos;
@@ -96,9 +96,8 @@ public class CreativeInventoryMenu : InventoryMenu {
         }
     }
 
-    protected override void handleSlotClick(ItemSlot slot, MouseButton button) {
-        var clickType = button == MouseButton.Left ? ClickType.LEFT : ClickType.RIGHT;
-        creativeCtx.handleSlotClick(slot, clickType);
+    protected override void handleSlotClick(ItemSlot slot, ClickType click) {
+        creativeCtx.handleSlotClick(slot, click);
     }
 
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {

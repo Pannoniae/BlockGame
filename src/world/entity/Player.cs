@@ -48,8 +48,8 @@ public class Player : Mob, CommandSource {
 
     // fall damage tracking
     private bool wasInAir = false;
-    private const double SAFE_FALL_SPEED = 13.0; // velocity threshold for damage
-    private const double FALL_DAMAGE_MULTIPLIER = 2.0; // damage per unit velocity over threshold
+    protected const double SAFE_FALL_SPEED = 13.0; // velocity threshold for damage
+    protected const double FALL_DAMAGE_MULTIPLIER = 2.0; // damage per unit velocity over threshold
 
     public PlayerInventory inventory;
 
@@ -150,6 +150,8 @@ public class Player : Mob, CommandSource {
             }
         }
 
+        readLooseItems(data);
+
         // gamemode
         var gamemodeID = data.getInt("gamemode", 1);
         gameMode = GameMode.fromID((GameModeID)gamemodeID);
@@ -192,6 +194,7 @@ public class Player : Mob, CommandSource {
         invData.add(accList);
 
         data.add(invData);
+        writeLooseItems(data);
 
         // gamemode
         data.addInt("gamemode", (int)gameMode.id);
@@ -210,38 +213,38 @@ public class Player : Mob, CommandSource {
 
     // ============ LIFECYCLE HOOKS ============die
 
+    /** server */
     protected override bool shouldContinueUpdate(double dt) {
-        if (hp <= 0 && !dead) {
+        if (hp <= 0) {
             die();
         }
 
+        return !dead;
+    }
+
+    protected override void updateVisual(double dt) {
+        // the death tilt lives in Mob.updateVisual
+        base.updateVisual(dt);
+
         if (dead) {
-            // save prev vars for smooth interpolation
-            prevBodyRotation = bodyRotation;
-
-            dieTime++;
-
-            // animate death fall (fall to side over a sec)
-            const int deathAnimDuration = 60;
-            float t = Math.Min(dieTime / (float)deathAnimDuration, 1f);
-            // ease out for smoother animation
-            t = 1f - (1f - t) * (1f - t);
-            bodyRotation.Z = -90f * t;
-
-            // prevent movement when dead
             velocity = Vector3D.Zero;
             inputVector = Vector3D.Zero;
             strafeVector = Vector3D.Zero;
-
-            if (world.isClient) {
-                Game.camera.updatePosition(dt); // update death tilt
-            }
-
-            return false;
         }
 
-        dieTime = 0;
-        return true;
+        if (isLocal) {
+            handRenderer.update(dt);
+        }
+
+        for (int i = 0; i < inventory.shiny.Length; i++) {
+            if (inventory.shiny[i] > 0) {
+                inventory.shiny[i] = float.Max(inventory.shiny[i] - (float)(dt * 4.0), 0);
+            }
+        }
+
+        if (recoilTime > 0) {
+            recoilTime--;
+        }
     }
 
     protected override void savePrevVars() {
@@ -249,12 +252,10 @@ public class Player : Mob, CommandSource {
 
         // player-specific prev vars
 
-        if (world.isClient) {
+        // remote players run this too now, and the camera is not theirs
+        if (isLocal) {
             Game.camera.prevBob = Game.camera.bob;
             Game.camera.prevAirBob = Game.camera.airBob;
-        }
-
-        if (world.isClient) {
             handRenderer.prevLower = handRenderer.lower;
         }
     }
@@ -291,43 +292,19 @@ public class Player : Mob, CommandSource {
         return total;
     }
 
-    protected override void updateTimers(double dt) {
-        base.updateTimers(dt);
-
-        if (world.isClient) {
-            handRenderer.update(dt);
-        }
-
-        // decay shiny values
-        for (int i = 0; i < inventory.shiny.Length; i++) {
-            if (inventory.shiny[i] > 0) {
-                inventory.shiny[i] -= (float)(dt * 4.0);
-                if (inventory.shiny[i] < 0) {
-                    inventory.shiny[i] = 0;
-                }
-            }
-        }
-
-        // decrement recoil timer
-        if (recoilTime > 0) {
-            recoilTime--;
-        }
-    }
-
     protected override void prePhysics(double dt) {
         updateInputVelocity(dt);
         applyInputMovement(dt);
     }
 
+    public int lastDMGTick = int.MinValue / 2;
+
     protected override void checkFallDamage(double dt) {
-        if (gameMode.gameplay && onGround && wasInAir && !flyMode && !inLiquid) {
+        if (gameMode.gameplay && onGround && wasInAir && !flyMode && !inLiquid && world.isClient) {
             var fallSpeed = -prevVelocity.Y;
             if (fallSpeed > SAFE_FALL_SPEED) {
-                var dmg = (float)((fallSpeed - SAFE_FALL_SPEED) * FALL_DAMAGE_MULTIPLIER);
-                base.dmg(dmg);
-                if (world.isClient) {
-                    Game.camera.applyImpact(dmg);
-                }
+                Game.camera.applyImpact((float)((fallSpeed - SAFE_FALL_SPEED) * FALL_DAMAGE_MULTIPLIER));
+                lastDMGTick = world.worldTick;
             }
         }
 
@@ -354,14 +331,16 @@ public class Player : Mob, CommandSource {
 
         // totalTraveled already updated in Mob.postPhysics()
 
-        // update camera
-        if (world.isClient) {
+        if (isLocal) {
             Game.camera.updatePosition(dt);
         }
 
-        // item pickup
-        pickup();
+        if (world.isServer && !dead) {
+            pickup();
+        }
     }
+
+    protected bool isLocal => hasmovement && world.isClient;
 
     // before pausing, all vars need to be updated SO THERE IS NO FUCKING JITTER ON THE PAUSE MENU
     public void catchUpOnPrevVars() {
@@ -703,28 +682,18 @@ public class Player : Mob, CommandSource {
         return new Vector3D(position.X, position.Y + eyeHeight - 0.4, position.Z);
     }
 
-    private void pickup() {
-        // get nearby entities
-        var entities = new List<Entity>();
-        var min = position.toBlockPos() - new Vector3I(2, 2, 2);
-        var max = position.toBlockPos() + new Vector3I(2, 2, 2);
-        world.getEntitiesInBox(entities, min, max);
-
-        // try to pickup any ItemEntities
-        foreach (var entity in entities) {
-            if (entity is ItemEntity itemEntity) {
-                itemEntity.pickup(this);
-            }
-        }
-
-        // todo play popcat sound!!
+    protected virtual void pickup() {
     }
 
     /**
-     * Updates body rotation to face movement direction with smooth interpolation
-     * Player uses strafeVector input, mob uses velocity
+     * Updates body rotation to face movement direction with smooth interpolation.
      */
     protected override void updateBodyRotation(double dt) {
+        if (dead || !isLocal) {
+            base.updateBodyRotation(dt);
+            return;
+        }
+
         var input = strafeVector.withoutY();
         var inputLength = input.Length();
 
@@ -825,7 +794,7 @@ public class Player : Mob, CommandSource {
         }
         else {
             // drop at feet, radomly offset
-            var r = Game.random;
+            var r = world.random;
             itemEntity.position = new Vector3D(
                 position.X + r.NextDouble() * 0.5 - 0.25,
                 position.Y + 0.5,
@@ -836,14 +805,10 @@ public class Player : Mob, CommandSource {
         world.addEntity(itemEntity);
     }
 
-    public override void die() {
-        dead = true;
-
-        // clear all effects on death
+    protected override void onDeath() {
         effects.Clear();
 
-        // drop inventory items on death (survival only, blocks only)
-        if (gameMode.gameplay) {
+        if (world.isServer && gameMode.gameplay) {
             dropInventoryOnDeath();
         }
 
@@ -915,6 +880,7 @@ public class Player : Mob, CommandSource {
     public override void syncState() {
         base.syncState();
         state.setBool(EntityState.FLYING, flyMode);
+        state.setBool(EntityState.NOCLIP, noClip);
     }
 
     public override void applyState() {
@@ -929,7 +895,113 @@ public class Player : Mob, CommandSource {
 
     public void closeInventory() {
         currentCtx.close();
-        currentInventoryID = -1;
+
+        // the 2x2 grid isn't real storage
+        if (world.isServer && currentCtx is SurvivalInventoryContext surv) {
+            pickupGrid(surv.getCraftingGrid());
+        }
+
+        currentInventoryID = Constants.INV_ID_PLAYER;
         currentCtx = inventoryCtx;
+    }
+
+    // ============ LOOSE ITEMS ============
+
+    /** server: put items "away" into the inventory, drop them if they don't fit */
+    public void pickup(ItemStack stack) {
+        if (stack != ItemStack.EMPTY && !inventory.addItem(stack)) {
+            dropItemStack(stack, withVelocity: true);
+        }
+    }
+
+    private void pickupGrid(CraftingGridInventory grid) {
+        for (int i = 0; i < grid.grid.Length; i++) {
+            pickup(grid.grid[i]);
+            grid.grid[i] = ItemStack.EMPTY;
+        }
+
+        grid.updateResult();
+    }
+
+    /** server: clear cursor when leaving so they don't get lost */
+    public void pickupLooseItems() {
+        pickup(inventory.cursor);
+        inventory.cursor = ItemStack.EMPTY;
+
+        if (inventoryCtx is SurvivalInventoryContext surv) {
+            pickupGrid(surv.getCraftingGrid());
+        }
+
+        if (fanumtax != null) {
+            foreach (var stack in fanumtax) {
+                pickup(stack);
+            }
+
+            fanumtax = null;
+        }
+    }
+
+    /** server: death */
+    protected void dropDeathItems() {
+        dropItemStack(inventory.cursor, withVelocity: true);
+        inventory.cursor = ItemStack.EMPTY;
+
+        if (inventoryCtx is SurvivalInventoryContext surv) {
+            var grid = surv.getCraftingGrid();
+            for (int i = 0; i < grid.grid.Length; i++) {
+                // todo only drop materials
+                if (Item.material[grid.grid[i].id]) {
+                    dropItemStack(grid.grid[i], withVelocity:true);
+                    grid.grid[i] = ItemStack.EMPTY;
+                }
+            }
+
+            grid.updateResult();
+        }
+    }
+
+    /** this holds the loose items from the last save for those rare situations where the server saved your stuff while you had stuff on the cursor */
+    private List<ItemStack>? fanumtax;
+
+    private void writeLooseItems(NBTCompound data) {
+        var list = new NBTList<NBTCompound>(NBTType.TAG_Compound, "loose");
+        writeItem(list, inventory.cursor);
+        if (inventoryCtx is SurvivalInventoryContext surv) {
+            foreach (var stack in surv.getCraftingGrid().grid) {
+                writeItem(list, stack);
+            }
+        }
+
+        if (fanumtax != null) {
+            foreach (var stack in fanumtax) {
+                writeItem(list, stack);
+            }
+        }
+
+        data.add(list);
+    }
+
+    private static void writeItem(NBTList<NBTCompound> list, ItemStack stack) {
+        if (stack == ItemStack.EMPTY) {
+            return;
+        }
+
+        var tag = new NBTCompound();
+        stack.write(tag);
+        list.add(tag);
+    }
+
+    private void readLooseItems(NBTCompound data) {
+        if (!data.has("loose")) {
+            return;
+        }
+
+        var list = data.getListTag<NBTCompound>("loose");
+        for (int i = 0; i < list.count(); i++) {
+            var stack = ItemStack.fromTag(list.get(i));
+            if (stack != ItemStack.EMPTY) {
+                (fanumtax ??= []).Add(stack);
+            }
+        }
     }
 }

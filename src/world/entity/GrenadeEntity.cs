@@ -16,15 +16,9 @@ public class GrenadeEntity : Entity {
     public const double EXPLOSION_DAMAGE = 15.0;
 
     public GrenadeEntity(World world) : base(world, "grenade") {
+        flags &= ~EFlag.BLOCK_INTERACTION;
     }
 
-    protected override bool needsPrevVars => true;
-    protected override bool needsPhysics => true;
-    protected override bool needsGravity => true;
-    protected override bool needsCollision => true;
-    protected override bool needsFriction => true;
-    protected override bool needsBlockInteraction => false;
-    protected override bool needsEntityCollision => false;
 
     public override AABB calcAABB(Vector3D pos) {
         return AABB.fromSize(
@@ -98,7 +92,7 @@ public class GrenadeEntity : Entity {
             position + new Vector3D(EXPLOSION_RADIUS)
         );
 
-        var entities = new List<Entity>();
+        var entities = nearby;
         world.getEntitiesInBox(entities, explosionBox);
 
         // apply damage with falloff

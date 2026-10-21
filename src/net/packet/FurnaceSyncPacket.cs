@@ -2,8 +2,8 @@
 
 namespace BlockGame.net.packet;
 
-/** S→C: 0x47 - sync furnace state (sent every 2 ticks to viewers) */
-public class FurnaceSyncPacket : Packet {
+/** S→C: 0x47 - sync furnace state (to viewers, on change) */
+public struct FurnaceSyncPacket : Packet {
     public Vector3I position;
     public int smeltProgress;
     public int smeltTime;

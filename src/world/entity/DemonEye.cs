@@ -1,4 +1,4 @@
-﻿using BlockGame.main;
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world.item;
 using Molten.DoublePrecision;
@@ -18,12 +18,12 @@ public class DemonEye : Hostile {
     private int retargetCooldown;
 
     // don't take fall damage
-    protected override bool needsFallDamage => false;
 
     public override bool burnInSunlight => true;
     public override double eyeHeight => 0; // it's a fucking floating eye
 
     public DemonEye(World world) : base(world, "eye") {
+        flags &= ~EFlag.FALL_DAMAGE;
         tex = "textures/entity/eye.png";
         flyMode = true;
         hp = 30;
@@ -81,17 +81,17 @@ public class DemonEye : Hostile {
 
         // pick new target
         if (flyTarget == null || retargetCooldown <= 0) {
-            var angle = Game.random.NextSingle(0, MathF.PI * 2);
-            var dist = Game.random.NextSingle(8f, 16f);
+            var angle = world.random.NextSingle(0, MathF.PI * 2);
+            var dist = world.random.NextSingle(8f, 16f);
             var tx = position.X + MathF.Cos(angle) * dist;
             var tz = position.Z + MathF.Sin(angle) * dist;
 
             // try to maintain hover height above ground
             var groundY = findGroundBelow((int)tx, (int)tz);
-            var ty = groundY + HOVER_HEIGHT + Game.random.NextSingle(-2f, 2f);
+            var ty = groundY + HOVER_HEIGHT + world.random.NextSingle(-2f, 2f);
 
             flyTarget = new Vector3D(tx, ty, tz);
-            retargetCooldown = 60 + Game.random.Next(120);
+            retargetCooldown = 60 + world.random.Next(120);
         }
 
         // fly towards target
@@ -137,7 +137,7 @@ public class DemonEye : Hostile {
     }
 
     public override void getDrop(List<ItemStack> drops) {
-        //if (id == DemonEye.id && Game.random.Next(20) == 0) {
+        //if (id == DemonEye.id && world.random.Next(20) == 0) {
         //    drops.Add(new ItemStack(LW_BOOTS.item, 1, 0));
         //}
     }

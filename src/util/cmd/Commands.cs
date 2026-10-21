@@ -1,12 +1,13 @@
-﻿using BlockGame.logic;
+﻿using System.Globalization;
+using BlockGame.logic;
 using BlockGame.main;
 using BlockGame.net;
 using BlockGame.net.packet;
 using BlockGame.net.srv;
 using BlockGame.ui;
 using BlockGame.util.log;
+using BlockGame.util.stuff;
 using BlockGame.world;
-using BlockGame.world.block;
 using BlockGame.world.entity;
 using BlockGame.world.item.inventory;
 using BlockGame.world.worldgen.generator;
@@ -16,16 +17,29 @@ using Registry = BlockGame.util.stuff.Registry;
 
 namespace BlockGame.util.cmd;
 
+public enum CmdSide : byte {
+    /** render/UI stuff, never sent to the server */
+    CLIENT,
+    /** any world/entity/inventory state, always goes to the server both SP and MP */
+    SERVER,
+    /** no state, runs on where it's called */
+    ANY
+}
+
 public readonly struct Command {
     public static readonly XUList<Command> commands = [];
 
     public readonly string name;
     public readonly string desc;
     public readonly Action<CommandSource, string[]> action;
-    public readonly NetMode side;
+    public readonly CmdSide side;
     public readonly bool cheat;
 
-    public Command(string name, string desc, NetMode side, Action<CommandSource, string[]> action, bool cheat = false) {
+    public Command(string name, string desc, CmdSide side, Action<CommandSource, string[]> action, bool cheat = false) {
+        if (cheat && side != CmdSide.SERVER) {
+            throw new ArgumentException($"/{name}: cheat commands have to be server-side");
+        }
+
         this.name = name;
         this.desc = desc;
         this.side = side;
@@ -56,21 +70,27 @@ public readonly struct Command {
             return;
         }
 
-        // check side
-        bool match = (Net.mode & cmd.Value.side) == 0;
-        if (cmd.Value.side != NetMode.BOTH && match) {
-            src.sendMessage($"Command {cmdName} cannot be used in the current mode.");
+        var c = cmd.Value;
+        var server = src.getWorld().isServer;
+
+        if (c.side == CmdSide.CLIENT && server) {
+            src.sendMessage($"/{c.name} is client-side, use it in-game.");
             return;
         }
 
-        // check permissions
-        if (cmd.Value.cheat && !src.isOp()) {
+        if (c.side == CmdSide.SERVER && !server) {
+            Log.error($"Server command /{c.name} executed on the client, plz fix");
+            src.sendMessage($"/{c.name} has to run on the server.");
+            return;
+        }
+
+        if (c.cheat && !src.isOp()) {
             src.sendMessage("You must be an operator to use this command.");
             return;
         }
 
         try {
-            cmd.Value.action(src, args[1..]);
+            c.action(src, args[1..]);
         }
         catch (Exception e) {
             src.sendMessage($"Error executing command {cmdName}: {e.Message}");
@@ -82,396 +102,43 @@ public readonly struct Command {
 
     public static void register() {
         var helpAction = (CommandSource source, string[] args) => {
+            // the console can't run the client commands
+            var server = source.getWorld().isServer && !source.isPlayer();
             source.sendMessage("Available commands:");
             foreach (var cmd in commands) {
+                if (server && cmd.side == CmdSide.CLIENT) {
+                    continue;
+                }
+
                 source.sendMessage($"/{cmd.name} - {cmd.desc}");
             }
         };
 
-        commands.Add(new Command("help", "Lists all available commands", NetMode.BOTH, helpAction));
-        commands.Add(new Command("?", "Lists all available commands", NetMode.BOTH, helpAction));
+        commands.Add(new Command("help", "Lists all available commands", CmdSide.ANY, helpAction));
+        commands.Add(new Command("?", "Lists all available commands", CmdSide.ANY, helpAction));
 
-        commands.Add(new Command("gamemode", "Changes the player's game mode", NetMode.BOTH, (source, args) => {
-            // 1-arg version
-            if (args.Length == 1) {
+        // ============ CLIENT ============
 
-                // bail on server
-                if (!source.isPlayer()) {
-                    source.sendMessage("You need to specify a player when changing gamemode on a server.");
-                    return;
-                }
-
-                switch (args[0].ToLower()) {
-                    case "creative":
-                    case "c":
-                    case "1":
-                        var player = source as Player;
-                        player!.gameMode = GameMode.creative;
-
-                        // switch to creative inventory context
-                        if (player is ServerPlayer) {
-                            var sp = player as ServerPlayer;
-
-                            // force-close any open inventory
-                            if (sp.currentInventoryID != Constants.INV_ID_PLAYER) {
-                                sp.currentCtx?.removeViewer(sp.conn);
-                                sp.currentInventoryID = Constants.INV_ID_PLAYER;
-                            }
-
-                            // remove viewer from old context
-                            player.inventoryCtx?.removeViewer(sp.conn);
-                        }
-
-                        player.inventoryCtx = new CreativeInventoryContext(player.inventory, 40);
-                        player.currentCtx = player.inventoryCtx; // update currentCtx to match
-
-                        // sync gamemode and re-add viewer to new context
-                        if (player is ServerPlayer) {
-                            var sp = player as ServerPlayer;
-
-                            // add viewer to new context
-                            player.inventoryCtx.addViewer(sp.conn, Constants.INV_ID_PLAYER);
-
-                            sp.conn.send(new GamemodePacket {
-                                gamemode = GameMode.creative.id
-                            }, DeliveryMethod.ReliableOrdered);
-                        }
-
-
-                        source.sendMessage("Set gamemode to Creative");
-                        break;
-                    case "survival":
-                    case "s":
-                    case "0":
-                        player = source as Player;
-                        player!.gameMode = GameMode.survival;
-                        // disable flying when switching to survival
-                        player.flyMode = false;
-
-                        // switch to survival inventory context
-                        if (player is ServerPlayer) {
-                            var sp = player as ServerPlayer;
-
-                            // force-close any open inventory
-                            if (sp.currentInventoryID != Constants.INV_ID_PLAYER) {
-                                sp.currentCtx?.removeViewer(sp.conn);
-                                sp.currentInventoryID = Constants.INV_ID_PLAYER;
-                            }
-
-                            // remove viewer from old context
-                            player.inventoryCtx?.removeViewer(sp.conn);
-                        }
-
-                        player.inventoryCtx = new SurvivalInventoryContext(player.inventory);
-                        player.currentCtx = player.inventoryCtx; // update currentCtx to match
-
-                        // sync gamemode and re-add viewer to new context
-                        if (player is ServerPlayer) {
-                            var sp = player as ServerPlayer;
-
-                            // add viewer to new context
-                            player.inventoryCtx.addViewer(sp.conn, Constants.INV_ID_PLAYER);
-
-                            sp.conn.send(new GamemodePacket {
-                                gamemode = GameMode.survival.id
-                            }, DeliveryMethod.ReliableOrdered);
-                        }
-
-                        source.sendMessage("Set gamemode to Survival");
-                        break;
-                    default:
-                        source.sendMessage("Invalid gamemode. Use: creative/c/1 or survival/s/0");
-                        break;
-                }
-            }
-            else if (args.Length == 0 && source.isPlayer()) {
-                var currentMode = (source as Player)?.gameMode.name;
-                source.sendMessage($"Current gamemode: {currentMode}. Usage: /gamemode <creative|survival>");
-            }
-
-            else if (args.Length == 2) {
-                var name = args[0];
-                foreach (var player in source.getWorld().players) {
-                    if (player.name.Equals(name, StringComparison.OrdinalIgnoreCase)) {
-                        switch (args[1].ToLower()) {
-                            case "creative":
-                            case "c":
-                            case "1":
-                                player.gameMode = GameMode.creative;
-
-                                // switch to creative inventory context
-                                if (player is ServerPlayer) {
-                                    var sp = player as ServerPlayer;
-
-                                    // force-close any open inventory
-                                    if (sp.currentInventoryID != Constants.INV_ID_PLAYER) {
-                                        sp.currentCtx?.removeViewer(sp.conn);
-                                        sp.currentInventoryID = Constants.INV_ID_PLAYER;
-                                    }
-
-                                    // remove viewer from old context
-                                    player.inventoryCtx?.removeViewer(sp.conn);
-                                }
-
-                                player.inventoryCtx = new CreativeInventoryContext(player.inventory, 40);
-                                player.currentCtx = player.inventoryCtx; // update currentCtx to match
-
-                                if (player is ServerPlayer) {
-                                    var sp = player as ServerPlayer;
-
-                                    // add viewer to new context
-                                    player.inventoryCtx.addViewer(sp.conn, Constants.INV_ID_PLAYER);
-
-                                    sp.conn.send(new GamemodePacket {
-                                        gamemode = GameMode.creative.id
-                                    }, DeliveryMethod.ReliableOrdered);
-                                }
-
-                                source.sendMessage($"Set gamemode of {name} to Creative");
-                                break;
-                            case "survival":
-                            case "s":
-                            case "0":
-                                player.gameMode = GameMode.survival;
-                                // disable flying when switching to survival
-                                player.flyMode = false;
-
-                                // switch to survival inventory context
-                                if (player is ServerPlayer) {
-                                    var sp = player as ServerPlayer;
-
-                                    // force-close any open inventory
-                                    if (sp.currentInventoryID != Constants.INV_ID_PLAYER) {
-                                        sp.currentCtx?.removeViewer(sp.conn);
-                                        sp.currentInventoryID = Constants.INV_ID_PLAYER;
-                                    }
-
-                                    // remove viewer from old context
-                                    player.inventoryCtx?.removeViewer(sp.conn);
-                                }
-
-                                player.inventoryCtx = new SurvivalInventoryContext(player.inventory);
-                                player.currentCtx = player.inventoryCtx; // update currentCtx to match
-
-                                if (player is ServerPlayer) {
-                                    var sp = player as ServerPlayer;
-
-                                    // add viewer to new context
-                                    player.inventoryCtx.addViewer(sp.conn, Constants.INV_ID_PLAYER);
-
-                                    sp.conn.send(new GamemodePacket {
-                                        gamemode = GameMode.survival.id
-                                    }, DeliveryMethod.ReliableOrdered);
-                                }
-
-                                source.sendMessage($"Set gamemode of {name} to Survival");
-                                break;
-                            default:
-                                source.sendMessage("Invalid gamemode. Use: creative/c/1 or survival/s/0");
-                                break;
-                        }
-
-                        return;
-                    }
-                }
-                source.sendMessage($"Player '{name}' not found.");
-            }
-            else {
-                source.sendMessage("Usage: /gamemode <creative|survival>");
-            }
-        }, true));
-
-        commands.Add(new Command("tp", "Teleports the player to specified coordinates", NetMode.BOTH, (source, args) => {
-            // 1-arg: /tp <player> - teleport yourself to player
-            if (args.Length == 1) {
-                if (source is not Player player) {
-                    source.sendMessage("Console cannot teleport itself");
-                    return;
-                }
-
-                var targetName = args[0];
-                Player? target = null;
-
-                foreach (var p in source.getWorld().players) {
-                    if (p.name.Equals(targetName, StringComparison.OrdinalIgnoreCase)) {
-                        target = p;
-                        break;
-                    }
-                }
-
-                if (target == null) {
-                    source.sendMessage($"Player '{targetName}' not found");
-                    return;
-                }
-
-                player.teleport(target.position);
-                source.sendMessage($"Teleported to {targetName}");
-            }
-            // 2-arg: /tp <player1> <player2> - teleport player1 to player2
-            else if (args.Length == 2) {
-                var player1Name = args[0];
-                var player2Name = args[1];
-                Player? player1 = null;
-                Player? player2 = null;
-
-                foreach (var p in source.getWorld().players) {
-                    if (p.name.Equals(player1Name, StringComparison.OrdinalIgnoreCase)) {
-                        player1 = p;
-                    }
-                    if (p.name.Equals(player2Name, StringComparison.OrdinalIgnoreCase)) {
-                        player2 = p;
-                    }
-                }
-
-                if (player1 == null) {
-                    source.sendMessage($"Player '{player1Name}' not found");
-                    return;
-                }
-                if (player2 == null) {
-                    source.sendMessage($"Player '{player2Name}' not found");
-                    return;
-                }
-
-                player1.teleport(player2.position);
-                source.sendMessage($"Teleported {player1Name} to {player2Name}");
-            }
-            // 3-arg: /tp <x> <y> <z> - teleport yourself to coords
-            else if (args.Length == 3) {
-                if (source is not Player player) {
-                    source.sendMessage("Console must specify player: /tp <player> <x> <y> <z>");
-                    return;
-                }
-
-                if (!parseCoord(args[0], player.position.X, out int x) ||
-                    !parseCoord(args[1], player.position.Y, out int y) ||
-                    !parseCoord(args[2], player.position.Z, out int z)) {
-                    source.sendMessage("Invalid coordinates");
-                    return;
-                }
-
-                player.teleport(new Vector3D(x, y, z));
-                source.sendMessage($"Teleported to {x}, {y}, {z}!");
-            }
-            // 4-arg: /tp <player> <x> <y> <z> - teleport player to coords
-            else if (args.Length == 4) {
-                var targetName = args[0];
-                Player? target = null;
-
-                foreach (var p in source.getWorld().players) {
-                    if (p.name.Equals(targetName, StringComparison.OrdinalIgnoreCase)) {
-                        target = p;
-                        break;
-                    }
-                }
-
-                if (target == null) {
-                    source.sendMessage($"Player '{targetName}' not found");
-                    return;
-                }
-
-                if (!parseCoord(args[1], target.position.X, out int x) ||
-                    !parseCoord(args[2], target.position.Y, out int y) ||
-                    !parseCoord(args[3], target.position.Z, out int z)) {
-                    source.sendMessage("Invalid coordinates");
-                    return;
-                }
-
-                target.teleport(new Vector3D(x, y, z));
-                source.sendMessage($"Teleported {targetName} to {x}, {y}, {z}!");
-            }
-            else {
-                source.sendMessage("Usage: /tp <player|x> [player|y] [z] or /tp <player> <x> <y> <z>");
-            }
-        }, true));
-
-        commands.Add(new Command("clear", "Clears the chat messages", NetMode.CL, (source, args) => {
+        commands.Add(new Command("clear", "Clears the chat messages", CmdSide.CLIENT, (source, args) => {
             var chatMenu = Screen.GAME_SCREEN.CHAT;
             chatMenu.getMessages().Clear();
             chatMenu.addMessage("Cleared chat!");
         }));
 
-        commands.Add(new Command("cb", "Toggles chunk borders", NetMode.CL, (source, args) => {
-            if (source.isPlayer()) {
-                if (Screen.GAME_SCREEN.chunkBorders) {
-                    Screen.GAME_SCREEN.chunkBorders = false;
-                    source.sendMessage("Chunk borders disabled");
-                }
-                else {
-                    Screen.GAME_SCREEN.chunkBorders = true;
-                    source.sendMessage("Chunk borders enabled");
-                }
-            }
-            else {
-                source.sendMessage("This command can only be used from the chat menu.");
-            }
+        commands.Add(new Command("cb", "Toggles chunk borders", CmdSide.CLIENT, (source, args) => {
+            Screen.GAME_SCREEN.chunkBorders = !Screen.GAME_SCREEN.chunkBorders;
+            source.sendMessage("Chunk borders " + (Screen.GAME_SCREEN.chunkBorders ? "enabled" : "disabled"));
         }));
 
-        commands.Add(new Command("fb", "Toggles fullbright mode", NetMode.SP, (source, args) => {
-            if (Game.graphics.fullbright) {
-                Game.graphics.fullbright = false;
-                source.sendMessage("Fullbright disabled");
-            }
-            else {
-                Game.graphics.fullbright = true;
-                source.sendMessage("Fullbright enabled");
-            }
+        commands.Add(new Command("fb", "Toggles fullbright mode", CmdSide.CLIENT, (source, args) => {
+            Game.graphics.fullbright = !Game.graphics.fullbright;
+            source.sendMessage("Fullbright " + (Game.graphics.fullbright ? "enabled" : "disabled"));
 
             // remesh everything to update lighting
             Game.instance.executeOnMainThread(() => { Screen.GAME_SCREEN.remeshWorld(0); });
         }));
 
-        commands.Add(new Command("fly", "Toggles noclip mode", NetMode.BOTH, (source, args) => {
-            if (!source.isPlayer()) {
-                source.sendMessage("This command can only be used by a player.");
-                return;
-            }
-
-            var player = source as Player;
-            player.noClip = !player.noClip;
-            source.sendMessage("Noclip " + (player.noClip ? "enabled" : "disabled"));
-        }, true));
-
-        commands.Add(new Command("time", "Gets or sets the world time", NetMode.BOTH, (source, args) => {
-            if (args.Length == 0) {
-                // display current time
-                var currentTick = source.getWorld().worldTick;
-                var dayPercent = source.getWorld().getDayPercentage(currentTick);
-                var timeOfDay = (int)(dayPercent * World.TICKS_PER_DAY);
-                source.sendMessage($"The time is {timeOfDay} (day {currentTick / World.TICKS_PER_DAY})");
-            }
-            else if (args is ["set", _]) {
-                // set time
-                if (int.TryParse(args[1], out int newTime)) {
-                    source.getWorld().worldTick = newTime;
-                    source.sendMessage($"Set time to {newTime}");
-
-                    // reset sky colours immediately to prevent lerp lag
-                    if (source is ClientPlayer) {
-                        var world = source.getWorld();
-                        Game.renderer.currentSkyColour = world.getSkyColour(newTime);
-                        Game.renderer.targetSkyColour = Game.renderer.currentSkyColour;
-                        Game.renderer.currentHorizonColour = Game.graphics.getHorizonColour(world, newTime);
-                        Game.renderer.targetHorizonColour = Game.renderer.currentHorizonColour;
-                    }
-
-                    // broadcast time update to all clients in multiplayer
-                    if (GameServer.instance != null) {
-                        GameServer.instance.send(
-                            new TimeUpdatePacket { worldTick = newTime, snap = true },
-                            DeliveryMethod.ReliableSequenced
-                        );
-                    }
-                }
-                else {
-                    source.sendMessage("Usage: /time set <time>");
-                }
-            }
-            else {
-                source.sendMessage("Usage: /time or /time set <time>");
-            }
-        }, true));
-
-        commands.Add(new Command("debug", "Various debug commands", NetMode.CL, (source, args) => {
+        commands.Add(new Command("debug", "Various debug commands", CmdSide.CLIENT, (source, args) => {
             var subCmd = args.Length > 0 ? args[0] : "";
 
             switch (subCmd) {
@@ -505,140 +172,233 @@ public readonly struct Command {
             }
         }));
 
-        commands.Add(new Command("noise", "Sample noise values at player position", NetMode.CL, (source, args) => {
-            var pos = Game.player.position.toBlockPos();
+        commands.Add(new Command("cec", "Shows entity count stats (client's copy of the world)", CmdSide.CLIENT,
+            (source, args) => entityStats(source, source.getWorld())));
 
-            var gen = Game.world.generator;
-            string result;
-
-            if (gen is NewWorldGenerator nwg) {
-                result = nwg.sample(pos.X, pos.Y, pos.Z);
-            }
-            else if (gen is PerlinWorldGenerator pwg) {
-                result = pwg.sample(pos.X, pos.Y, pos.Z);
-            }
-            else {
-                source.sendMessage($"Generator '{Game.world.generatorName}' does not support noise sampling");
+        commands.Add(new Command("netstats", "Shows network statistics", CmdSide.CLIENT, (source, args) => {
+            if (ClientConnection.instance is not { connected: true } conn) {
+                source.sendMessage("Not connected to a server");
                 return;
             }
 
-            // send each line separately
+            var m = Game.metrics;
+            source.sendMessage("=== Netstats ===");
+            source.sendMessage($"↑ {m.bytesSent / 1024.0:0.0}KB/s ({m.packetsSent} pkt/s)");
+            source.sendMessage($"↓ {m.bytesReceived / 1024.0:0.0}KB/s ({m.packetsReceived} pkt/s)");
+            source.sendMessage($"Ping: {conn.ping}ms");
+        }));
+
+        commands.Add(new Command("packetstats", "Shows packet statistics by type", CmdSide.CLIENT, (source, args) => {
+            if (ClientConnection.instance is not { connected: true }) {
+                source.sendMessage("Not connected to a server");
+                return;
+            }
+
+            var stats = Game.metrics.packets;
+            if (stats.Count == 0) {
+                source.sendMessage("No packets received in the last second");
+                return;
+            }
+
+            source.sendMessage("=== Packet Stats (last second) ===");
+            foreach (var kvp in stats.OrderByDescending(kvp => kvp.Value)) {
+                var typeName = kvp.Key.Name.Replace("Packet", "");
+                source.sendMessage($"{typeName}: {kvp.Value}/s");
+            }
+            source.sendMessage($"Total: {Game.metrics.packetsReceived}/s");
+        }));
+
+        // ============ SERVER ============
+
+        commands.Add(new Command("gamemode", "Changes the player's game mode", CmdSide.SERVER, (source, args) => {
+            switch (args.Length) {
+                case 0 when source is Player self:
+                    source.sendMessage($"Current gamemode: {self.gameMode.name}. Usage: /gamemode [player] <creative|survival>");
+                    return;
+                case 1 when source is not Player:
+                    source.sendMessage("You need to specify a player when changing gamemode from the console.");
+                    return;
+                case 1 or 2:
+                    break;
+                default:
+                    source.sendMessage("Usage: /gamemode [player] <creative|survival>");
+                    return;
+            }
+
+            var target = args.Length == 2 ? findPlayer(source, args[0]) : source as Player;
+            if (target == null) {
+                return;
+            }
+
+            var mode = parseMode(args[^1]);
+            if (mode == null) {
+                source.sendMessage("Invalid gamemode. Use: creative/c/1 or survival/s/0");
+                return;
+            }
+
+            setGameMode(target, mode);
+            source.sendMessage(target == source ? $"Set gamemode to {mode.name}" : $"Set gamemode of {target.name} to {mode.name}");
+        }, true));
+
+        commands.Add(new Command("tp", "Teleports a player to another player or to coordinates", CmdSide.SERVER, (source, args) => {
+            Player? who;
+            Vector3D to;
+
+            switch (args.Length) {
+                // /tp <player> - yourself to them
+                case 1: {
+                    who = self(source);
+                    var target = who == null ? null : findPlayer(source, args[0]);
+                    if (target == null) {
+                        return;
+                    }
+
+                    to = target.position;
+                    break;
+                }
+                // /tp <player1> <player2>
+                case 2: {
+                    who = findPlayer(source, args[0]);
+                    var target = who == null ? null : findPlayer(source, args[1]);
+                    if (target == null) {
+                        return;
+                    }
+
+                    to = target.position;
+                    break;
+                }
+                // /tp <x> <y> <z>
+                case 3:
+                    who = self(source);
+                    if (who == null || !parsePos(source, args, 0, who.position, out to)) {
+                        return;
+                    }
+
+                    break;
+                // /tp <player> <x> <y> <z>
+                case 4:
+                    who = findPlayer(source, args[0]);
+                    if (who == null || !parsePos(source, args, 1, who.position, out to)) {
+                        return;
+                    }
+
+                    break;
+                default:
+                    source.sendMessage("Usage: /tp <player> [player] or /tp [player] <x> <y> <z>");
+                    return;
+            }
+
+            who.teleport(to);
+            source.sendMessage($"Teleported {who.name} to {fmt(to)}");
+        }, true));
+
+        commands.Add(new Command("fly", "Toggles noclip mode", CmdSide.SERVER, (source, args) => {
+            if (self(source) is not { } player) {
+                return;
+            }
+
+            // the owning client runs the physics, it gets this through the state sync
+            player.noClip = !player.noClip;
+            source.sendMessage("Noclip " + (player.noClip ? "enabled" : "disabled"));
+        }, true));
+
+        commands.Add(new Command("time", "Gets or sets the world time", CmdSide.SERVER, (source, args) => {
+            var world = source.getWorld();
+
+            if (args.Length == 0) {
+                var currentTick = world.worldTick;
+                var timeOfDay = (int)(world.getDayPercentage(currentTick) * World.TICKS_PER_DAY);
+                source.sendMessage($"The time is {timeOfDay} (day {currentTick / World.TICKS_PER_DAY})");
+            }
+            else if (args is ["set", _] && int.TryParse(args[1], out int newTime)) {
+                world.worldTick = newTime;
+
+                // snap: the clients jump the sky colour instead of lerping half a day
+                GameServer.instance.send(new TimeUpdatePacket { worldTick = newTime, snap = true }, DeliveryMethod.ReliableSequenced);
+                source.sendMessage($"Set time to {newTime}");
+            }
+            else {
+                source.sendMessage("Usage: /time or /time set <time>");
+            }
+        }, true));
+
+        commands.Add(new Command("noise", "Sample noise values at player position", CmdSide.SERVER, (source, args) => {
+            if (self(source) is not { } player) {
+                return;
+            }
+
+            var pos = player.position.toBlockPos();
+            var world = source.getWorld();
+
+            string result;
+            if (world.generator is NewWorldGenerator nwg) {
+                result = nwg.sample(pos.X, pos.Y, pos.Z);
+            }
+            else if (world.generator is PerlinWorldGenerator pwg) {
+                result = pwg.sample(pos.X, pos.Y, pos.Z);
+            }
+            else {
+                source.sendMessage($"Generator '{world.generatorName}' does not support noise sampling");
+                return;
+            }
+
             foreach (var line in result.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)) {
                 source.sendMessage(line);
             }
         }));
 
-        commands.Add(new Command("summon", "Summons an entity at the specified location", NetMode.CL,
-            (source, args) => {
-                if (args.Length < 1) {
-                    source.sendMessage("Usage: /summon <entity> [x] [y] [z]");
-                    return;
-                }
+        commands.Add(new Command("summon", "Summons an entity", CmdSide.SERVER, (source, args) => {
+            if (args.Length is not (1 or 2 or 4 or 5)) {
+                source.sendMessage("Usage: /summon <entity> [x y z] [count]");
+                return;
+            }
 
-                var entityName = args[0].ToUpper();
-                var entityField = typeof(Entities).GetField(entityName);
+            var type = lookup(Registry.ENTITIES, args[0]);
+            if (type < 0) {
+                source.sendMessage($"Unknown entity: {args[0]}");
+                return;
+            }
 
-                if (entityField == null || !entityField.IsStatic || entityField.FieldType != typeof(int)) {
-                    source.sendMessage($"Unknown entity: {args[0]}");
-                    return;
-                }
+            if (type == Entities.PLAYER || type == Entities.ITEM_ENTITY || type == Entities.FALLING_BLOCK) {
+                source.sendMessage($"Cannot summon {args[0]}");
+                return;
+            }
 
-                int entityType = (int)entityField.GetValue(null)!;
-                if (entityType == Entities.PLAYER || entityType == Entities.ITEM_ENTITY) {
-                    source.sendMessage($"Cannot summon entity: {args[0]}");
-                    return;
-                }
+            var pos = origin(source);
+            if (args.Length >= 4 && !parsePos(source, args, 1, pos, out pos)) {
+                return;
+            }
 
-                var entity = Entities.create(source.getWorld(), entityType);
-                if (entity == null) {
+            var count = 1;
+            if (args.Length is 2 or 5 && (!int.TryParse(args[^1], out count) || count is < 1 or > 256)) {
+                source.sendMessage("Count must be 1-256");
+                return;
+            }
+
+            var world = source.getWorld();
+            for (int i = 0; i < count; i++) {
+                var e = Entities.create(world, type);
+                if (e == null) {
                     source.sendMessage($"Failed to create entity: {args[0]}");
                     return;
                 }
 
-                var player = source as Player;
-
-                // parse position (default to player position)
-                Vector3D spawnPos;
-                if (args.Length >= 4) {
-                    if (double.TryParse(args[1], out double sx) &&
-                        double.TryParse(args[2], out double sy) &&
-                        double.TryParse(args[3], out double sz)) {
-                        spawnPos = new Vector3D(sx, sy, sz);
-                    }
-                    else {
-                        source.sendMessage("Invalid coords");
-                        return;
-                    }
-                }
-                else {
-                    if (player == null) {
-                        source.sendMessage("You must specify coordinates when summoning from console.");
-                        return;
-                    }
-                    spawnPos = player.position;
-                }
-
-                entity.position = spawnPos;
-                entity.prevPosition = spawnPos;
-                source.getWorld().addEntity(entity);
-                source.sendMessage($"Summoned {args[0]} at {(int)spawnPos.X}, {(int)spawnPos.Y}, {(int)spawnPos.Z}");
-            }, true));
-
-        commands.Add(new Command("ec", "Shows entity count stats", NetMode.BOTH, (source, args) => {
-            var world = source.getWorld();
-            var entities = world.entities;
-
-            // count by type
-            var typeCounts = new Dictionary<string, int>();
-            int totalMobs = 0;
-            int passiveMobs = 0;
-            int hostileMobs = 0;
-            int other = 0;
-            int notInWorld = 0;
-
-            foreach (var e in entities) {
-                var typeName = e.type;
-                typeCounts[typeName] = typeCounts.GetValueOrDefault(typeName, 0) + 1;
-
-                if (!e.inWorld) {
-                    notInWorld++;
-                }
-
-                if (e is Mob) {
-                    totalMobs++;
-                    var spawnType = Entities.spawnType[Entities.getID(e.type)];
-                    if (spawnType == SpawnType.PASSIVE) {
-                        passiveMobs++;
-                    }
-                    else if (spawnType.isHostile()) {
-                        hostileMobs++;
-                    }
-                } else {
-                    other++;
-                }
+                e.teleport(pos);
+                world.addEntity(e);
             }
 
-            source.sendMessage($"=== Entity Count: {entities.Count} ===");
-            source.sendMessage($"Mobs: {totalMobs} (Passive: {passiveMobs}, Hostile: {hostileMobs}) ");
-            source.sendMessage($"Other: {other}");
-            source.sendMessage($"Not in world: {notInWorld}");
-            source.sendMessage("");
-            source.sendMessage("By Type:");
-            foreach (var (type, count) in typeCounts.OrderByDescending(kv => kv.Value)) {
-                source.sendMessage($"  {type}: {count}");
-            }
-        }));
+            source.sendMessage($"Summoned {count}x {Registry.ENTITIES.getName(type)} at {fmt(pos)}");
+        }, true));
 
-        commands.Add(new Command("killall", "Kills all entities of a type or all mobs", NetMode.BOTH, (source, args) => {
+        commands.Add(new Command("ec", "Shows entity count stats", CmdSide.SERVER,
+            (source, args) => entityStats(source, source.getWorld())));
+
+        commands.Add(new Command("killall", "Removes all entities of a type or all mobs", CmdSide.SERVER, (source, args) => {
             var world = source.getWorld();
-            var entities = world.entities;
+            string targetType = args.Length > 0 ? args[0].ToLowerInvariant() : "mobs";
 
             int killed = 0;
-            string targetType = args.Length > 0 ? args[0].ToLower() : "mobs";
-
-            // collect entities to kill (can't modify list while iterating)
-            var toKill = new List<Entity>();
-            foreach (var e in entities) {
+            foreach (var e in world.entities) {
                 // never kill players
                 if (e is Player) {
                     continue;
@@ -653,112 +413,74 @@ public readonly struct Command {
                 };
 
                 if (shouldKill) {
-                    toKill.Add(e);
+                    e.active = false;
+                    killed++;
                 }
-            }
-
-            // kill them
-            foreach (var e in toKill) {
-                e.active = false;
-                killed++;
             }
 
             source.sendMessage($"Killed {killed} entities ({targetType})");
         }, true));
 
-        commands.Add(new Command("setblock", "Sets blocks in a specified region", NetMode.CL, (source, args) => {
-
-            if (args.Length < 7) {
+        commands.Add(new Command("setblock", "Sets blocks in a region", CmdSide.SERVER, (source, args) => {
+            if (args.Length != 7) {
                 source.sendMessage("Usage: /setblock <x0> <y0> <z0> <x1> <y1> <z1> <block>");
                 return;
             }
 
-            if (!source.isPlayer()) {
-                source.sendMessage("This command can currently only be used by a player. Yell at the developer!");
+            var o = origin(source);
+            if (!parsePos(source, args, 0, o, out var p0) || !parsePos(source, args, 3, o, out var p1)) {
                 return;
             }
 
-            var player = (source as Player)!;
-
-            if (!parseCoord(args[0], player.position.X, out int x0) ||
-                !parseCoord(args[1], player.position.Y, out int y0) ||
-                !parseCoord(args[2], player.position.Z, out int z0) ||
-                !parseCoord(args[3], player.position.X, out int x1) ||
-                !parseCoord(args[4], player.position.Y, out int y1) ||
-                !parseCoord(args[5], player.position.Z, out int z1)) {
-                source.sendMessage("Invalid coordinates");
+            var blockID = lookup(Registry.BLOCKS, args[6]);
+            if (blockID < 0) {
+                source.sendMessage($"Unknown block: {args[6]}");
                 return;
             }
 
-            // parse block
-            if (ushort.TryParse(args[6], out var blockId)) {
-                // numeric ID
-            }
-            else {
-                // block name
-                var blockName = args[6].ToUpper();
-                var blockField = typeof(Block).GetField(blockName);
-                if (blockField == null || blockField.GetValue(null) is not Block) {
-                    source.sendMessage($"Unknown block: {args[6]}");
-                    return;
-                }
+            int minX = (int)Math.Floor(Math.Min(p0.X, p1.X));
+            int maxX = (int)Math.Floor(Math.Max(p0.X, p1.X));
+            int minY = Math.Max(0, (int)Math.Floor(Math.Min(p0.Y, p1.Y)));
+            int maxY = Math.Min(World.WORLDHEIGHT - 1, (int)Math.Floor(Math.Max(p0.Y, p1.Y)));
+            int minZ = (int)Math.Floor(Math.Min(p0.Z, p1.Z));
+            int maxZ = (int)Math.Floor(Math.Max(p0.Z, p1.Z));
 
-                blockId = ((Block)blockField.GetValue(null)!).id;
+            long volume = (long)(maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1);
+            if (volume > MAX_FILL) {
+                source.sendMessage($"Too many blocks ({volume}), the limit is {MAX_FILL}");
+                return;
             }
 
-            // clamp and sort coords
-            int minX = Math.Min(x0, x1);
-            int maxX = Math.Max(x0, x1);
-            int minY = Math.Max(0, Math.Min(y0, y1));
-            int maxY = Math.Min(World.WORLDHEIGHT - 1, Math.Max(y0, y1));
-            int minZ = Math.Min(z0, z1);
-            int maxZ = Math.Max(z0, z1);
-
-            // fill region
-            int count = 0;
+            var world = source.getWorld();
             for (int x = minX; x <= maxX; x++) {
                 for (int y = minY; y <= maxY; y++) {
                     for (int z = minZ; z <= maxZ; z++) {
-                        source.getWorld().setBlock(x, y, z, blockId);
-                        count++;
+                        world.setBlock(x, y, z, (ushort)blockID);
                     }
                 }
             }
 
-            source.sendMessage($"Set {count} blocks to {args[6]}");
+            source.sendMessage($"Set {volume} blocks to {Registry.BLOCKS.getName(blockID)}");
         }, true));
 
-        commands.Add(new Command("give", "Gives an item to the player", NetMode.CL, (source, args) => {
-            if (args.Length < 1) {
+        commands.Add(new Command("give", "Gives an item to the player", CmdSide.SERVER, (source, args) => {
+            if (args.Length is < 1 or > 3) {
                 source.sendMessage("Usage: /give <item> [quantity] [metadata]");
                 return;
             }
 
-            if (source is not Player player) {
-                source.sendMessage("This command can currently only be used by a player. Yell at the developer!");
+            if (self(source) is not { } player) {
                 return;
             }
 
-            // parse item
-            if (int.TryParse(args[0], out var itemID)) {
-                // numeric ID
-            }
-            else {
-                // item name
-                var itemName = args[0];
-
-                itemID = Registry.ITEMS.getID(itemName);
-
-                if (itemID == -1) {
-                    // todo parse player to give to
-                    source.sendMessage($"Unknown item: {args[0]}");
-                    return;
-                }
+            var itemID = lookup(Registry.ITEMS, args[0]);
+            if (itemID <= 0) {
+                source.sendMessage($"Unknown item: {args[0]}");
+                return;
             }
 
-            // parse quantity
             int quantity = 1;
-            if (args.Length >= 2 && !int.TryParse(args[1], out quantity)) {
+            if (args.Length >= 2 && (!int.TryParse(args[1], out quantity) || quantity <= 0)) {
                 source.sendMessage("Invalid quantity");
                 return;
             }
@@ -769,288 +491,378 @@ public readonly struct Command {
                 return;
             }
 
-            // give item
-            var itemStack = new ItemStack(itemID, quantity, metadata);
-            if (player.inventory.addItem(itemStack)) {
-                source.sendMessage($"Gave {quantity} of {args[0]}");
-            }
-            else {
-                source.sendMessage("Not enough space in inventory");
-            }
+            // addItem shrinks the stack to what didn't fit
+            var stack = new ItemStack(itemID, quantity, metadata);
+            var given = player.inventory.addItem(stack) ? quantity : quantity - stack.quantity;
+            (player as ServerPlayer)?.syncInventory();
+
+            var name = Registry.ITEMS.getName(itemID);
+            source.sendMessage(given == quantity ? $"Gave {quantity} of {name}" : $"Gave {given} of {name}, the rest didn't fit");
         }, true));
 
-        commands.Add(new Command("ci", "Clears the player's inventory", NetMode.BOTH, (source, args) => {
-            if (source is not Player player) {
-                source.sendMessage("This command can currently only be used by a player. Yell at the developer!");
+        commands.Add(new Command("ci", "Clears the player's inventory", CmdSide.SERVER, (source, args) => {
+            if (self(source) is not { } player) {
                 return;
             }
-            player.inventory.clearAll();
 
-            // sync all slots!
-            for (int i = 0; i < Game.player.inventory.size(); i++) {
-                player.inventoryCtx.notifyAllSlotsChanged();
-            }
+            player.inventory.clearAll();
+            (player as ServerPlayer)?.syncInventory();
             source.sendMessage("Cleared inventory");
         }, true));
 
-        commands.Add(new Command("chunkmuncher", "Deletes all blocks in the current chunk", NetMode.CL,
-            (source, args) => {
-                if (source is not Player player) {
-                    source.sendMessage("This command can currently only be used by a player. Yell at the developer!");
-                    return;
-                }
+        commands.Add(new Command("chunkmuncher", "Deletes all blocks in the current chunk", CmdSide.SERVER, (source, args) => {
+            if (self(source) is not { } player) {
+                return;
+            }
 
-                var playerPos = player.position.toBlockPos();
-                var chunkCoord = World.getChunkPos(playerPos.X, playerPos.Z);
+            var world = source.getWorld();
+            var playerPos = player.position.toBlockPos();
+            var chunkCoord = World.getChunkPos(playerPos.X, playerPos.Z);
 
-                if (!source.getWorld().getChunkMaybe(chunkCoord, out var playerChunk)) {
-                    source.sendMessage("You're not in a valid chunk!");
-                    return;
-                }
+            if (!world.getChunkMaybe(chunkCoord, out _)) {
+                source.sendMessage("You're not in a valid chunk!");
+                return;
+            }
 
-                // yeet all blocks in chunk
-                int munched = 0;
-                for (int cx = 0; cx < 16; cx++) {
-                    for (int cy = 0; cy < World.WORLDHEIGHT; cy++) {
-                        for (int cz = 0; cz < 16; cz++) {
-                            var wx = (chunkCoord.x << 4) + cx;
-                            var wz = (chunkCoord.z << 4) + cz;
-                            if (source.getWorld().getBlock(wx, cy, wz) != 0) {
-                                source.getWorld().setBlockMetadata(wx, cy, wz, 0);
-                                munched++;
-                            }
+            // yeet all blocks in chunk
+            int munched = 0;
+            for (int cx = 0; cx < 16; cx++) {
+                for (int cy = 0; cy < World.WORLDHEIGHT; cy++) {
+                    for (int cz = 0; cz < 16; cz++) {
+                        var wx = (chunkCoord.x << 4) + cx;
+                        var wz = (chunkCoord.z << 4) + cz;
+                        if (world.getBlock(wx, cy, wz) != 0) {
+                            world.setBlockMetadata(wx, cy, wz, 0);
+                            munched++;
                         }
                     }
                 }
+            }
 
-                source.sendMessage($"Munched {munched} blocks from chunk ({chunkCoord.x}, {chunkCoord.z})");
-            }, true));
+            source.sendMessage($"Munched {munched} blocks from chunk ({chunkCoord.x}, {chunkCoord.z})");
+        }, true));
 
-        commands.Add(new Command("suicide", "Commits suicide", NetMode.BOTH, (source, args) => {
-            if (source is not Player player) {
-                source.sendMessage("Only players can commit suicide.");
+        commands.Add(new Command("suicide", "Commits suicide", CmdSide.SERVER, (source, args) => {
+            if (self(source) is not { } player) {
                 return;
             }
 
             player.sethp(0);
+            player.die();
             source.sendMessage("You have committed suicide.");
         }));
 
-        commands.Add(new Command("netstats", "Shows network statistics", NetMode.BOTH, (source, args) => {
-            if (!source.isPlayer() && Net.mode.isDed()) {
-                // server side - show all connected players' stats
-                if (GameServer.instance.connections.Count == 0) {
-                    source.sendMessage("No players connected");
-                    return;
-                }
-
-                source.sendMessage("=== Netstats ===");
-                foreach (var conn in GameServer.instance.connections.Values) {
-                    if (conn.authenticated) {
-                        var m = conn.metrics;
-                        source.sendMessage($"[{conn.username}] ↑{m.bytesSent / 1024.0:0.0}KB/s ({m.packetsSent}/s) ↓{m.bytesReceived / 1024.0:0.0}KB/s ({m.packetsReceived}/s) ping:{conn.ping}ms");
-                    }
-                }
-            }
-            else if (Net.mode == NetMode.MPC) {
-                // client side - show client connection stats
-                if (ClientConnection.instance == null || !ClientConnection.instance.connected) {
-                    source.sendMessage("Not connected to a server");
-                    return;
-                }
-
-                var m = Game.metrics;
-                source.sendMessage("=== Netstats ===");
-                source.sendMessage($"↑ {m.bytesSent / 1024.0:0.0}KB/s ({m.packetsSent} pkt/s)");
-                source.sendMessage($"↓ {m.bytesReceived / 1024.0:0.0}KB/s ({m.packetsReceived} pkt/s)");
-                source.sendMessage($"Ping: {ClientConnection.instance.ping}ms");
-            }
-            else {
-                source.sendMessage("Network statistics only available in multiplayer");
-            }
-        }));
-
-        commands.Add(new Command("packetstats", "Shows packet statistics by type", NetMode.CL, (source, args) => {
-            if (Net.mode != NetMode.MPC || ClientConnection.instance == null || !ClientConnection.instance.connected) {
-                source.sendMessage("Not connected to a server");
-                return;
-            }
-
-            var stats = Game.metrics.packets;
-            if (stats.Count == 0) {
-                source.sendMessage("No packets received in the last second");
-                return;
-            }
-
-            // sort by count descending
-            var sorted = stats.OrderByDescending(kvp => kvp.Value).ToList();
-
-            source.sendMessage("=== Packet Stats (last second) ===");
-            foreach (var kvp in sorted) {
-                var typeName = kvp.Key.Name.Replace("Packet", "");
-                source.sendMessage($"{typeName}: {kvp.Value}/s");
-            }
-            source.sendMessage($"Total: {Game.metrics.packetsReceived}/s");
-        }));
-
         var stopAction = (CommandSource source, string[] args) => {
+            // integrated: the client would be left talking to a dead server. quit through the menu
+            if (!GameServer.instance.isDedicated) {
+                source.sendMessage("This is singleplayer, quit from the menu.");
+                return;
+            }
+
             source.sendMessage("Stopping server...");
             GameServer.instance.stop();
         };
 
-        commands.Add(new Command("stop", "Stops the server", NetMode.DED, stopAction, true));
-        commands.Add(new Command("exit", "Stops the server", NetMode.DED, stopAction, true));
-        commands.Add(new Command("quit", "Stops the server", NetMode.DED, stopAction, true));
+        commands.Add(new Command("stop", "Stops the server", CmdSide.SERVER, stopAction, true));
+        commands.Add(new Command("exit", "Stops the server", CmdSide.SERVER, stopAction, true));
+        commands.Add(new Command("quit", "Stops the server", CmdSide.SERVER, stopAction, true));
 
-        commands.Add(new Command("list", "Lists connected players", NetMode.DED, (source, args) => {
-            if (GameServer.instance.connections.Count == 0) {
+        commands.Add(new Command("list", "Lists connected players", CmdSide.SERVER, (source, args) => {
+            var conns = GameServer.instance.connections.Values;
+            if (conns.Count == 0) {
                 source.sendMessage("No players online");
+                return;
             }
-            else {
-                source.sendMessage($"{GameServer.instance.connections.Count} player(s) online:");
-                foreach (var conn in GameServer.instance.connections.Values) {
-                    if (conn.authenticated) {
-                        source.sendMessage($"  {conn.username} (ping: {conn.ping}ms)");
-                    }
+
+            source.sendMessage($"{conns.Count} player(s) online:");
+            foreach (var conn in conns) {
+                if (conn.authenticated) {
+                    var m = conn.metrics;
+                    source.sendMessage($"  {conn.username} (ping: {conn.ping}ms) ↑{m.bytesSent / 1024.0:0.0}KB/s ({m.packetsSent}/s) ↓{m.bytesReceived / 1024.0:0.0}KB/s ({m.packetsReceived}/s)");
                 }
             }
         }));
 
-        commands.Add(new Command("save", "Saves world and user data", NetMode.DED, (source, args) => {
+        commands.Add(new Command("save", "Saves world and user data", CmdSide.SERVER, (source, args) => {
+            var srv = GameServer.instance;
             source.sendMessage("Saving...");
-            GameServer.instance.saveUsers();
-            GameServer.instance.saveOps();
-            GameServer.instance.world.worldIO.save(GameServer.instance.world, GameServer.instance.world.name, saveChunks: true);
+
+            if (srv.isDedicated) {
+                srv.saveUsers();
+                srv.saveOps();
+            }
+
+            srv.world.worldIO.save(srv.world, srv.world.name, saveChunks: true);
             source.sendMessage("Save complete");
         }, true));
 
-        commands.Add(new Command("op", "Grants operator permissions to a player", NetMode.DED, (source, args) => {
-            if (args.Length < 1) {
+        commands.Add(new Command("op", "Grants operator permissions to a player", CmdSide.SERVER, (source, args) => {
+            if (args.Length != 1) {
                 source.sendMessage("Usage: /op <player>");
                 return;
             }
 
+            var srv = GameServer.instance;
             var username = args[0];
-            if (GameServer.instance.ops.Contains(username)) {
+            if (!srv.ops.Add(username)) {
                 source.sendMessage($"{username} is already an operator");
                 return;
             }
 
-            GameServer.instance.ops.Add(username);
-            GameServer.instance.saveOps();
-            source.sendMessage($"Made {username} an operator");
-
-            // notify the player if online
-            foreach (var conn in GameServer.instance.connections.Values) {
-                if (conn.username.Equals(username, StringComparison.OrdinalIgnoreCase)) {
-                    conn.player?.sendMessage("&eYou are now an operator");
-                    break;
-                }
+            if (srv.isDedicated) {
+                srv.saveOps();
             }
+
+            source.sendMessage($"Made {username} an operator");
+            notifyOnline(username, "&eYou are now an operator");
         }, true));
 
-        commands.Add(new Command("deop", "Revokes operator permissions from a player", NetMode.DED, (source, args) => {
-            if (args.Length < 1) {
+        commands.Add(new Command("deop", "Revokes operator permissions from a player", CmdSide.SERVER, (source, args) => {
+            if (args.Length != 1) {
                 source.sendMessage("Usage: /deop <player>");
                 return;
             }
 
+            var srv = GameServer.instance;
             var username = args[0];
-            if (!GameServer.instance.ops.Remove(username)) {
+            if (!srv.ops.Remove(username)) {
                 source.sendMessage($"{username} is not an operator");
                 return;
             }
 
-            GameServer.instance.saveOps();
-            source.sendMessage($"Removed operator status from {username}");
-
-            // notify the player if online
-            foreach (var conn in GameServer.instance.connections.Values) {
-                if (conn.username.Equals(username, StringComparison.OrdinalIgnoreCase)) {
-                    conn.player?.sendMessage("&eYou are no longer an operator");
-                    break;
-                }
+            if (srv.isDedicated) {
+                srv.saveOps();
             }
+
+            source.sendMessage($"Removed operator status from {username}");
+            notifyOnline(username, "&eYou are no longer an operator");
         }, true));
 
-        commands.Add(new Command("setspawn", "Sets the world spawn point", NetMode.DED, (source, args) => {
+        commands.Add(new Command("setspawn", "Sets the world spawn point", CmdSide.SERVER, (source, args) => {
             var world = source.getWorld();
             Vector3D newSpawn;
 
             if (args.Length == 3) {
-                // /setspawn <x> <y> <z>
-                if (!double.TryParse(args[0], out double x) ||
-                    !double.TryParse(args[1], out double y) ||
-                    !double.TryParse(args[2], out double z)) {
-                    source.sendMessage("Invalid coordinates");
+                if (!parsePos(source, args, 0, origin(source), out newSpawn)) {
                     return;
                 }
-                newSpawn = new Vector3D(x, y, z);
             }
-            else if (args.Length == 0 && source.isPlayer()) {
-                // /setspawn - use player position
-                newSpawn = (source as Player)!.position;
+            else if (args.Length == 0 && source is Player player) {
+                newSpawn = player.position;
             }
             else {
-                source.sendMessage("Usage: /setspawn [x] [y] [z]");
+                source.sendMessage("Usage: /setspawn [x y z]");
                 return;
             }
 
             world.spawn = newSpawn;
-            source.sendMessage($"Set spawn to {(int)newSpawn.X}, {(int)newSpawn.Y}, {(int)newSpawn.Z}");
+            source.sendMessage($"Set spawn to {fmt(newSpawn)}");
         }, true));
 
-        commands.Add(new Command("say", "Broadcasts a message to all players", NetMode.DED, (source, args) => {
+        // cheat because it speaks as [Server]. otherwise anyone can impersonate the server
+        commands.Add(new Command("say", "Broadcasts a message to all players", CmdSide.SERVER, (source, args) => {
             if (args.Length < 1) {
                 source.sendMessage("Usage: /say <message>");
                 return;
             }
 
             var msg = string.Join(' ', args);
-            var formatted = $"&h[Server]&r {msg}";
+            GameServer.instance.send(new ChatMessagePacket { message = $"&h[Server]&r {msg}" }, DeliveryMethod.ReliableOrdered);
 
-            GameServer.instance.send(
-                new ChatMessagePacket { message = formatted },
-                DeliveryMethod.ReliableOrdered
-            );
+            // a player already got it through the broadcast
+            if (source is not Player) {
+                source.sendMessage($"&h[Server] {msg}");
+            }
 
-            source.sendMessage($"&h[Server] {msg}");
-
-            // also send it on discord
-            var discordMsg = TextColours.strip(msg);
-
-            GameServer.instance.discord?.sendMessage($"**[Server]** {discordMsg}");
-        }));
+            GameServer.instance.discord?.sendMessage($"**[Server]** {TextColours.strip(msg)}");
+        }, true));
     }
 
-    private static bool parseCoord(string input, double current, out int result) {
-        if (input.StartsWith('~')) {
-            if (input.Length == 1) {
-                result = (int)current;
+    private const int MAX_FILL = 262144;
+
+    private static void setGameMode(Player player, GameMode mode) {
+        var sp = player as ServerPlayer;
+        var conn = sp?.conn;
+
+        if (sp != null) {
+            if (sp.currentInventoryID != Constants.INV_ID_PLAYER) {
+                var id = sp.currentInventoryID;
+                sp.currentCtx.removeViewer(conn!);
+                sp.closeInventory();
+                conn?.send(new InventoryClosePacket { invID = id }, DeliveryMethod.ReliableOrdered);
+            }
+
+            // the old context (and its 2x2 grid) gets yeeted so spill the items
+            sp.pickupLooseItems();
+            sp.inventoryCtx.removeViewer(conn!);
+        }
+
+        player.gameMode = mode;
+        if (mode == GameMode.survival) {
+            player.flyMode = false;
+        }
+
+        sp?.resetFall();
+
+        player.inventoryCtx = mode == GameMode.creative
+            ? new CreativeInventoryContext(player.inventory, 40)
+            : new SurvivalInventoryContext(player.inventory);
+        player.currentCtx = player.inventoryCtx;
+
+        if (sp != null && conn != null) {
+            player.inventoryCtx.addViewer(conn, Constants.INV_ID_PLAYER);
+            conn.send(new GamemodePacket { gamemode = mode.id }, DeliveryMethod.ReliableOrdered);
+            sp.syncInventory();
+        }
+    }
+
+    private static GameMode? parseMode(string s) => s.ToLowerInvariant() switch {
+        "creative" or "c" or "1" => GameMode.creative,
+        "survival" or "s" or "0" => GameMode.survival,
+        _ => null
+    };
+
+    // ============ ARG HELPERS ============
+    // to reduce slopcoding in every single command....
+
+    private static Player? self(CommandSource source) {
+        if (source is Player p) {
+            return p;
+        }
+
+        source.sendMessage("The console has to name a player.");
+        return null;
+    }
+
+    private static Player? findPlayer(CommandSource source, string name) {
+        foreach (var p in source.getWorld().players) {
+            if (p.name.Equals(name, StringComparison.OrdinalIgnoreCase)) {
+                return p;
+            }
+        }
+
+        source.sendMessage($"Player '{name}' not found");
+        return null;
+    }
+
+    /** get origin, fallback is worldspawn */
+    private static Vector3D origin(CommandSource source) => source is Player p ? p.position : source.getWorld().spawn;
+
+    /** absolute, or ~ / ~5 / ~-3 relative to <paramref name="cur"/> */
+    private static bool parseCoord(string s, double cur, out double r) {
+        if (s.StartsWith('~')) {
+            if (s.Length == 1) {
+                r = cur;
                 return true;
             }
 
-            if (int.TryParse(input[1..], out int offset)) {
-                result = (int)(current + offset);
+            if (double.TryParse(s.AsSpan(1), NumberStyles.Float, CultureInfo.InvariantCulture, out var off)) {
+                r = cur + off;
                 return true;
             }
 
-            result = 0;
+            r = 0;
             return false;
         }
 
-        return int.TryParse(input, out result);
+        return double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out r);
+    }
+
+    /** args[i..i+3] as a position */
+    private static bool parsePos(CommandSource source, string[] args, int i, Vector3D cur, out Vector3D pos) {
+        if (parseCoord(args[i], cur.X, out var x) && parseCoord(args[i + 1], cur.Y, out var y) && parseCoord(args[i + 2], cur.Z, out var z)) {
+            pos = new Vector3D(x, y, z);
+            return true;
+        }
+
+        source.sendMessage($"Invalid coordinates: {args[i]} {args[i + 1]} {args[i + 2]}");
+        pos = default;
+        return false;
+    }
+
+    /** registry ID by exact name, numeric ID, or case-insensitive name. -1 if none */
+    private static int lookup<T>(Registry<T> reg, string name) {
+        if (int.TryParse(name, out var id)) {
+            return id >= 0 && id < reg.count() ? id : -1;
+        }
+
+        var exact = reg.getID(name);
+        if (exact >= 0) {
+            return exact;
+        }
+
+        foreach (var (k, v) in reg.nameToID) {
+            if (k.Equals(name, StringComparison.OrdinalIgnoreCase)) {
+                return v;
+            }
+        }
+
+        return -1;
+    }
+
+    private static string fmt(Vector3D p) => $"{p.X:0.#}, {p.Y:0.#}, {p.Z:0.#}";
+
+    private static void notifyOnline(string username, string msg) {
+        foreach (var conn in GameServer.instance.connections.Values) {
+            if (conn.username.Equals(username, StringComparison.OrdinalIgnoreCase)) {
+                conn.player?.sendMessage(msg);
+                return;
+            }
+        }
+    }
+
+    private static void entityStats(CommandSource source, World world) {
+        var entities = world.entities;
+
+        var typeCounts = new Dictionary<string, int>();
+        int totalMobs = 0;
+        int passiveMobs = 0;
+        int hostileMobs = 0;
+        int other = 0;
+        int notInWorld = 0;
+
+        foreach (var e in entities) {
+            typeCounts[e.type] = typeCounts.GetValueOrDefault(e.type, 0) + 1;
+
+            if (!e.inWorld) {
+                notInWorld++;
+            }
+
+            if (e is Mob) {
+                totalMobs++;
+                var spawnType = Entities.spawnType[Entities.getID(e.type)];
+                if (spawnType == SpawnType.PASSIVE) {
+                    passiveMobs++;
+                }
+                else if (spawnType.isHostile()) {
+                    hostileMobs++;
+                }
+            }
+            else {
+                other++;
+            }
+        }
+
+        source.sendMessage($"=== Entity Count: {entities.Count} ===");
+        source.sendMessage($"Mobs: {totalMobs} (Passive: {passiveMobs}, Hostile: {hostileMobs}) ");
+        source.sendMessage($"Other: {other}");
+        source.sendMessage($"Not in world: {notInWorld}");
+        source.sendMessage("");
+        source.sendMessage("By Type:");
+        foreach (var (type, count) in typeCounts.OrderByDescending(kv => kv.Value)) {
+            source.sendMessage($"  {type}: {count}");
+        }
     }
 
     private static string dumpRegistries() {
-        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
         var path = $"registry_dump_{timestamp}.txt";
 
         using var writer = new StreamWriter(path);
         writer.WriteLine("=== BLOCKGAME REGISTRY DUMP ===");
         writer.WriteLine($"Generated: {DateTime.Now}");
         writer.WriteLine();
-        
+
         var registryType = typeof(Registry);
         var fields = registryType.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
 
@@ -1106,25 +918,12 @@ public interface CommandSource {
         return this is Player;
     }
 
-    /** check if this command source has operator permissions */
     public bool isOp() {
-        // console is always OP
-        if (Net.mode == NetMode.DED) {
-            var sp = this as ServerPlayer;
-            return this is ServerConsole || (sp != null && GameServer.instance.isOp(sp.name));
-        }
-        // on integrated: the host is always op
-        if (Net.mode == NetMode.SP) {
-            if (this is ServerPlayer sp2) {
-                return sp2.conn.isHost || GameServer.instance.isOp(sp2.name);
-            }
-
-            return true;
-        }
-        // in multiplayer client, check if player is OP (this won't work, server handles it)
-        if (this is ServerPlayer p) {
-            return GameServer.instance.isOp(p.name);
-        }
-        return false;
+        return this switch {
+            ServerConsole => true,
+            // the integrated host owns the world
+            ServerPlayer sp => sp.conn is { isHost: true } || GameServer.instance.isOp(sp.name),
+            _ => false
+        };
     }
 }

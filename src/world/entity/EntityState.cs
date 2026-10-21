@@ -33,11 +33,16 @@ public class EntityState {
     public const byte FLYING = 2;
     public const byte RIDING = 3; // int: entity ID of mount, or -1
     public const byte ON_GROUND = 4;
+    public const byte DEAD = 5;
 
     // player-specific (32-63)
     public const byte PLAYER_GAMEMODE = 32; // byte: 0=survival, 1=creative
+    public const byte NOCLIP = 33; // server -> owner: /fly. the owner runs the physics
 
-    // future entity types (64-95, 96-127, etc.)
+    // item entity (64-95)
+    public const byte ITEM_QUANTITY = 64; // int: shrinks on partial pickup
+
+    // future entity types (96-127, etc.)
 
     // ============ SETTERS (mark dirty automatically) ============
 
@@ -285,7 +290,15 @@ public class EntityState {
 
     // ============ DIRTY FLAG MANAGEMENT ============
 
-    public bool isDirty() => fields.Values.Any(f => f.dirty);
+    public bool isDirty() {
+        foreach (var f in fields.Values) {
+            if (f.dirty) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     public void clearDirty() {
         // use CollectionsMarshal to get ref and modify in-place (zero-copy)

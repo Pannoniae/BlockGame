@@ -5,7 +5,7 @@ namespace BlockGame.net.packet;
 /**
  * S→C: 0x14 - light values for one subchunk.
  */
-public class LightUpdatePacket : Packet {
+public struct LightUpdatePacket : Packet {
     public ChunkCoord coord;
     public byte y;
     public byte uniformSky;
