@@ -43,6 +43,21 @@ public partial class Block {
     public static Block BRICKBLOCK_STAIRS;
     
     public static Block STONE_WALL;
+    public static Block COBBLESTONE_WALL;
+    public static Block BASALT_WALL;
+    public static Block BRICK_WALL;
+    public static Block STONEBRICK_WALL;
+    public static Block SANDBRICK_WALL;
+    public static Block OAKPLANK_WALL;
+    public static Block MAPLEPLANK_WALL;
+    public static Block PINEPLANK_WALL;
+    public static Block PALMPLANK_WALL;
+    public static Block REDWOODPLANK_WALL;
+    public static Block MAHOGANYPLANK_WALL;
+    //public static Block CANDY_WALL;
+    public static Block WINDOW;
+    public static Block FRAMED_WINDOW;
+
 
     public static Block CLAY_BLOCK;
     public static Block BRICK_BLOCK;
@@ -64,7 +79,7 @@ public partial class Block {
 
     public static Block YELLOW_FLOWER;
 
-    //public static Block RED_FLOWER;
+    public static Block RED_FLOWER;
     public static Block MARIGOLD;
     public static Block BLUE_TULIP;
     public static Block THISTLE;
@@ -302,6 +317,10 @@ public partial class Block {
         COBBLESTONE_STAIRS.setTex(cubeUVs(6, 1));
         COBBLESTONE_STAIRS.material(Material.STONE);
 
+        COBBLESTONE_WALL= register("cobblestoneWall", new Walls("Cobblestone Wall"));
+        COBBLESTONE_WALL.setTex(cubeUVs(6, 1));
+        COBBLESTONE_WALL.material(Material.STONE);
+
         GRAVEL = register("gravel", new GravelBlock("Gravel"));
         GRAVEL.setTex(uv("blocks.png", 7, 0));
         renderType[GRAVEL.id] = RenderType.CUBE;
@@ -347,27 +366,37 @@ public partial class Block {
         GLASS.transparency();
         GLASS.material(Material.GLASS);
 
+        WINDOW= register("window", new Walls("Window"));
+        WINDOW.setTex(cubeUVs(6, 0));
+        WINDOW.transparency();
+        WINDOW.material(Material.GLASS);
+
         GLASS_FRAMED_X = register("framedXglass", new Block("X-Framed Glass"));
         GLASS_FRAMED_X.setTex(uv("blocks.png", 17, 0));
-        renderType[GLASS.id] = RenderType.CUBE;
+        renderType[GLASS_FRAMED_X.id] = RenderType.CUBE;
         GLASS_FRAMED_X.transparency();
         GLASS_FRAMED_X.material(Material.GLASS);
 
+        FRAMED_WINDOW= register("framedwindow", new Walls("Framed Window"));
+        FRAMED_WINDOW.setTex(cubeUVs(17, 0));
+        FRAMED_WINDOW.transparency();
+        FRAMED_WINDOW.material(Material.GLASS);
+
         GLASS_FRAMED_R = register("framedRglass", new Block("Rhombus-Framed Glass"));
         GLASS_FRAMED_R.setTex(uv("blocks.png", 18, 0));
-        renderType[GLASS.id] = RenderType.CUBE;
+        renderType[GLASS_FRAMED_R.id] = RenderType.CUBE;
         GLASS_FRAMED_R.transparency();
         GLASS_FRAMED_R.material(Material.GLASS);
 
         GLASS_FRAMED_T = register("framedTglass", new Block("Tulip-Framed Glass"));
         GLASS_FRAMED_T.setTex(uv("blocks.png", 19, 0));
-        renderType[GLASS.id] = RenderType.CUBE;
+        renderType[GLASS_FRAMED_T.id] = RenderType.CUBE;
         GLASS_FRAMED_T.transparency();
         GLASS_FRAMED_T.material(Material.GLASS);
 
         GLASS_FRAMED_C = register("framedCglass", new Block("Cross-Framed Glass"));
         GLASS_FRAMED_C.setTex(uv("blocks.png", 20, 0));
-        renderType[GLASS.id] = RenderType.CUBE;
+        renderType[GLASS_FRAMED_C.id] = RenderType.CUBE;
         GLASS_FRAMED_C.transparency();
         GLASS_FRAMED_C.material(Material.GLASS);
 
@@ -384,6 +413,10 @@ public partial class Block {
         BRICKBLOCK_STAIRS.setTex(cubeUVs(0, 2));
         BRICKBLOCK_STAIRS.material(Material.STONE);
 
+        BRICK_WALL= register("brickWall", new Walls("Brick Wall"));
+        BRICK_WALL.setTex(cubeUVs(0, 2));
+        BRICK_WALL.material(Material.STONE);
+
         STONE_BRICK = register("stoneBrick", new Block("Stone Brick"));
         STONE_BRICK.setTex(uv("blocks.png", 1, 2));
         renderType[STONE_BRICK.id] = RenderType.CUBE;
@@ -397,6 +430,10 @@ public partial class Block {
         STONE_BRICK_STAIRS.setTex(cubeUVs(1, 2));
         STONE_BRICK_STAIRS.material(Material.STONE);
 
+        STONEBRICK_WALL= register("stonebrickWall", new Walls("StoneBrick Wall"));
+        STONEBRICK_WALL.setTex(cubeUVs(1, 2));
+        STONEBRICK_WALL.material(Material.STONE);
+
         SAND_BRICK = register("sandBrick", new Block("Sand Brick"));
         SAND_BRICK.setTex(uv("blocks.png", 2, 2));
         renderType[SAND_BRICK.id] = RenderType.CUBE;
@@ -409,6 +446,9 @@ public partial class Block {
         SAND_BRICK_STAIRS.setTex(cubeUVs(2, 2));
         SAND_BRICK_STAIRS.material(Material.STONE);
 
+        SANDBRICK_WALL= register("sandbrickWall", new Walls("SandBrick Wall"));
+        SANDBRICK_WALL.setTex(cubeUVs(2, 2));
+        SANDBRICK_WALL.material(Material.STONE);
 
         COAL_ORE = register("coalOre", new CoalOreBlock("Coal Ore"));
         COAL_ORE.setTex(uv("blocks.png", 4, 1));
@@ -616,15 +656,15 @@ public partial class Block {
         YELLOW_FLOWER.itemLike();
         YELLOW_FLOWER.setFlammable(60);
 
-        //RED_FLOWER = register("redFlower", new Flower("Red Flower"));
-        //RED_FLOWER.setTex(crossUVs(11, 1));
-        //RED_FLOWER.setModel(BlockModel.makeGrass(RED_FLOWER));
-        //RED_FLOWER.transparency();
-        //RED_FLOWER.flowerAABB();
-        //RED_FLOWER.noCollision();
-        //RED_FLOWER.waterTransparent();
-        //RED_FLOWER.itemLike();
-        //RED_FLOWER.material(Material.ORGANIC);
+        RED_FLOWER = register("redFlower", new Flower("Red Flower"));
+        RED_FLOWER.setTex(crossUVs(11, 1));
+        RED_FLOWER.setModel(BlockModel.makeGrass(RED_FLOWER));
+        RED_FLOWER.transparency();
+        RED_FLOWER.flowerAABB();
+        RED_FLOWER.noCollision();
+        RED_FLOWER.waterTransparent();
+        RED_FLOWER.itemLike();
+        RED_FLOWER.material(Material.ORGANIC);
 
         MARIGOLD = register("marigold", new Flower("Marigold"));
         MARIGOLD.setTex(crossUVs(12, 5));
@@ -681,6 +721,10 @@ public partial class Block {
         OAK_SLAB.material(Material.WOOD);
         OAK_SLAB.setFlammable(30);
 
+        OAKPLANK_WALL= register("oakplankWall", new Walls("Oak Plank Wall"));
+        OAKPLANK_WALL.setTex(cubeUVs(0, 5));
+        OAKPLANK_WALL.material(Material.WOOD);
+
         LEAVES = register("oakLeaves", new Leaves("Oak Leaves"));
         LEAVES.setTex(uv("blocks.png", 4, 5));
         registerLeafTexture("blocks.png", 4, 5);
@@ -723,6 +767,10 @@ public partial class Block {
         MAPLE_SLAB.material(Material.WOOD);
         MAPLE_SLAB.setFlammable(30);
 
+        MAPLEPLANK_WALL= register("mapleplankWall", new Walls("Maple Plank Wall"));
+        MAPLEPLANK_WALL.setTex(cubeUVs(5, 5));
+        MAPLEPLANK_WALL.material(Material.WOOD);
+
         MAPLE_LEAVES = register("mapleLeaves", new Leaves("Maple Leaves"));
         MAPLE_LEAVES.setTex(uv("blocks.png", 9, 5));
         registerLeafTexture("blocks.png", 9, 5);
@@ -763,6 +811,10 @@ public partial class Block {
         MAHOGANY_SLAB.setTex(cubeUVs(3, 2));
         MAHOGANY_SLAB.material(Material.WOOD);
         MAHOGANY_SLAB.setFlammable(30);
+
+        MAHOGANYPLANK_WALL= register("mahoganyplankWall", new Walls("Mahogany Plank Wall"));
+        MAHOGANYPLANK_WALL.setTex(cubeUVs(3, 2));
+        MAHOGANYPLANK_WALL.material(Material.WOOD);
 
         MAHOGANY_LEAVES = register("mahoganyLeaves", new Leaves("Mahogany Leaves"));
         MAHOGANY_LEAVES.setTex(cubeUVs(7, 2));
@@ -829,6 +881,10 @@ public partial class Block {
         PINE_SLAB.material(Material.WOOD);
         PINE_SLAB.setFlammable(30);
 
+        PINEPLANK_WALL= register("pineplankWall", new Walls("Pine Plank Wall"));
+        PINEPLANK_WALL.setTex(cubeUVs(8, 2));
+        PINEPLANK_WALL.material(Material.WOOD);
+
         PINE_LEAVES = register("pineLeaves", new Leaves("Pine Leaves"));
         PINE_LEAVES.setTex(uv("blocks.png", 12, 2));
         registerLeafTexture("blocks.png", 12, 2);
@@ -869,6 +925,10 @@ public partial class Block {
         PALM_SLAB.setTex(cubeUVs(13, 2));
         PALM_SLAB.material(Material.WOOD);
         PALM_SLAB.setFlammable(30);
+
+        PALMPLANK_WALL= register("palmplankWall", new Walls("Palm Plank Wall"));
+        PALMPLANK_WALL.setTex(cubeUVs(13, 2));
+        PALMPLANK_WALL.material(Material.WOOD);
 
         PALM_LEAVES = register("palmLeaves", new Leaves("Palm Leaves"));
         PALM_LEAVES.setTex(uv("blocks.png", 17, 2));
@@ -915,6 +975,10 @@ public partial class Block {
         REDWOOD_SLAB.setTex(cubeUVs(18, 2));
         REDWOOD_SLAB.material(Material.WOOD);
         REDWOOD_SLAB.setFlammable(30);
+
+        REDWOODPLANK_WALL= register("redwoodplankWall", new Walls("Redwood Plank Wall"));
+        REDWOODPLANK_WALL.setTex(cubeUVs(18, 2));
+        REDWOODPLANK_WALL.material(Material.WOOD);
 
         REDWOOD_LEAVES = register("redwoodLeaves", new Leaves("Redwood Leaves"));
         REDWOOD_LEAVES.setTex(uv("blocks.png", 22, 2));

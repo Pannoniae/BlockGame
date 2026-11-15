@@ -178,23 +178,38 @@ public class Fence : EntityBlock {
 
     public override bool canPlace(World world, int x, int y, int z, Placement info) {
         var target = world.getBlock(x, y, z);
-        // allow adding edges to an existing fence of the same type
         if (target == id) {
             byte edge = edgeBitFromHit(info.hitPoint.X, info.hitPoint.Z);
             byte current = world.getBlockRaw(x, y, z).getMetadata();
-            return (current & edge) == 0; // only if this edge isn't set yet
+            return (current & edge) == 0;
         }
         if (!base.canPlace(world, x, y, z, info)) {
             return false;
         }
 
-        var below = world.getBlock(x, y - 1, z);
+        var raw = world.getBlockRaw(x, y - 1, z);
+        var below = raw.getID();
+        if (blocks[below] is Slabs) {
+            var bm = raw.getMetadata();
+            return Slabs.isTop(bm) || Slabs.isDouble(bm);
+        }
+
         return fullBlock[below] || below == id;
     }
 
     public override byte maxValidMetadata() => 15;
 
+    // default drop is the block's own (blacklisted, untextured) BlockItem
+    public override void getDrop(List<ItemStack> drops, World world, int x, int y, int z, byte metadata, bool canBreak) {
+        if (canBreak) {
+            drops.Add(getActualItem(metadata));
+        }
+    }
+
     public override ItemStack getActualItem(byte metadata) {
         return new ItemStack(fenceItem, 1);
     }
+
+    // creative pick block uses this, edge metadata is meaningless on the item
+    public override ItemStack getCanonical(byte metadata) => getActualItem(metadata);
 }
