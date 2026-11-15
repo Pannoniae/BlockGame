@@ -17,7 +17,7 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="11.0.0-rc.2.26504.105" />
+        <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="11.0.0" />
         <PackageReference Include="Silk.NET.GLFW" Version="2.23.0" />
         <ProjectReference Include="..\Silk.NET.Windowing.Common\Silk.NET.Windowing.Common.csproj" />
     </ItemGroup>

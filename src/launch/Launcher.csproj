@@ -25,8 +25,8 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="MonoMod.Core" Version="1.4.0-prerelease.1" />
-        <PackageReference Include="MonoMod.RuntimeDetour" Version="25.4.0-prerelease.1" />
+        <PackageReference Include="MonoMod.Core" Version="1.4.0-prerelease.2" />
+        <PackageReference Include="MonoMod.RuntimeDetour" Version="25.4.0-prerelease.2" />
     </ItemGroup>
 
     <PropertyGroup>
