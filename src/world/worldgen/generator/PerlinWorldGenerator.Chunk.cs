@@ -28,7 +28,7 @@ public partial class PerlinWorldGenerator {
     const float NOISE_PER_Z_INV = 1f / NOISE_PER_Z;
 
     public const int NOISE_SIZE_X = (Chunk.CHUNKSIZE / NOISE_PER_X) + 1;
-    public const int NOISE_SIZE_Y = (Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT) / NOISE_PER_Y + 1;
+    public const int NOISE_SIZE_Y = WorldgenUtil.GEN_HEIGHT / NOISE_PER_Y + 1;
     public const int NOISE_SIZE_Z = (Chunk.CHUNKSIZE / NOISE_PER_Z) + 1;
 
     public const int WATER_LEVEL = 64;
@@ -118,7 +118,7 @@ public partial class PerlinWorldGenerator {
     private static float calculateAirBias(float low, float high, float weirdness, int y) {
         // Reduce the density when too high above 64 and increase it when too low
         // range: // -0.5 (at y=128) to 0.5 (at y=0)
-        var airBias = (y - WATER_LEVEL - 4) / (float)World.WORLDHEIGHT;
+        var airBias = (y - WATER_LEVEL - 4) / (float)WorldgenUtil.GEN_HEIGHT;
         // our SIGNATURE weird terrain
         //airBias *= 0.5f;
         // normalish terrain (kinda like old mc?)

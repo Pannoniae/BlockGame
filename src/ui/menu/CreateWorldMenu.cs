@@ -124,6 +124,9 @@ public class CreateWorldMenu : Menu {
         // reset inputs
         nameInput.setInput("New World");
         seedInput.setInput("");
+
+        // this menu is constructed before mods get to register their generators, so pick those up here
+        generatorButton.setStates(WorldGenerators.all.Select(n => "generator." + n));
     }
 
     public override void draw() {

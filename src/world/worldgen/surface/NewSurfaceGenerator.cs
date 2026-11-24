@@ -30,6 +30,12 @@ public class NewSurfaceGenerator : SurfaceGenerator {
     private readonly Cave caves = new();
     private readonly Ravine ravines = new();
 
+    /** Do carve caves and ravines? */
+    public bool carve = true;
+
+    /** Actual worldgen limit instead of hardwiring the worldheight in */
+    public int top = WorldgenUtil.GEN_HEIGHT;
+
     public readonly record struct Vein(OreFeature ore, int count, int minY, int maxY) {
         public readonly OreFeature ore = ore;
         public readonly int count = count;
@@ -76,29 +82,29 @@ public class NewSurfaceGenerator : SurfaceGenerator {
 
     private readonly BiomeType[] biomes = new BiomeType[Chunk.CHUNKSIZE * Chunk.CHUNKSIZE];
 
-    private readonly byte[] height = new byte[Chunk.CHUNKSIZE * Chunk.CHUNKSIZE];
+    private readonly ushort[] height = new ushort[Chunk.CHUNKSIZE * Chunk.CHUNKSIZE];
 
     public NewSurfaceGenerator(WorldGenerator worldgen, World world, int version) {
         this.worldgen = worldgen;
         this.world = world;
 
         veins = [
-            new Vein(new OreFeature(Block.COAL_ORE.id, 16), 16, 0, World.WORLDHEIGHT),
+            new Vein(new OreFeature(Block.COAL_ORE.id, 16), 16, 0, WorldgenUtil.GEN_HEIGHT),
             // copper spawns more on the surface!
-            new Vein(new OreFeature(Block.COPPER_ORE.id, 12), 16, World.WORLDHEIGHT / 4,
-                (int)(World.WORLDHEIGHT * (3 / 4f))),
-            new Vein(new OreFeature(Block.TIN_ORE.id, 8), 12, 0, World.WORLDHEIGHT / 2),
-            new Vein(new OreFeature(Block.IRON_ORE.id, 8), 16, 0, World.WORLDHEIGHT / 2),
-            new Vein(new OreFeature(Block.GOLD_ORE.id, 8), 4, 0, World.WORLDHEIGHT / 3),
+            new Vein(new OreFeature(Block.COPPER_ORE.id, 12), 16, WorldgenUtil.GEN_HEIGHT / 4,
+                (int)(WorldgenUtil.GEN_HEIGHT * (3 / 4f))),
+            new Vein(new OreFeature(Block.TIN_ORE.id, 8), 12, 0, WorldgenUtil.GEN_HEIGHT / 2),
+            new Vein(new OreFeature(Block.IRON_ORE.id, 8), 16, 0, WorldgenUtil.GEN_HEIGHT / 2),
+            new Vein(new OreFeature(Block.GOLD_ORE.id, 8), 4, 0, WorldgenUtil.GEN_HEIGHT / 3),
             // cosmetic shit!
-            new Vein(new OreFeature(Block.DIAMOND_ORE.id, 8), 2, 0, World.WORLDHEIGHT / 4),
-            new Vein(new OreFeature(Block.CINNABAR_ORE.id, 6), 2, 0, World.WORLDHEIGHT / 4),
+            new Vein(new OreFeature(Block.DIAMOND_ORE.id, 8), 2, 0, WorldgenUtil.GEN_HEIGHT / 4),
+            new Vein(new OreFeature(Block.CINNABAR_ORE.id, 6), 2, 0, WorldgenUtil.GEN_HEIGHT / 4),
             // clay in the hills, the rest scattered underground
-            new Vein(new OreFeature(Block.CLAY_BLOCK.id, 24, stoneMode:false), 16, 72, World.WORLDHEIGHT),
-            new Vein(new OreFeature(Block.DIRT.id, 32, stoneMode:false), 16, 16, World.WORLDHEIGHT - 16),
-            new Vein(new OreFeature(Block.GRAVEL.id, 32, stoneMode:false), 8, 16, World.WORLDHEIGHT - 16),
+            new Vein(new OreFeature(Block.CLAY_BLOCK.id, 24, stoneMode:false), 16, 72, WorldgenUtil.GEN_HEIGHT),
+            new Vein(new OreFeature(Block.DIRT.id, 32, stoneMode:false), 16, 16, WorldgenUtil.GEN_HEIGHT - 16),
+            new Vein(new OreFeature(Block.GRAVEL.id, 32, stoneMode:false), 8, 16, WorldgenUtil.GEN_HEIGHT - 16),
             // sand pockets underground (le funny)
-            new Vein(new OreFeature(Block.SAND.id, 32, stoneMode:false), 6, 16, World.WORLDHEIGHT - 16)
+            new Vein(new OreFeature(Block.SAND.id, 32, stoneMode:false), 6, 16, WorldgenUtil.GEN_HEIGHT - 16)
         ];
     }
 
@@ -121,8 +127,10 @@ public class NewSurfaceGenerator : SurfaceGenerator {
             }
         }
 
-        caves.place(world, coord);
-        ravines.place(world, coord);
+        if (carve) {
+            caves.place(world, coord);
+            ravines.place(world, coord);
+        }
 
         for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
             for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
@@ -182,7 +190,7 @@ public class NewSurfaceGenerator : SurfaceGenerator {
 
     private bool placeTree(Chunk chunk, XRandom random, TreeType type, int x, int z) {
         var y = height[(z << 4) + x];
-        if (y > 120) {
+        if (y > top - 8) {
             return false;
         }
 
@@ -247,7 +255,7 @@ public class NewSurfaceGenerator : SurfaceGenerator {
             var z = random.Next(0, Chunk.CHUNKSIZE);
             var y = height[(z << 4) + x];
 
-            if (chunk.getBlock(x, y, z) == Block.GRASS.id && y < World.WORLDHEIGHT - 1 &&
+            if (chunk.getBlock(x, y, z) == Block.GRASS.id && y < top - 1 &&
                 chunk.getBlock(x, y + 1, z) == Block.AIR.id) {
                 chunk.setBlockDumb(x, y + 1, z,
                     random.NextSingle() > 0.7f ? Block.TALL_GRASS.id : Block.SHORT_GRASS.id);
@@ -273,7 +281,7 @@ public class NewSurfaceGenerator : SurfaceGenerator {
                 }
 
                 var y = height[(z << 4) + x];
-                if (y >= World.WORLDHEIGHT - 1) {
+                if (y >= top - 1) {
                     continue;
                 }
 
@@ -306,7 +314,7 @@ public class NewSurfaceGenerator : SurfaceGenerator {
             }
 
             var y = height[idx];
-            if (y >= World.WORLDHEIGHT - 1 || chunk.getBlock(x, y, z) != Block.SAND.id ||
+            if (y >= top - 1 || chunk.getBlock(x, y, z) != Block.SAND.id ||
                 chunk.getBlock(x, y + 1, z) != Block.AIR.id) {
                 continue;
             }
@@ -317,7 +325,7 @@ public class NewSurfaceGenerator : SurfaceGenerator {
             }
 
             var h = random.Next(2, 4);
-            for (int yy = 0; yy < h && y + 1 + yy < World.WORLDHEIGHT; yy++) {
+            for (int yy = 0; yy < h && y + 1 + yy < top; yy++) {
                 chunk.setBlockDumb(x, y + 1 + yy, z, Block.CACTUS.id);
             }
         }
@@ -335,7 +343,7 @@ public class NewSurfaceGenerator : SurfaceGenerator {
             }
 
             var y = height[idx];
-            if (y >= World.WORLDHEIGHT - 6 || chunk.getBlock(x, y, z) != Block.GRASS.id ||
+            if (y >= top - 6 || chunk.getBlock(x, y, z) != Block.GRASS.id ||
                 Block.log[chunk.getBlock(x, y + 1, z)]) {
                 continue;
             }

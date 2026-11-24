@@ -161,7 +161,7 @@ public struct ChunkDataPacket : Packet {
 
     /** subchunkdata - see PaletteBlockData */
     public class SubChunkData {
-        public byte y; // which subchunk (0-7)
+        public byte y; // which subchunk (0 to CHUNKHEIGHT - 1)
 
         public uint[] vertices;
         public byte[]? indices;

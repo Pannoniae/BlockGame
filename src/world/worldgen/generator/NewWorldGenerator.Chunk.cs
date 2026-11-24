@@ -143,8 +143,8 @@ public partial class NewWorldGenerator {
                     var od = float.Abs((0.5f) * (mm + 0.8f)) - 0.1f;
                     d = mm < -0.6f && e < 0.2f ? od : d;
 
-                    d *= World.WORLDHEIGHT;
-                    var airBias = (y - ((WATER_LEVEL + 4) + d)) / (float)World.WORLDHEIGHT * 10f * m;
+                    d *= WorldgenUtil.GEN_HEIGHT;
+                    var airBias = (y - ((WATER_LEVEL + 4) + d)) / (float)WorldgenUtil.GEN_HEIGHT * 10f * m;
                     if (y < WATER_LEVEL + 4) {
                         airBias *= 4;
                     }
@@ -326,9 +326,9 @@ public partial class NewWorldGenerator {
                     var od = float.Abs((0.5f) * (mm + 0.8f)) - 0.1f;
                     d = mm < -0.6f && e < 0.2f ? od : d;
 
-                    d *= World.WORLDHEIGHT * 0.7f;
+                    d *= WorldgenUtil.GEN_HEIGHT * 0.7f;
                     // increase bias by default, mod it above
-                    var airBias = (y - ((WATER_LEVEL + 4) + d)) / (float)World.WORLDHEIGHT * 10f * m;
+                    var airBias = (y - ((WATER_LEVEL + 4) + d)) / (float)WorldgenUtil.GEN_HEIGHT * 10f * m;
 
                     //Console.Out.WriteLine(airBias);
 
@@ -540,10 +540,10 @@ public partial class NewWorldGenerator {
 
                     //e = -0.2f;
 
-                    e *= World.WORLDHEIGHT;
+                    e *= WorldgenUtil.GEN_HEIGHT;
                     //m *= World.WORLDHEIGHT;
                     // increase bias by default, mod it above
-                    var airBias = (y - ((WATER_LEVEL + 4) + e)) / (float)World.WORLDHEIGHT * 10 * m;
+                    var airBias = (y - ((WATER_LEVEL + 4) + e)) / (float)WorldgenUtil.GEN_HEIGHT * 10 * m;
 
                     //Console.Out.WriteLine(airBias);
 

@@ -27,7 +27,7 @@ public class ChunkTracker {
 
     private const int MAX_INDIVIDUAL_CHANGES = 16;
 
-    private byte lightDirty;
+    private uint lightDirty;
 
     public ChunkTracker(ChunkCoord coord, GameServer server) {
         this.coord = coord;
@@ -39,7 +39,7 @@ public class ChunkTracker {
             return;
         }
 
-        lightDirty |= (byte)(1 << y);
+        lightDirty |= 1u << y;
     }
 
     /** mark a block as dirty (world coords) */
@@ -207,7 +207,7 @@ public class ChunkTracker {
 
         while (mask != 0) {
             var y = BitOperations.TrailingZeroCount(mask);
-            mask &= (byte)(mask - 1);
+            mask &= mask - 1;
 
             chunk.blocks[y].skillIssueLightPlanes(out var sky, out var blk, out var uSky, out var uBlk);
 

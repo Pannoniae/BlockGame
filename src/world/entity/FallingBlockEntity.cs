@@ -56,7 +56,7 @@ public class FallingBlockEntity : Entity {
     private void landAndPlace() {
         // defensive shitcoding: validate position before placing
         if (double.IsNaN(position.Y) || double.IsInfinity(position.Y) ||
-            position.Y < -64 || position.Y > 256) {
+            position.Y < -64 || position.Y > World.WORLDHEIGHT * 2) {
             remove();
             return;
         }

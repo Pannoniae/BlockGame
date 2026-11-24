@@ -1,4 +1,6 @@
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Runtime.Loader;
 using BlockGame.util.log;
 using BlockGame.util.xNBT;
 
@@ -54,6 +56,13 @@ public static class ModLoader {
 
         // TODO: topological sort by dependencies
 
+        // Mods go into the same load context the game itself is running in. With coremods present that's NOT the
+        // default one (see GameLoadContext), and a mod loaded into the default context would bind to the untransformed
+        // core.dll on disk i.e. the types would be duplicated and everything would be messed up
+        var context = AssemblyLoadContext.GetLoadContext(typeof(ModLoader).Assembly) ?? AssemblyLoadContext.Default;
+        context.Resolving += resolveDependency;
+        context.ResolvingUnmanagedDll += resolveNativeDependency;
+
         // load DLLs
         foreach (var mod in mods) {
             var dllPath = Path.Combine(mod.path, mod.internalname + ".dll");
@@ -63,7 +72,7 @@ public static class ModLoader {
             }
 
             try {
-                var asm = Assembly.LoadFrom(dllPath);
+                var asm = context.LoadFromAssemblyPath(Path.GetFullPath(dllPath));
                 var modType = asm.GetTypes().FirstOrDefault(t => typeof(Mod).IsAssignableFrom(t) && !t.IsInterface);
                 if (modType != null) {
                     mod.instance = (Mod)Activator.CreateInstance(modType)!;
@@ -81,7 +90,35 @@ public static class ModLoader {
     }
 
     /**
-     * Called from Block.preLoad() after vanilla blocks are registered.
+     * Handle managed libraries a mod ships sit next to its DLL.
+     * Only gets called when the normal lookup has already failed.
+     */
+    private static Assembly? resolveDependency(AssemblyLoadContext context, AssemblyName name) {
+        foreach (var mod in mods) {
+            var path = Path.GetFullPath(Path.Combine(mod.path, name.Name + ".dll"));
+            if (File.Exists(path)) {
+                return context.LoadFromAssemblyPath(path);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Same for native libraries, fallback when the normal lookup has already failed.
+     */
+    private static IntPtr resolveNativeDependency(Assembly assembly, string name) {
+        foreach (var mod in mods) {
+            if (NativeLibrary.TryLoad(Path.GetFullPath(Path.Combine(mod.path, name)), out var handle)) {
+                return handle;
+            }
+        }
+
+        return IntPtr.Zero;
+    }
+
+    /**
+     * Called once the vanilla content is registered, before postLoad.
      * Invokes onInit() on all loaded mods.
      */
     public static void invokeInit() {

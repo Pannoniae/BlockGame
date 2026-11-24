@@ -33,6 +33,13 @@ public static class Loc {
     }
 
     /**
+     * Add (or replace) a string.
+     */
+    public static void add(string key, string value) {
+        strings[key] = value;
+    }
+
+    /**
      * Check if key exists in localization data.
      */
     public static bool has(string key) {

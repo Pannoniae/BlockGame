@@ -100,7 +100,7 @@ public class OreFeature : Feature {
 
     private void placeSphere(World world, Vector3 center, float radius, Vector3 prev, float prevRadSq, ref OreCache c) {
         int y0 = Math.Max(0, (int)(center.Y - radius));
-        int y1 = Math.Min(World.WORLDHEIGHT, (int)(center.Y + radius) + 1);
+        int y1 = Math.Min(WorldgenUtil.GEN_HEIGHT, (int)(center.Y + radius) + 1);
         int z0 = int.Max(lz0, (int)(center.Z - radius));
         int z1 = int.Min(lz1 + 1, (int)(center.Z + radius) + 1);
 

@@ -45,6 +45,13 @@ public class BiomeData {
         var t = bilinear(this.temp, x, z);
         var h = bilinear(this.hum, x, z);
 
+        // already final values, nothing to normalise
+        if (chunk != null && chunk.world.generator is { linearClimate: true }) {
+            temp = t;
+            hum = h;
+            return;
+        }
+
         if (chunk != null && chunk.world.generator is NewWorldGenerator gen) {
             // y pinned to 0 so the value distribution (and therefore the fe() normaliser below) is
             // unchanged from when this was a 3D field

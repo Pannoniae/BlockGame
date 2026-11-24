@@ -74,8 +74,8 @@ public partial class NewWorldGenerator {
                     m = f < 0f ? 0f : m;
                     m = 1 / (m + 0.5f);
 
-                    e *= World.WORLDHEIGHT;
-                    var airBias = (y - ((WATER_LEVEL + 4) + e)) / (float)World.WORLDHEIGHT * 10 * m;
+                    e *= WorldgenUtil.GEN_HEIGHT;
+                    var airBias = (y - ((WATER_LEVEL + 4) + e)) / (float)WorldgenUtil.GEN_HEIGHT * 10 * m;
 
                     if (y < WATER_LEVEL + 4) {
                         airBias *= 4;

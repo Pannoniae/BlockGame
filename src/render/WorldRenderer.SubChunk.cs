@@ -18,14 +18,19 @@ public partial class WorldRenderer {
 
     /// <summary>
     /// Batched visibility check for 8 subchunks at once. Updates the isRendered field for each subchunk based on visibility.
+    /// Goes through the whole column in batches of 8, so CHUNKHEIGHT must be a multiple of 8!
     /// </summary>
     public static unsafe void isVisibleEight(SubChunk[] subChunks, BoundingFrustum frustum) {
-        // Get visibility mask (1 bit = outside/not visible, 0 bit = visible)
-        byte outsideMask = isFrontTwoEightD(subChunks, frustum.Top, frustum.Bottom);
+        for (int o = 0; o < Chunk.CHUNKHEIGHT; o += 8) {
+            var batch = subChunks.AsSpan(o, 8);
 
-        // Update isRendered for each subchunk
-        for (int i = 0; i < 8; i++) {
-            subChunks[i].isRendered = (outsideMask & (1 << i)) == 0;
+            // Get visibility mask (1 bit = outside/not visible, 0 bit = visible)
+            byte outsideMask = isFrontTwoEightD(batch, frustum.Top, frustum.Bottom);
+
+            // Update isRendered for each subchunk
+            for (int i = 0; i < 8; i++) {
+                batch[i].isRendered = (outsideMask & (1 << i)) == 0;
+            }
         }
     }
 
@@ -147,7 +152,7 @@ public partial class WorldRenderer {
     /// Optimized isFrontTwoEight that reads directly from SubChunk[] without copying AABBs.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static byte isFrontTwoEightD(SubChunk[] subChunks, Plane p1, Plane p2) {
+    public static byte isFrontTwoEightD(ReadOnlySpan<SubChunk> subChunks, Plane p1, Plane p2) {
         return Avx2.IsSupported ? isFrontTwoEightDAvx2(subChunks, p1, p2) : isFrontTwoEightDFallback(subChunks, p1, p2);
     }
 
@@ -155,7 +160,7 @@ public partial class WorldRenderer {
     /// AVX2
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static unsafe byte isFrontTwoEightDAvx2(SubChunk[] subChunks, Plane p1, Plane p2) {
+    public static unsafe byte isFrontTwoEightDAvx2(ReadOnlySpan<SubChunk> subChunks, Plane p1, Plane p2) {
         // Load plane components once
         ref var pp1 = ref Unsafe.As<Plane, float>(ref p1);
         ref var pp2 = ref Unsafe.As<Plane, float>(ref p2);
@@ -252,7 +257,7 @@ public partial class WorldRenderer {
     /// SSE fallback for systems without AVX2.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static byte isFrontTwoEightDFallback(SubChunk[] subChunks, Plane p1, Plane p2) {
+    public static byte isFrontTwoEightDFallback(ReadOnlySpan<SubChunk> subChunks, Plane p1, Plane p2) {
         var vP1 = Vector128.LoadUnsafe(ref Unsafe.As<Plane, float>(ref p1));
         var vP2 = Vector128.LoadUnsafe(ref Unsafe.As<Plane, float>(ref p2));
 

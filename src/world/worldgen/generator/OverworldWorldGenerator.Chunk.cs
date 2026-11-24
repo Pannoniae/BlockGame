@@ -38,7 +38,7 @@ public partial class OverworldWorldGenerator {
                 // hack until we can propagate them properly AND cheaply
                 chunk.setBlockLightDumb(x, 0, z, Block.lightLevel[Block.HELLROCK.id]);
 
-                for (int y = 1; y < World.WORLDHEIGHT; y++) {
+                for (int y = 1; y < WorldgenUtil.GEN_HEIGHT; y++) {
                     if (y < flatNoise) {
                         chunk.setBlockFast(x, y, z,  Block.STONE.id);
                         // set heightmap

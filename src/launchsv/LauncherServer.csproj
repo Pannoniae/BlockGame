@@ -34,10 +34,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="..\launchshared\CoremodLoader.cs" Link="CoremodLoader.cs" />
-    </ItemGroup>
-
-    <ItemGroup>
+        <ProjectReference Include="..\loader\Loader.csproj" />
         <ProjectReference Include="..\Core.csproj" />
     </ItemGroup>
 

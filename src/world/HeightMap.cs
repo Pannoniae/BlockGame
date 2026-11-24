@@ -4,9 +4,9 @@ using BlockGame.world.chunk;
 namespace BlockGame.world;
 
 public class HeightMap : IDisposable {
-    public static readonly FixedArrayPool<byte> heightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
+    public static readonly FixedArrayPool<ushort> heightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
 
-    public byte[] height;
+    public ushort[] height;
     public Chunk chunk;
 
     public HeightMap(Chunk chunk) {
@@ -15,11 +15,11 @@ public class HeightMap : IDisposable {
         Array.Clear(height);
     }
 
-    public byte get(int x, int z) {
+    public ushort get(int x, int z) {
         return height[(x << 4) + z];
     }
 
-    public void set(int x, int z, byte val) {
+    public void set(int x, int z, ushort val) {
         // pack it back inside
         height[(x << 4) + z] = val;
     }

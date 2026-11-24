@@ -418,7 +418,7 @@ public partial class World : IDisposable {
 
             while (mask != 0) {
                 var sy = BitOperations.TrailingZeroCount(mask);
-                mask &= (byte)(mask - 1);
+                mask &= mask - 1;
 
                 var coord = new SubChunkCoord(c.coord.x, sy, c.coord.z);
                 foreach (var l in listeners) {
