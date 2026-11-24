@@ -9,7 +9,7 @@ using BoundingFrustum = BlockGame.util.meth.BoundingFrustum;
 namespace BlockGame.world.chunk;
 
 public class Chunk : IDisposable, IEquatable<Chunk> {
-    public const int CHUNKHEIGHT = 8;
+    public const int CHUNKHEIGHT = 32;
     public const int CHUNKSIZE = 16;
     public const int BIOMESIZE = 4;
     public const int CHUNKSIZESQ = CHUNKSIZE * CHUNKSIZE;
@@ -48,7 +48,8 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     public bool dirty;
     public bool destroyed = false;
 
-    public byte lightDirty;
+    /** one bit per section, so this must be at least CHUNKHEIGHT bits wide */
+    public uint lightDirty;
 
     private readonly record struct LocalLightNode(int x, int y, int z, Chunk chunk) {
         public readonly int x = x;
@@ -244,7 +245,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             world.lightDirtyChunks.Add(this);
         }
 
-        lightDirty |= (byte)(1 << sy);
+        lightDirty |= 1u << sy;
     }
 
     public void lightChunk() {
@@ -827,7 +828,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     public void addToHeightMap(int x, int y, int z) {
         var height = heightMap.get(x, z);
         if (height < y && y < CHUNKHEIGHT * CHUNKSIZE) {
-            heightMap.set(x, z, (byte)y);
+            heightMap.set(x, z, (ushort)y);
         }
     }
 
@@ -848,7 +849,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             }
 
             if (Block.isFullBlock(getBlock(x, yy, z))) {
-                heightMap.set(x, z, (byte)yy);
+                heightMap.set(x, z, (ushort)yy);
                 return;
             }
         }

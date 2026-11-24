@@ -13,8 +13,17 @@ namespace BlockGame.world.worldgen;
 
 public static class WorldgenUtil {
 
+    /**
+     * The height the stock generators generate into (y 0..GEN_HEIGHT-1), everything above is left as air.
+     * Actual worldgen limit instead of hardwiring the worldheight in World.WORLDHEIGHT
+     */
+    public const int GEN_HEIGHT = 128;
+
+    /** Number of blocks in a chunk column up to GEN_HEIGHT. */
+    public const int GEN_MAXIDX = Chunk.CHUNKSIZESQ * GEN_HEIGHT;
+
     [ThreadStatic] private static float[]? interpsTS;
-    private static float[] interps => interpsTS ??= new float[Chunk.MAXINDEXCOL];
+    private static float[] interps => interpsTS ??= new float[GEN_MAXIDX];
 
     public static void printNoiseResolution(float freq, int octaves, float falloff = 2f) {
         printNoiseResolution(freq, octaves, falloff, 1 / falloff);
@@ -83,7 +92,7 @@ public static class WorldgenUtil {
     private const float NOISE_PER_Y_INV = 1f / NOISE_PER_Y;
     private const float NOISE_PER_Z_INV = 1f / NOISE_PER_Z;
     public const int NOISE_SIZE_X = (Chunk.CHUNKSIZE / NOISE_PER_X) + 1;
-    public const int NOISE_SIZE_Y = (Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT) / NOISE_PER_Y + 1;
+    public const int NOISE_SIZE_Y = GEN_HEIGHT / NOISE_PER_Y + 1;
     public const int NOISE_SIZE_Z = (Chunk.CHUNKSIZE / NOISE_PER_Z) + 1;
 
     public static void interpolate(Chunk chunk, float[] buffer) {
@@ -102,7 +111,7 @@ public static class WorldgenUtil {
     }
 
     private static void interpolateScalar(Chunk chunk, float[] buffer) {
-        for (int y = 0; y < Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
+        for (int y = 0; y < GEN_HEIGHT; y++) {
             var y0 = y >> NOISE_PER_Y_SHIFT;
             var y1 = y0 + 1;
             float yd = (y & NOISE_PER_Y_MASK) * NOISE_PER_Y_INV;
@@ -241,7 +250,7 @@ public static class WorldgenUtil {
 
     private static void interpolateSSE(Chunk chunk, float[] buffer) {
 
-        for (int y = 0; y < Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
+        for (int y = 0; y < GEN_HEIGHT; y++) {
             var y0 = y >> NOISE_PER_Y_SHIFT;
             var y1 = y0 + 1;
             float yd = (y & NOISE_PER_Y_MASK) * NOISE_PER_Y_INV;
@@ -308,7 +317,7 @@ public static class WorldgenUtil {
 
         // now set blocks from interps
 
-        for (int i = 0; i < Chunk.MAXINDEXCOL; i++) {
+        for (int i = 0; i < GEN_MAXIDX; i++) {
             float value = interps[i];
             int x = i & 0xF;
             int z = (i >> 4) & 0xF;
@@ -351,7 +360,7 @@ public static class WorldgenUtil {
     private static void interpolateAVX512(Chunk chunk, float[] buffer) {
         const int width = Chunk.CHUNKSIZE;
         const int slice = width * width;
-        const int height = width * Chunk.CHUNKHEIGHT;
+        const int height = GEN_HEIGHT;
 
         // hoisted constants
         var xts = Vector512.Create(
@@ -406,7 +415,7 @@ public static class WorldgenUtil {
             }
         }
 
-        for (int i = 0; i < Chunk.MAXINDEXCOL; i++) {
+        for (int i = 0; i < GEN_MAXIDX; i++) {
             float density = interps[i];
             int x = i & 0xF;
             int z = (i >> 4) & 0xF;
@@ -444,7 +453,7 @@ public static class WorldgenUtil {
     private static void interpolateAVX2(Chunk chunk, float[] buffer) {
         const int width = Chunk.CHUNKSIZE;
         const int slice = width * width;
-        const int height = width * Chunk.CHUNKHEIGHT;
+        const int height = GEN_HEIGHT;
 
         for (int y = 0; y < height; y++) {
             int gridY0 = y >> NOISE_PER_Y_SHIFT;
@@ -501,7 +510,7 @@ public static class WorldgenUtil {
             }
         }
 
-        for (int i = 0; i < Chunk.MAXINDEXCOL; i++) {
+        for (int i = 0; i < GEN_MAXIDX; i++) {
             float density = interps[i];
             int x = i & 0xF;
             int z = (i >> 4) & 0xF;

@@ -56,6 +56,13 @@ public class ToggleButton : Button {
         updateDisplay();
     }
 
+    /** Replace the states. Keeps the current index if it's still in range. */
+    public void setStates(IEnumerable<string> ids) {
+        this.ids = new List<string>(ids);
+        index = int.Clamp(index, 0, this.ids.Count - 1);
+        updateDisplay();
+    }
+
     public string getState() {
         return ids[index];
     }

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime;
 using System.Runtime.InteropServices;
+using BlockGame.mod;
 using BlockGame.net;
 using BlockGame.net.srv;
 using BlockGame.render;
@@ -879,6 +880,7 @@ public partial class Game {
 
         Menu.STARTUP_LOADING.updateProgress(0.8f, "Loading blocks");
         jankyFrame();
+        ModLoader.discover();
         Block.preLoad();
         Item.preLoad();
         Entities.preLoad();
@@ -886,6 +888,8 @@ public partial class Game {
         Recipe.preLoad();
         SmeltingRecipe.preLoad();
         EffectRegistry.init(Registry.EFFECTS);
+        // mods go after all of vanilla is registered, but before postLoad and the content hash
+        ModLoader.invokeInit();
 
         //RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance)!.MethodHandle);
         

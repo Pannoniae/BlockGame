@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using BlockGame.main;
+using BlockGame.mod;
 using BlockGame.net.packet;
 using BlockGame.util;
 using BlockGame.util.cmd;
@@ -201,12 +202,15 @@ public class GameServer : INetEventListener {
             loadUsers();
             loadOps();
 
+            ModLoader.discover();
             Block.preLoad();
             Item.preLoad();
             Entities.preLoad();
             BlockEntity.preLoad();
             Recipe.preLoad();
             SmeltingRecipe.preLoad();
+            // mods go after all of vanilla is registered, but before postLoad and the content hash
+            ModLoader.invokeInit();
 
             Block.postLoad();
 

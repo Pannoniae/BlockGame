@@ -677,7 +677,14 @@ public class WorldIO {
     /** Shared section loading - deduped from loadChunkFromNBT and loadChunkDataFromNBT */
     private static void loadChunkSections(Chunk chunk, NBTCompound chunkTag) {
         var sections = chunkTag.getListTag<NBTCompound>("sections");
-        for (int sy = 0; sy < Chunk.CHUNKHEIGHT; sy++) {
+        // saves from before the height increase have fewer sections
+        var sectionCount = int.Min(sections.count(), Chunk.CHUNKHEIGHT);
+        for (int sy = sectionCount; sy < Chunk.CHUNKHEIGHT; sy++) {
+            // nothing was ever above the old height limit, so it's open sky
+            chunk.blocks[sy].setLightPlanes(null, null, 15, 0);
+        }
+
+        for (int sy = 0; sy < sectionCount; sy++) {
             var section = sections.get(sy);
             var blocks = chunk.blocks[sy];
 

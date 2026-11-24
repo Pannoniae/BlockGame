@@ -31,7 +31,7 @@ public class Ravine : OverlayFeature {
         
         var x = coord.x * Chunk.CHUNKSIZE + rand.Next(Chunk.CHUNKSIZE);
         var z = coord.z * Chunk.CHUNKSIZE + rand.Next(Chunk.CHUNKSIZE);
-        var y = rand.Next(10, World.WORLDHEIGHT - 20);
+        var y = rand.Next(10, WorldgenUtil.GEN_HEIGHT - 20);
 
         genRavine(world, rand, x, y, z, origin);
     }
@@ -128,7 +128,7 @@ public class Ravine : OverlayFeature {
                 bool hasGrass = false;
 
                 // Carve from top to bottom
-                for (int yy = Math.Min(topY, World.WORLDHEIGHT - 1); yy >= bottomY; yy--) {
+                for (int yy = Math.Min(topY, WorldgenUtil.GEN_HEIGHT - 1); yy >= bottomY; yy--) {
                     // Calculate ledge width at this depth
                     double ledgeWidth = baseWidth * widthMultiplier;
                     for (int ledgeIndex = 0; ledgeIndex < numLedges; ledgeIndex++) {

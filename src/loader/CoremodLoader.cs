@@ -8,7 +8,8 @@ namespace BlockGame.launch.shared;
 
 /**
  * Shared coremod loading and transformation logic for client/server launchers.
- * This file is linked into both launcher projects to avoid loading core.dll early.
+ * This lives in its own assembly (together with the Coremod interface) so that nothing here touches core.dll
+ * before the coremods have patched it.
  */
 public static class CoremodLoader {
     private const string COREMOD_DIR = "mods/coremods";
@@ -65,13 +66,19 @@ public static class CoremodLoader {
             var transformedBytes = ms.ToArray();
 
             // load and invoke entry point from transformed assembly
-            var transformedAsm = Assembly.Load(transformedBytes);
+            var context = new GameLoadContext();
+            using var transformed = new MemoryStream(transformedBytes, false);
+            var transformedAsm = context.loadGame(transformed);
             var entryPoint = transformedAsm.GetType(entryTypeName)?.GetMethod(entryMethodName);
             if (entryPoint == null) {
                 throw new Exception($"Failed to find {entryTypeName}.{entryMethodName} in transformed assembly");
             }
 
-            entryPoint.Invoke(null, [args]);
+            // by-name lookups from libraries in the default context (Type.GetType("..., core") and friends) should
+            // find the transformed game too, not the one on disk
+            using (context.EnterContextualReflection()) {
+                entryPoint.Invoke(null, [args]);
+            }
 
         } catch (Exception e) {
             Log.error("Launcher", "Coremod loading failed:");

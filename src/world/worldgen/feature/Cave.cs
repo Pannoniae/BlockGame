@@ -160,8 +160,8 @@ public class Cave : OverlayFeature {
     /// </summary>
     private void genCave(World world, XRandom rand, int x, int y, int z, ChunkCoord origin) {
         width = rand.NextSingle() * 2 + 1.5f; // random width between 1 and 3
-        var steps = rand.Next(32, World.WORLDHEIGHT); // yesn't
-        steps -= rand.Next((int)(World.WORLDHEIGHT / 4d));
+        var steps = rand.Next(32, WorldgenUtil.GEN_HEIGHT); // yesn't
+        steps -= rand.Next((int)(WorldgenUtil.GEN_HEIGHT / 4d));
 
         // if it's wide, have fewer steps
         var fat = double.Max(width - 3, 0);
@@ -345,7 +345,7 @@ public class Cave : OverlayFeature {
         if (xMax < origin.x * Chunk.CHUNKSIZE ||
             xMin > (origin.x + 1) * Chunk.CHUNKSIZE ||
             yMax < 2 ||
-            yMin > World.WORLDHEIGHT - 4 ||
+            yMin > WorldgenUtil.GEN_HEIGHT - 4 ||
             zMax < origin.z * Chunk.CHUNKSIZE ||
             zMin > (origin.z + 1) * Chunk.CHUNKSIZE) {
             goto cleanup;
@@ -360,7 +360,7 @@ public class Cave : OverlayFeature {
         xMin = int.Max(xMin, origin.x * Chunk.CHUNKSIZE);
         xMax = int.Min(xMax, (origin.x + 1) * Chunk.CHUNKSIZE);
         yMin = int.Max(yMin, 2);
-        yMax = int.Min(yMax, World.WORLDHEIGHT - 4);
+        yMax = int.Min(yMax, WorldgenUtil.GEN_HEIGHT - 4);
         zMin = int.Max(zMin, origin.z * Chunk.CHUNKSIZE);
         zMax = int.Min(zMax, (origin.z + 1) * Chunk.CHUNKSIZE);
 

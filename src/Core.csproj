@@ -208,16 +208,19 @@
         <None Remove="server\**" />
         <None Remove="launch\**" />
         <None Remove="launchsv\**" />
+        <None Remove="loader\**" />
 
         <Compile Remove="client\**" />
         <Compile Remove="server\**" />
         <Compile Remove="launch\**" />
         <Compile Remove="launchsv\**" />
+        <Compile Remove="loader\**" />
 
         <EmbeddedResource Remove="client\**" />
         <EmbeddedResource Remove="server\**" />
         <EmbeddedResource Remove="launch\**" />
         <EmbeddedResource Remove="launchsv\**" />
+        <EmbeddedResource Remove="loader\**" />
     </ItemGroup>
 
 </Project>
